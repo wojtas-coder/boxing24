@@ -104,7 +104,7 @@ async function fetchGeminiContent() {
 
     console.log(`🤖 Redaktor Naczelny is thinking... (${TODAY})`);
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,7 +113,10 @@ async function fetchGeminiContent() {
     });
 
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) {
+        console.error("❌ API ERROR DETAILS:", JSON.stringify(data.error, null, 2));
+        throw new Error(data.error.message);
+    }
 
     let text = data.candidates[0].content.parts[0].text;
 
