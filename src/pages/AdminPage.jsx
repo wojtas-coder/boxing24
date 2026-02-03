@@ -11,9 +11,15 @@ const AdminPage = () => {
     const [currentArticle, setCurrentArticle] = useState(null);
     const navigate = useNavigate();
 
-    // 1. Auth Check
+    // 1. Auth Check - DEBUG VERSION
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log("🔍 Checking Supabase Auth...");
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) {
+                console.error("❌ Auth Error:", error);
+                alert("Błąd połączenia z bazą: " + error.message);
+            }
+            console.log("✅ Session:", session);
             setSession(session);
             if (session) fetchNews();
             setLoading(false);
