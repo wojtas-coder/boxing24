@@ -5,7 +5,7 @@ import { ArrowLeft, Calendar, User } from 'lucide-react';
 import { mockNews } from '../data/mockNews';
 import { articles } from '../data/articles';
 import { supabase } from '../lib/supabaseClient';
-import { supabase } from '../lib/supabaseClient';
+
 
 const NewsArticlePage = () => {
     const { slug } = useParams();
