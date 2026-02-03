@@ -69,59 +69,45 @@ Schema:
 ]
 `;
 
-OUTPUT: SINGLE VALID JSON ARRAY.
-    Schema:
-[
-    {
-        "title": "String (Polish, Catchy)",
-        "slug": "String (kebab-case)",
-        "excerpt": "String (Teaser)",
-        "content": "String (HTML, extensive, include 'Zapraszamy na treningi w Boxing24' at the end)",
-        "category": "String (e.g. 'WROCŁAW', 'ŚWIAT', 'PRO', 'OLIMPIJSKI')",
-        "image_url": "String",
-        "author": "Redaktor Naczelny",
-        "published_at": "ISO string"
-    }
-]
-`;
+
 
 async function fetchGeminiNews() {
-    console.log(`🥊[Data Ring] Searching for VERIFIED news(${ TODAY })...`);
+    console.log(`🥊[Data Ring] Searching for VERIFIED news(${TODAY})...`);
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-    contents: [{ parts: [{ text: SYSTEM_PROMPT }] }],
-    tools: [{ google_search: {} }]
-})
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: SYSTEM_PROMPT }] }],
+            tools: [{ google_search: {} }]
+        })
     });
 
-const data = await response.json();
+    const data = await response.json();
 
-if (data.error) throw new Error(data.error.message);
-if (!data.candidates || data.candidates.length === 0) throw new Error('No content generated.');
+    if (data.error) throw new Error(data.error.message);
+    if (!data.candidates || data.candidates.length === 0) throw new Error('No content generated.');
 
-let text = data.candidates[0].content.parts[0].text;
+    let text = data.candidates[0].content.parts[0].text;
 
-// Robust Parsing
-const start = text.indexOf('[');
-const end = text.lastIndexOf(']');
+    // Robust Parsing
+    const start = text.indexOf('[');
+    const end = text.lastIndexOf(']');
 
-if (start !== -1 && end !== -1) {
-    text = text.substring(start, end + 1);
-} else {
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-}
+    if (start !== -1 && end !== -1) {
+        text = text.substring(start, end + 1);
+    } else {
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    }
 
-try {
-    return JSON.parse(text);
-} catch (e) {
-    console.error("❌ JSON Parse Failed. Raw Text:", text.substring(0, 50) + "...");
-    const match = text.match(/\[.*\]/s);
-    if (match) return JSON.parse(match[0]);
-    throw e;
-}
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("❌ JSON Parse Failed. Raw Text:", text.substring(0, 50) + "...");
+        const match = text.match(/\[.*\]/s);
+        if (match) return JSON.parse(match[0]);
+        throw e;
+    }
 }
 
 // Slugify helper
