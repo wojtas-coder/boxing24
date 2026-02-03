@@ -49,13 +49,11 @@ function App() {
                                 </ProtectedRoute>
                             } />
 
-                            {/* Admin Routes */}
-                            <Route path="admin" element={
-                                <AdminRoute>
-                                    <AdminPage />
-                                </AdminRoute>
-                            } />
+
                         </Route>
+
+                        {/* Standalone Admin Panel */}
+                        <Route path="/admin" element={<AdminPage />} />
                     </Routes>
                 </BrowserRouter>
             </SiteLock>

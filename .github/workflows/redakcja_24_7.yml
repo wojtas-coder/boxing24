@@ -1,0 +1,41 @@
+name: Redakcja Boxing24 (24/7)
+
+on:
+  schedule:
+    # 07:00 UTC = 08:00 CET
+    # 15:00 UTC = 16:00 CET
+    - cron: '0 7,15 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  redakcja:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Redaktor AI (Gemini + Google Images)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
+          GOOGLE_CX_ID: ${{ secrets.GOOGLE_CX_ID }}
+        run: node scripts/news_bot_json.js
+
+      - name: Commit & Push News
+        run: |
+          git config --global user.name "Redaktor Naczelny (Bot)"
+          git config --global user.email "bot@boxing24.pl"
+          git add public/news.json
+          git commit -m "📰 Wydanie Specjalne: $(date +'%Y-%m-%d %H:%M')" || exit 0
+          git push
