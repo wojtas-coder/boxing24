@@ -40,13 +40,31 @@ const BookingPage = () => {
     if (step === 'coach_selection') return (
         <div className="min-h-screen bg-black pt-32 pb-20 px-4">
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-4">
-                        Wybierz <span className="text-boxing-green">Trenera</span>
-                    </h1>
-                    <p className="text-zinc-400 text-lg max-w-2xl mx-auto mb-8">
-                        Treningi personalne na najwyższym poziomie. Wybierz eksperta w swoim mieście.
-                    </p>
+                <div className="text-center mb-16 relative">
+                    {/* HERO SECTION - UNDERGROUND VIBE */}
+                    <div className="relative py-12 mb-12 border-b border-white/5">
+                        <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl">
+                            <img
+                                src="https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2669&auto=format&fit=crop"
+                                alt="Boxing Gym Atmosphere"
+                                className="w-full h-full object-cover grayscale opacity-20 scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
+                        </div>
+
+                        <div className="relative z-10">
+                            <h2 className="text-zinc-500 font-bold uppercase tracking-[0.3em] mb-4 text-xs md:text-sm">
+                                Boxing24 <span className="text-boxing-green mx-2">x</span> Underground Boxing Club
+                            </h2>
+                            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6">
+                                Treningi <span className="text-boxing-green">Personalne</span>
+                            </h1>
+                            <p className="text-zinc-400 text-lg max-w-2xl mx-auto mb-8 font-light">
+                                To nie jest fitness club. To kuźnia charakteru. <br />
+                                Wybierz eksperta i trenuj w <span className="text-white font-bold">Underground Boxing Club</span>.
+                            </p>
+                        </div>
+                    </div>
 
                     {/* CITY FILTER */}
                     <div className="flex flex-wrap justify-center gap-2 md:gap-4">

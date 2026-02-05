@@ -9,7 +9,20 @@ import MemberPage from './pages/MemberPage';
 import BoutiquePage from './pages/BoutiquePage';
 import ProductPage from './pages/ProductPage';
 import LoginPage from './pages/LoginPage';
-import AdminPage from './pages/AdminPage';
+import AdminPage from './pages/AdminPage'; // Keeping for reference/fallback if needed
+import AdminLayout from './layout/AdminLayout';
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminNews from './pages/admin/News';
+
+import AdminUsers from './pages/admin/Users';
+import AdminStats from './components/admin/modules/AdminStats';
+import AdminAds from './components/admin/modules/AdminAds';
+import AdminSEO from './components/admin/modules/AdminSEO';
+
+import CoachLayout from './layout/CoachLayout';
+import CoachDashboard from './pages/coach/Dashboard';
+import CoachPlans from './pages/coach/CoachPlans';
+import CoachClients from './pages/coach/CoachClients';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -21,12 +34,15 @@ import MemberPageWrapper from './pages/MemberPageWrapper';
 
 import SiteLock from './components/SiteLock';
 
+import DebugPage from './pages/DebugPage';
+
 function App() {
     return (
         <AuthProvider>
             <SiteLock>
                 <BrowserRouter>
                     <Routes>
+                        <Route path="/debug-check" element={<DebugPage />} />
                         {/* Standalone Application Funnel - NO LAYOUT */}
                         <Route path="/login" element={<LoginPage />} />
 
@@ -52,8 +68,23 @@ function App() {
 
                         </Route>
 
-                        {/* Standalone Admin Panel */}
-                        <Route path="/admin" element={<AdminPage />} />
+
+                        {/* New Admin Panel Layout */}
+                        <Route path="/admin" element={<AdminLayout />}>
+                            <Route index element={<AdminDashboard />} />
+                            <Route path="stats" element={<AdminStats />} />
+                            <Route path="news" element={<AdminNews />} />
+                            <Route path="users" element={<AdminUsers />} />
+                            <Route path="ads" element={<AdminAds />} />
+                            <Route path="seo" element={<AdminSEO />} />
+                        </Route>
+
+                        {/* Coach Panel Layout */}
+                        <Route path="/coach" element={<CoachLayout />}>
+                            <Route index element={<CoachDashboard />} />
+                            <Route path="clients" element={<CoachClients />} />
+                            <Route path="plans" element={<CoachPlans />} />
+                        </Route>
                     </Routes>
                 </BrowserRouter>
             </SiteLock>

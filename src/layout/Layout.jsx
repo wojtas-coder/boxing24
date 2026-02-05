@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import AICoachWidget from '../components/AICoachWidget';
 
 import { useAuth } from '../context/AuthContext';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 const AdminButton = () => {
     const { isAdmin, user, profile } = useAuth();
@@ -28,6 +29,9 @@ const Layout = () => {
     const location = useLocation();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    // Initialize Analytics
+    useAnalytics();
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -64,7 +68,7 @@ const Layout = () => {
                             { to: '/news', label: 'Aktualności', color: 'text-red-500' },
                             { to: '/calendar', label: 'Kalendarz', color: 'text-zinc-300' },
                             { to: '/membership', label: 'Oferta Online', color: 'text-boxing-green' },
-                            { to: '/booking', label: 'Treningi Stacjonarne', color: 'text-zinc-300' },
+                            { to: '/booking', label: 'Treningi Personalne', color: 'text-zinc-300' },
                             { to: '/knowledge', label: 'Wiedza', color: 'text-zinc-300' },
                             { to: '/boutique', label: 'Sklep', color: 'text-zinc-300' }
                         ].map((link) => (
@@ -129,7 +133,7 @@ const Layout = () => {
                         <div className="flex flex-col space-y-6 text-center">
                             <Link to="/membership" className="text-2xl font-bold uppercase tracking-widest text-[#22c55e]">Oferta Online</Link>
                             <Link to="/calendar" className="text-2xl font-bold uppercase tracking-widest text-white">Kalendarz</Link>
-                            <Link to="/booking" className="text-2xl font-bold uppercase tracking-widest text-white">Treningi Stacjonarne</Link>
+                            <Link to="/booking" className="text-2xl font-bold uppercase tracking-widest text-white">Treningi Personalne</Link>
                             <Link to="/knowledge" className="text-2xl font-bold uppercase tracking-widest text-white">Wiedza</Link>
                             <Link to="/boutique" className="text-2xl font-bold uppercase tracking-widest text-white">Sklep</Link>
                             <Link to="/boutique" className="text-2xl font-bold uppercase tracking-widest text-white">Butik</Link>

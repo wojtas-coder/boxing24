@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
                         id: userId,
                         email: email,
                         full_name: userMeta?.full_name || email?.split('@')[0],
-                        is_admin: false,
+                        role: 'client',
                         membership_status: 'Free'
                     };
 
@@ -106,7 +106,9 @@ export const AuthProvider = ({ children }) => {
         user,
         profile,
         loading,
-        isAdmin: profile?.is_admin || false,
+        isAdmin: profile?.role === 'admin' || false,
+        isTrainer: profile?.role === 'trainer' || false,
+        userRole: profile?.role || 'client',
         membershipStatus: profile?.membership_status || 'Free',
         login: async (email, password) => {
             // Timeout promise
