@@ -98,14 +98,23 @@ const CoachDashboard = () => {
 
     const handleSaveSettings = async () => {
         try {
-            const { error } = await supabase.from('coach_settings').upsert({
-                coach_id: coachId,
-                work_start_time: workHours.start,
-                work_end_time: workHours.end,
-                google_calendar_id: calendarId
-            }, { onConflict: 'coach_id' });
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    coachId: coachId,
+                    workStart: workHours.start,
+                    workEnd: workHours.end,
+                    googleCalendarId: calendarId
+                })
+            });
 
-            if (error) throw error;
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Server error');
+            }
+
             alert('Ustawienia zapisane! Dane zsynchronizowane.');
         } catch (err) {
             console.error(err);
