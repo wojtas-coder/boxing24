@@ -267,7 +267,9 @@ const BookingPage = () => {
                                                     ? 'bg-boxing-green text-black border-boxing-green scale-105'
                                                     : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-white'
                                                 }
+                                                ${isBefore(date, addDays(new Date(), 0)) ? 'opacity-50 cursor-not-allowed' : ''} 
                                             `}
+                                            disabled={isBefore(date, addDays(new Date(), 0))} // Only allow tomorrow+
                                         >
                                             <span className="text-xs font-bold uppercase tracking-wider mb-1">
                                                 {format(date, 'EEE', { locale: pl })}
