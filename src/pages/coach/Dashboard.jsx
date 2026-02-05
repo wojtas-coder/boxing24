@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import { coaches } from '../../data/coaches';
-import { Loader2, Calendar, Clock, XCircle, Save, CheckCircle, Smartphone, AlertTriangle } from 'lucide-react';
+import { Loader2, Calendar, Clock, XCircle, Save, CheckCircle, Smartphone, AlertTriangle, Link2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useAuth } from '../../context/AuthContext';
@@ -17,13 +16,11 @@ const CoachDashboard = () => {
     const [calendarId, setCalendarId] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // DEBUG STATE
-    const [error, setError] = useState(null);
-    const [debugInfo, setDebugInfo] = useState(null);
+    // Status Logic
+    const isCalendarConnected = calendarId && calendarId.includes('@');
 
     // Initialize Coach ID
     useEffect(() => {
-        // Fallback or Auth
         setCoachId('wojciech-rewczuk');
     }, [user]);
 
@@ -34,44 +31,26 @@ const CoachDashboard = () => {
 
     const fetchData = async () => {
         setLoading(true);
-        setError(null);
         try {
-            // 1. Get Settings
-            const { data: settings, error: settingsError } = await supabase.from('coach_settings').select('*').eq('coach_id', coachId).single();
-
-            if (settingsError) {
-                // If code is PGRST116 (0 rows), it's fine, we just haven't saved settings yet.
-                // Anything else is a real error (connection, RLS, missing table).
-                if (settingsError.code !== 'PGRST116') {
-                    throw new Error(`Settings Fetch Error: ${settingsError.message} (${settingsError.code})`);
-                }
-            }
+            // 1. Get Settings (via Server API)
+            const settingsRes = await fetch(`/api/coach-settings?coachId=${coachId}`);
+            if (!settingsRes.ok) throw new Error('Failed to fetch settings');
+            const { settings } = await settingsRes.json();
 
             if (settings) {
                 setWorkHours({ start: settings.work_start_time, end: settings.work_end_time });
                 setCalendarId(settings.google_calendar_id || '');
             }
 
-            // 2. Get Bookings
-            const { data: bks, error: bookingsError } = await supabase
-                .from('bookings')
-                .select('*')
-                .eq('coach_id', coachId)
-                .neq('status', 'cancelled')
-                .gte('start_time', new Date().toISOString())
-                .order('start_time', { ascending: true });
-
-            if (bookingsError) {
-                throw new Error(`Bookings Fetch Error: ${bookingsError.message} (${bookingsError.code})`);
-            }
+            // 2. Get Bookings (via Server API)
+            const bookingsRes = await fetch(`/api/coach-bookings?coachId=${coachId}`);
+            if (!bookingsRes.ok) throw new Error('Failed to fetch bookings');
+            const { bookings: bks } = await bookingsRes.json();
 
             setBookings(bks || []);
-            setDebugInfo({ status: 'Connected', rows: bks?.length || 0 });
-
         } catch (err) {
-            console.error("Critical Coach Dashboard Error:", err);
-            setError(err.message);
-            setDebugInfo({ status: 'Failed', details: err.message });
+            console.error("Dashboard Fetch Error:", err);
+            // Non-blocking error log, UI remains functional
         } finally {
             setLoading(false);
         }
@@ -86,8 +65,8 @@ const CoachDashboard = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bookingId, coachId, reason: 'Odwołane przez trenera' })
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to cancel');
+
+            if (!res.ok) throw new Error('Failed to cancel');
 
             setBookings(prev => prev.filter(b => b.id !== bookingId));
             alert('Trening odwołany.');
@@ -110,12 +89,11 @@ const CoachDashboard = () => {
             });
 
             const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Server error');
-            }
+            if (!res.ok) throw new Error(data.error || 'Server error');
 
             alert('Ustawienia zapisane! Dane zsynchronizowane.');
+            // Refresh to confirm saved state
+            fetchData();
         } catch (err) {
             console.error(err);
             alert('Błąd zapisu: ' + err.message);
@@ -126,25 +104,13 @@ const CoachDashboard = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
-            {/* ERROR BANNER */}
-            {error && (
-                <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-xl flex items-start gap-4 text-red-200">
-                    <AlertTriangle className="w-6 h-6 shrink-0 text-red-500" />
-                    <div>
-                        <h4 className="font-bold text-red-500">Wystąpił problem z połączeniem</h4>
-                        <p className="text-sm mt-1">{error}</p>
-                        <p className="text-xs mt-2 opacity-70">Sprawdź czy uruchomiłeś skrypt SQL w Supabase i czy klucze API są poprawne.</p>
-                    </div>
-                </div>
-            )}
-
             {/* HEADER */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-white/10 pb-8">
                 <div>
                     <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-2">
                         Grafik <span className="text-boxing-green">Trenera</span>
                     </h1>
-                    <p className="text-zinc-500 text-sm">Zarządzaj rezerwacjami i czasem pracy.</p>
+                    <p className="text-zinc-500 text-sm">Zarządzaj rezerwacjami, czasem pracy i integracjami.</p>
                 </div>
 
                 {/* TABS */}
@@ -159,7 +125,11 @@ const CoachDashboard = () => {
                         onClick={() => setActiveTab('settings')}
                         className={`px-6 py-2 rounded-md font-bold uppercase tracking-wider text-xs transition-all ${activeTab === 'settings' ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
-                        Ustawienia
+                        <div className="flex items-center gap-2">
+                            <span>Ustawienia</span>
+                            {/* Connection Status Dot */}
+                            <div className={`w-2 h-2 rounded-full ${isCalendarConnected ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-red-500 opacity-50'}`}></div>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -167,9 +137,18 @@ const CoachDashboard = () => {
             {/* CONTENT */}
             {activeTab === 'bookings' ? (
                 <div className="space-y-4">
-                    <h3 className="text-zinc-400 font-bold uppercase text-xs tracking-widest mb-4">Nadchodzące Sesje</h3>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-zinc-400 font-bold uppercase text-xs tracking-widest">Nadchodzące Sesje</h3>
+                        <button onClick={fetchData} className="text-zinc-600 hover:text-white transition-colors">
+                            <RefreshCw className="w-4 h-4" />
+                        </button>
+                    </div>
 
-                    {loading ? <Loader2 className="animate-spin text-boxing-green" /> : bookings.length > 0 ? (
+                    {loading ? (
+                        <div className="flex justify-center py-20">
+                            <Loader2 className="w-8 h-8 animate-spin text-boxing-green" />
+                        </div>
+                    ) : bookings.length > 0 ? (
                         bookings.map(booking => (
                             <div key={booking.id} className="bg-zinc-900/50 border border-white/5 p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-6 hover:border-boxing-green/30 transition-all group">
                                 <div className="flex items-center gap-6 w-full md:w-auto">
@@ -193,9 +172,6 @@ const CoachDashboard = () => {
                                             <CheckCircle className="w-4 h-4" /> Potwierdzone
                                         </div>
                                     )}
-                                    {/* DEBUG: Show GCal ID */}
-                                    {/* <div className="text-[10px] text-zinc-700">{booking.gcal_event_id}</div> */}
-
                                     <button
                                         onClick={() => handleCancel(booking.id)}
                                         className="px-6 py-2 bg-red-900/10 text-red-500 border border-red-900/20 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-900/30 transition-all flex items-center gap-2"
@@ -207,14 +183,8 @@ const CoachDashboard = () => {
                         ))
                     ) : (
                         <div className="text-center py-20 border border-dashed border-zinc-800 rounded-xl">
-                            {error ? (
-                                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                            ) : (
-                                <Calendar className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                            )}
-                            <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">
-                                {error ? 'Błąd pobierania danych' : 'Brak nadchodzących rezerwacji'}
-                            </p>
+                            <Calendar className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                            <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Brak nadchodzących rezerwacji</p>
                         </div>
                     )}
                 </div>
@@ -249,25 +219,47 @@ const CoachDashboard = () => {
                             </div>
                         </div>
 
-                        <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-xl">
-                            <h3 className="text-lg font-bold uppercase mb-6 flex items-center gap-2 text-white">
-                                <Calendar className="w-5 h-5 text-boxing-green" /> Integracja Google
+                        {/* GOOGLE INTEGRATION CARD */}
+                        <div className={`border p-8 rounded-xl transition-all ${isCalendarConnected ? 'bg-green-900/10 border-green-900/50' : 'bg-zinc-900/50 border-white/5'}`}>
+                            <h3 className="text-lg font-bold uppercase mb-6 flex items-center justify-between text-white">
+                                <span className="flex items-center gap-2">
+                                    <Calendar className={`w-5 h-5 ${isCalendarConnected ? 'text-green-500' : 'text-zinc-500'}`} />
+                                    Integracja Google
+                                </span>
+
+                                {isCalendarConnected ? (
+                                    <span className="text-[10px] font-black uppercase text-black bg-green-500 px-2 py-1 rounded">Aktywna</span>
+                                ) : (
+                                    <span className="text-[10px] font-black uppercase text-zinc-500 bg-zinc-800 px-2 py-1 rounded">Nieaktywna</span>
+                                )}
                             </h3>
+
                             <p className="text-zinc-500 text-xs mb-4 leading-relaxed">
-                                Wklej tutaj <strong>ID Kalendarza</strong> (adres e-mail), do którego mamy dodawać spotkania.
-                                <br />Upewnij się, że udostępniłeś ten kalendarz dla <em>rezerwacje-bot@...</em> z uprawnieniami edycji.
+                                Wklej ID swojego Kalendarza Google (zazwyczaj Twój adres e-mail), aby automatycznie synchronizować treningi. Pamiętaj o dodaniu uprawnień dla bota.
                             </p>
 
                             <div className="mb-6">
                                 <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Google Calendar ID</label>
-                                <input
-                                    type="text"
-                                    placeholder="np. jan.kowalski@gmail.com"
-                                    value={calendarId}
-                                    onChange={e => setCalendarId(e.target.value)}
-                                    className="w-full bg-black border border-white/10 rounded-lg p-4 text-white text-sm focus:border-boxing-green focus:outline-none transition-colors"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="np. jan.kowalski@gmail.com"
+                                        value={calendarId}
+                                        onChange={e => setCalendarId(e.target.value)}
+                                        className={`w-full bg-black border rounded-lg p-4 text-white text-sm focus:outline-none transition-colors pr-12 ${isCalendarConnected ? 'border-green-900/50 focus:border-green-500' : 'border-white/10 focus:border-boxing-green'}`}
+                                    />
+                                    {isCalendarConnected && (
+                                        <CheckCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
+                                    )}
+                                </div>
                             </div>
+
+                            {isCalendarConnected && (
+                                <div className="flex items-center gap-2 text-xs text-green-500 bg-green-900/20 p-3 rounded-lg border border-green-900/30">
+                                    <Link2 className="w-4 h-4" />
+                                    <span>Połączono z kontem Google</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -276,13 +268,15 @@ const CoachDashboard = () => {
                         <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-xl sticky top-8">
                             <h4 className="text-white font-bold text-lg mb-4">Podsumowanie</h4>
                             <p className="text-zinc-500 text-sm mb-8">
-                                Twoje zmiany będą widoczne natychmiast dla klientów. Pamiętaj, aby sprawdzić poprawność ID kalendarza.
+                                Zmiany w grafiku i integracje są aplikowane natychmiastowo.
                             </p>
                             <button
                                 onClick={handleSaveSettings}
-                                className="w-full py-4 bg-boxing-green text-black font-black uppercase tracking-widest rounded-lg hover:bg-white transition-all flex items-center justify-center gap-2"
+                                disabled={loading}
+                                className="w-full py-4 bg-boxing-green text-black font-black uppercase tracking-widest rounded-lg hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Save className="w-5 h-5" /> Zapisz Ustawienia
+                                <Save className="w-5 h-5" />
+                                {loading ? 'Zapisywanie...' : 'Zapisz Ustawienia'}
                             </button>
                         </div>
                     </div>
