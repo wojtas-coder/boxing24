@@ -29,7 +29,6 @@ const AdminLayout = () => {
                     </div>
                     <div className="mt-4 flex flex-col">
                         <span className="text-[10px] font-bold text-red-600 uppercase tracking-[0.3em]">Command Center</span>
-                        <span className="text-[9px] font-mono text-zinc-500 mt-1">v6.0 (LIVE CHECK)</span>
                     </div>
                 </div>
 

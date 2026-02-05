@@ -1,29 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowRight, User, MapPin, Star, Calendar } from 'lucide-react';
+import { Check, ArrowRight, User, MapPin, Star, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { coaches } from '../data/coaches';
+import { format, addDays, startOfToday, isSameDay } from 'date-fns';
+import { pl } from 'date-fns/locale';
 
 const BookingPage = () => {
     const [step, setStep] = useState('coach_selection'); // coach_selection, calendar, success
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(startOfToday());
+
+    // Booking Form State
+    const [clientName, setClientName] = useState('');
+    const [clientEmail, setClientEmail] = useState('');
+    const [clientPhone, setClientPhone] = useState('');
+    const [notes, setNotes] = useState('');
+
+    // Data State
+    const [availableSlots, setAvailableSlots] = useState([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
+    const [processingBooking, setProcessingBooking] = useState(false);
+    const [message, setMessage] = useState(null); // For errors/success feedback
 
     const [selectedCity, setSelectedCity] = useState('ALL');
 
     // Extract unique cities (simple parsing)
-    // We look at the first word or known cities.
     const uniqueCities = ['ALL', ...new Set(coaches.map(c => {
         if (c.location.includes('Warszawa')) return 'Warszawa';
         if (c.location.includes('Wrocław')) return 'Wrocław';
         if (c.location.includes('Kraków')) return 'Kraków';
         if (c.location.includes('Polska')) return 'Polska (Cały Kraj)';
-        return c.location.split(' / ')[0]; // Fallback to first part
+        return c.location.split(' / ')[0];
     }))].sort();
-
-    // Remove duplicates caused by fallback if needed, but Set handles it mostly.
-    // Let's clean up "Polska" vs "Polska (Cały Kraj)" if needed.
-    // Simpler approach: Just map raw strings and clean manually? 
-    // Let's stick to the mapped values above.
 
     // Filter logic
     const filteredCoaches = selectedCity === 'ALL'
@@ -35,6 +44,66 @@ const BookingPage = () => {
             if (selectedCity === 'Polska (Cały Kraj)') return c.location.includes('Polska');
             return c.location.startsWith(selectedCity);
         });
+
+    // --- FETCH AVAILABILITY ---
+    useEffect(() => {
+        if (selectedCoach && selectedDate) {
+            const fetchSlots = async () => {
+                setLoadingSlots(true);
+                setAvailableSlots([]);
+                setSelectedSlot(null);
+
+                try {
+                    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+                    // Note: This endpoint (/api/availability) must exist. 
+                    const res = await fetch(`/api/availability?coachId=${selectedCoach.id}&date=${dateStr}`);
+                    if (!res.ok) throw new Error('Błąd pobierania terminów');
+                    const data = await res.json();
+                    setAvailableSlots(data.slots || []);
+                } catch (err) {
+                    console.error("Availability Error", err);
+                    setAvailableSlots([]);
+                } finally {
+                    setLoadingSlots(false);
+                }
+            };
+            fetchSlots();
+        }
+    }, [selectedCoach, selectedDate]);
+
+    // --- SUBMIT BOOKING ---
+    const handleBooking = async () => {
+        if (!selectedSlot || !clientEmail || !clientName) return;
+
+        setProcessingBooking(true);
+        try {
+            const res = await fetch('/api/booking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    coachId: selectedCoach.id,
+                    date: format(selectedDate, 'yyyy-MM-dd'),
+                    time: selectedSlot,
+                    clientName,
+                    clientEmail,
+                    clientPhone,
+                    notes
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Booking Failed');
+
+            setStep('success');
+        } catch (err) {
+            console.error('Booking Failed', err);
+            setMessage('Wystąpił błąd podczas rezerwacji. Spróbuj ponownie.');
+        } finally {
+            setProcessingBooking(false);
+        }
+    };
+
+    // Generate next 14 days for date picker
+    const dateOptions = Array.from({ length: 14 }, (_, i) => addDays(startOfToday(), i));
 
     // --- VIEW: COACH SELECTION ---
     if (step === 'coach_selection') return (
@@ -143,7 +212,7 @@ const BookingPage = () => {
     // --- VIEW: CALENDAR ---
     if (step === 'calendar') return (
         <div className="min-h-screen bg-black pt-32 pb-20 px-4">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-6xl mx-auto">
                 <button
                     onClick={() => setStep('coach_selection')}
                     className="mb-8 text-zinc-500 hover:text-white flex items-center gap-2 text-sm font-bold uppercase tracking-widest transition-colors"
@@ -151,10 +220,10 @@ const BookingPage = () => {
                     <ArrowRight className="w-4 h-4 rotate-180" /> Powrót do wyboru trenera
                 </button>
 
-                <div className="flex flex-col md:flex-row gap-12 items-start">
+                <div className="flex flex-col lg:flex-row gap-12 items-start">
 
                     {/* LEFT: COACH SUMMARY */}
-                    <div className="w-full md:w-1/3 bg-zinc-900/30 border border-boxing-green/30 rounded-2xl p-6">
+                    <div className="w-full lg:w-1/3 bg-zinc-900/30 border border-boxing-green/30 rounded-2xl p-6">
                         <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">Wybrany Trener</h3>
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-16 h-16 rounded-full bg-zinc-800 overflow-hidden border border-white/10">
@@ -175,35 +244,135 @@ const BookingPage = () => {
                     </div>
 
                     {/* RIGHT: CALENDAR GRID */}
-                    <div className="w-full md:w-2/3">
+                    <div className="w-full lg:w-2/3">
                         <h2 className="text-3xl font-black text-white uppercase italic mb-2">Rezerwacja Terminu</h2>
-                        <p className="text-zinc-400 mb-8">Wybierz dostępną godzinę na trening wstępny.</p>
+                        <p className="text-zinc-400 mb-8">Wybierz dzień i godzinę treningu.</p>
 
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-8">
-                            {['10:00', '11:00', '13:00', '15:30', '17:00', '18:30', '20:00'].map(time => (
-                                <button
-                                    key={time}
-                                    onClick={() => setSelectedSlot(time)}
-                                    className={`py-4 text-center border rounded-lg font-bold transition-all ${selectedSlot === time ? 'bg-white text-black border-white' : 'border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-white'}`}
-                                >
-                                    {time}
-                                </button>
-                            ))}
+                        {/* DATE SELECTOR */}
+                        <div className="mb-8 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+                            <div className="flex gap-3 w-max">
+                                {dateOptions.map(date => {
+                                    const isSelected = isSameDay(date, selectedDate);
+                                    return (
+                                        <button
+                                            key={date.toISOString()}
+                                            onClick={() => setSelectedDate(date)}
+                                            className={`
+                                                flex flex-col items-center justify-center w-20 h-24 rounded-xl border transition-all
+                                                ${isSelected
+                                                    ? 'bg-boxing-green text-black border-boxing-green scale-105'
+                                                    : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-white'
+                                                }
+                                            `}
+                                        >
+                                            <span className="text-xs font-bold uppercase tracking-wider mb-1">
+                                                {format(date, 'EEE', { locale: pl })}
+                                            </span>
+                                            <span className="text-2xl font-black">
+                                                {format(date, 'd')}
+                                            </span>
+                                            <span className="text-[10px] uppercase">
+                                                {format(date, 'MMM', { locale: pl })}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        <div className="bg-zinc-900/50 p-6 rounded-xl border border-white/5 mb-8">
-                            <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Twój Numer Telefonu</label>
-                            <input type="tel" placeholder="+48 000 000 000" className="w-full bg-black border border-white/10 rounded-lg p-4 text-white font-mono focus:border-boxing-green focus:outline-none" />
+                        {/* SLOTS GRID */}
+                        <div className="mb-8">
+                            <h3 className="text-white font-bold uppercase text-sm mb-4 flex items-center gap-2">
+                                {loadingSlots && <Loader2 className="w-4 h-4 animate-spin text-boxing-green" />}
+                                Dostępne godziny
+                            </h3>
+
+                            {loadingSlots ? (
+                                <div className="text-zinc-500 text-sm py-4">Sprawdzam dostępność...</div>
+                            ) : availableSlots.length > 0 ? (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                    {availableSlots.map(time => (
+                                        <button
+                                            key={time}
+                                            onClick={() => setSelectedSlot(time)}
+                                            className={`py-3 text-center border rounded-lg font-bold text-sm transition-all 
+                                                ${selectedSlot === time
+                                                    ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                                                    : 'border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white bg-zinc-900/50'
+                                                }
+                                            `}
+                                        >
+                                            {time}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-6 border border-red-900/30 bg-red-900/10 rounded-xl text-red-500 text-sm font-bold uppercase tracking-wide text-center">
+                                    Oups. Brak wolnych terminów w tym dniu.
+                                </div>
+                            )}
                         </div>
+
+                        {/* FORM */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-zinc-900/50 p-6 rounded-xl border border-white/5 mb-8">
+                            <div className="col-span-1 md:col-span-2">
+                                <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Imię i Nazwisko</label>
+                                <input
+                                    type="text"
+                                    value={clientName}
+                                    onChange={e => setClientName(e.target.value)}
+                                    className="w-full bg-black border border-white/10 rounded-lg p-3 text-white focus:border-boxing-green focus:outline-none placeholder-zinc-700"
+                                    placeholder="Jan Nowak"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Numer Telefonu</label>
+                                <input
+                                    type="tel"
+                                    value={clientPhone}
+                                    onChange={e => setClientPhone(e.target.value)}
+                                    placeholder="+48 000 000 000"
+                                    className="w-full bg-black border border-white/10 rounded-lg p-3 text-white font-mono focus:border-boxing-green focus:outline-none placeholder-zinc-700"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Adres Email</label>
+                                <input
+                                    type="email"
+                                    value={clientEmail}
+                                    onChange={e => setClientEmail(e.target.value)}
+                                    placeholder="jan@example.com"
+                                    className="w-full bg-black border border-white/10 rounded-lg p-3 text-white focus:border-boxing-green focus:outline-none placeholder-zinc-700"
+                                />
+                            </div>
+                            <div className="col-span-1 md:col-span-2">
+                                <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Notatki (Opcjonalnie)</label>
+                                <textarea
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                    className="w-full bg-black border border-white/10 rounded-lg p-3 text-white focus:border-boxing-green focus:outline-none placeholder-zinc-700 h-20 resize-none"
+                                    placeholder="Czy to Twój pierwszy trening bokserski?"
+                                />
+                            </div>
+                        </div>
+
+                        {message && (
+                            <div className="mb-4 text-red-500 font-bold text-center uppercase text-sm">
+                                {message}
+                            </div>
+                        )}
 
                         <button
-                            disabled={!selectedSlot}
-                            onClick={() => setStep('success')}
-                            className={`w-full py-6 font-black uppercase tracking-widest text-lg transition-all flex items-center justify-center gap-3
-                                ${selectedSlot ? 'bg-boxing-green text-black hover:bg-white' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}
+                            disabled={!selectedSlot || !clientName || !clientEmail || processingBooking}
+                            onClick={handleBooking}
+                            className={`w-full py-6 font-black uppercase tracking-widest text-lg transition-all flex items-center justify-center gap-3 rounded-lg
+                                ${(!selectedSlot || !clientName || !clientEmail || processingBooking)
+                                    ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                                    : 'bg-boxing-green text-black hover:bg-white hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]'
+                                }
                             `}
                         >
-                            Potwierdź Rezerwację
+                            {processingBooking ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Potwierdź Rezerwację'}
                         </button>
                     </div>
                 </div>
@@ -221,8 +390,8 @@ const BookingPage = () => {
                 </div>
                 <h2 className="text-4xl font-black text-white uppercase italic mb-4">Trening Zarezerwowany!</h2>
                 <p className="text-zinc-400 text-lg mb-8">
-                    Twoja sesja z trenerem <strong>{selectedCoach?.name}</strong> została wstępnie potwierdzona na godzinę <strong>{selectedSlot}</strong>.
-                    <br /> Czekaj na SMS z potwierdzeniem.
+                    Twoja sesja z trenerem <strong>{selectedCoach?.name}</strong> została wstępnie potwierdzona na godzinę <strong>{selectedSlot}</strong> w dniu <strong>{format(selectedDate, 'dd.MM')}</strong>.
+                    <br /> Potwierdzenie zostało wysłane na maila.
                 </p>
                 <button onClick={() => window.location.href = '/'} className="px-8 py-3 rounded-full border border-white/10 text-white font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all">
                     Powrót do Strony Głównej

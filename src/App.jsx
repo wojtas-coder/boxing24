@@ -34,15 +34,12 @@ import MemberPageWrapper from './pages/MemberPageWrapper';
 
 import SiteLock from './components/SiteLock';
 
-import DebugPage from './pages/DebugPage';
-
 function App() {
     return (
         <AuthProvider>
             <SiteLock>
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/debug-check" element={<DebugPage />} />
                         {/* Standalone Application Funnel - NO LAYOUT */}
                         <Route path="/login" element={<LoginPage />} />
 

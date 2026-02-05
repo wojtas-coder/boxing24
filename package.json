@@ -12,13 +12,16 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.93.3",
+    "date-fns": "^4.1.0",
     "framer-motion": "^11.0.0",
+    "googleapis": "^171.2.0",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.562.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.12.0",
-    "recharts": "^3.6.0"
+    "recharts": "^3.6.0",
+    "resend": "^6.9.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
