@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         if (process.env.RESEND_API_KEY) {
             try {
                 await resend.emails.send({
-                    from: 'Boxing24 <potwierdzenia@boxing24.pl>',
+                    from: 'Boxing24 <onboarding@resend.dev>',
                     to: [clientEmail],
                     subject: 'Potwierdzenie Rezerwacji - Boxing24',
                     html: `

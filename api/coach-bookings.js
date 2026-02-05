@@ -21,7 +21,8 @@ export default async function handler(req, res) {
             .select('*')
             .eq('coach_id', coachId)
             .neq('status', 'cancelled')
-            .gte('start_time', new Date().toISOString())
+            // Show all bookings from the start of today (so we don't hide earlier sessions)
+            .gte('start_time', new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
             .order('start_time', { ascending: true });
 
         if (error) {
