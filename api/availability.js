@@ -3,70 +3,121 @@ import { getSupabase, corsHeaders } from './_utils.js';
 import { startOfDay, endOfDay, parse, format, addMinutes, isBefore, isAfter, isEqual } from 'date-fns';
 import { google } from 'googleapis';
 
-// Helper to check if a specific time slot overlaps with any busy range
 const isSlotBusy = (slotStart, slotEnd, busyRanges) => {
     return busyRanges.some(range => {
         const busyStart = new Date(range.start);
         const busyEnd = new Date(range.end);
         return (
-            (isAfter(slotStart, busyStart) && isBefore(slotStart, busyEnd)) || // Starts inside
-            (isAfter(slotEnd, busyStart) && isBefore(slotEnd, busyEnd)) ||   // Ends inside
-            (isEqual(slotStart, busyStart)) || // Starts exactly on busy start
-            (isBefore(slotStart, busyStart) && isAfter(slotEnd, busyEnd))    // Encloses busy range
+            (isAfter(slotStart, busyStart) && isBefore(slotStart, busyEnd)) ||
+            (isAfter(slotEnd, busyStart) && isBefore(slotEnd, busyEnd)) ||
+            (isEqual(slotStart, busyStart)) ||
+            (isBefore(slotStart, busyStart) && isAfter(slotEnd, busyEnd))
         );
     });
 };
 
 export default async function handler(req, res) {
-    // Handle CORS
-    if (req.method === 'OPTIONS') {
-        return res.status(200).json({}, { headers: corsHeaders });
-    }
-
-    const { date, coachId } = req.query; // date in YYYY-MM-DD format
-
-    if (!date || !coachId) {
-        return res.status(400).json({ error: 'Missing date or coachId' }, { headers: corsHeaders });
-    }
-
+    // 0. Global Catch for Import/Init errors
     try {
-        const supabase = getSupabase();
+        if (req.method === 'OPTIONS') {
+            return res.status(200).json({}, { headers: corsHeaders });
+        }
 
-        // 1. Get Coach Settings (Hours, Duration)
-        const { data: settings, error: settingsError } = await supabase
-            .from('coach_settings')
-            .select('*')
-            .eq('coach_id', coachId)
-            .single();
+        const debugLogs = [];
+        const log = (msg) => {
+            console.log(msg);
+            debugLogs.push(msg);
+        };
 
-        // Defaults if no settings
-        const workStartStr = settings?.work_start_time || '08:00';
-        const workEndStr = settings?.work_end_time || '20:00';
-        const duration = settings?.session_duration_minutes || 60;
+        log('Handler started');
 
-        // 2. Get Bookings for that day
+        const { date, coachId } = req.query;
+
+        if (!date || !coachId) {
+            return res.status(400).json({ error: 'Missing date or coachId' }, { headers: corsHeaders });
+        }
+
+        log(`Params: ${date}, ${coachId}`);
+
+        // 1. Init Supabase
+        let supabase;
+        try {
+            supabase = getSupabase();
+            log('Supabase client initialized');
+        } catch (err) {
+            throw new Error(`Supabase Init Failed: ${err.message}`);
+        }
+
+        // 2. Settings
+        let settings = null;
+        let workStartStr = '08:00';
+        let workEndStr = '20:00';
+        let duration = 60;
+
+        try {
+            const { data, error } = await supabase
+                .from('coach_settings')
+                .select('*')
+                .eq('coach_id', coachId)
+                .single();
+
+            if (error) {
+                log(`Settings fetch error (or 404): ${error.message} code: ${error.code}`);
+            } else {
+                settings = data;
+                log('Settings found');
+            }
+        } catch (dbErr) {
+            log(`DB Settings Crash: ${dbErr.message}`);
+        }
+
+        if (settings) {
+            workStartStr = settings.work_start_time || '08:00';
+            workEndStr = settings.work_end_time || '20:00';
+            duration = settings.session_duration_minutes || 60;
+        }
+
+        // 3. Bookings
         const dayStart = startOfDay(new Date(date)).toISOString();
         const dayEnd = endOfDay(new Date(date)).toISOString();
+        let bookings = [];
 
-        const { data: bookings } = await supabase
-            .from('bookings')
-            .select('start_time, end_time')
-            .eq('coach_id', coachId)
-            .neq('status', 'cancelled')
-            .gte('start_time', dayStart)
-            .lte('end_time', dayEnd);
+        try {
+            const { data, error } = await supabase
+                .from('bookings')
+                .select('start_time, end_time')
+                .eq('coach_id', coachId)
+                .neq('status', 'cancelled')
+                .gte('start_time', dayStart)
+                .lte('end_time', dayEnd);
 
-        // 3. Get Google Calendar Busy Times (if configured)
+            if (error) throw error;
+            bookings = data || [];
+            log(`Bookings fetched: ${bookings.length}`);
+        } catch (bkErr) {
+            log(`Bookings fetch error: ${bkErr.message}. proceeding with empty list.`);
+        }
+
+        // 4. Google Calendar
         let googleBusy = [];
         if (settings?.google_calendar_id && process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+            log('Attempting GCal sync...');
             try {
-                const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+                // Parse JSON safely
+                let credentials;
+                try {
+                    credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+                } catch (jsonErr) {
+                    throw new Error('Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON');
+                }
+
                 const auth = new google.auth.JWT(
                     credentials.client_email,
                     null,
                     credentials.private_key,
                     ['https://www.googleapis.com/auth/calendar.readonly']
                 );
+
                 const calendar = google.calendar({ version: 'v3', auth });
                 const response = await calendar.freebusy.query({
                     requestBody: {
@@ -75,43 +126,53 @@ export default async function handler(req, res) {
                         items: [{ id: settings.google_calendar_id }]
                     }
                 });
-                const calendars = response.data.calendars;
-                if (calendars && calendars[settings.google_calendar_id]) {
-                    googleBusy = calendars[settings.google_calendar_id].busy.map(b => ({
-                        start: b.start,
-                        end: b.end
-                    }));
+
+                if (response.data.calendars[settings.google_calendar_id]) {
+                    googleBusy = response.data.calendars[settings.google_calendar_id].busy || [];
+                    log(`GCal busy slots: ${googleBusy.length}`);
+                } else {
+                    log('GCal ID not found in response response (permission issue?)');
                 }
             } catch (gError) {
-                console.error('Google Calendar Sync Error:', gError);
-                // Continue without GCal if error
+                log(`GCal Error: ${gError.message}`);
             }
+        } else {
+            log('Skipping GCal (no ID or no creds)');
         }
 
-        // 4. Generate Slots
+        // 5. Generate Slots
         const slots = [];
-        let current = parse(`${date} ${workStartStr}`, 'yyyy-MM-dd HH:mm', new Date());
-        const end = parse(`${date} ${workEndStr}`, 'yyyy-MM-dd HH:mm', new Date());
+        try {
+            let current = parse(`${date} ${workStartStr}`, 'yyyy-MM-dd HH:mm', new Date());
+            const end = parse(`${date} ${workEndStr}`, 'yyyy-MM-dd HH:mm', new Date());
 
-        const allBusy = [
-            ...(bookings || []).map(b => ({ start: b.start_time, end: b.end_time })),
-            ...googleBusy
-        ];
+            const allBusy = [
+                ...bookings.map(b => ({ start: b.start_time, end: b.end_time })),
+                ...googleBusy.map(b => ({ start: b.start, end: b.end }))
+            ];
 
-        while (isBefore(addMinutes(current, duration), end) || isEqual(addMinutes(current, duration), end)) {
-            const slotStart = current;
-            const slotEnd = addMinutes(current, duration);
+            log(`Generating slots from ${format(current, 'HH:mm')} to ${format(end, 'HH:mm')}. Busy blocks: ${allBusy.length}`);
 
-            if (!isSlotBusy(slotStart, slotEnd, allBusy)) {
-                slots.push(format(slotStart, 'HH:mm'));
+            while (isBefore(addMinutes(current, duration), end) || isEqual(addMinutes(current, duration), end)) {
+                const slotStart = current;
+                const slotEnd = addMinutes(current, duration);
+
+                if (!isSlotBusy(slotStart, slotEnd, allBusy)) {
+                    slots.push(format(slotStart, 'HH:mm'));
+                }
+                current = addMinutes(current, 30);
             }
-
-            current = addMinutes(current, 30); // 30 min intervals between start times? Or duration? Let's say 30 min steps.
+        } catch (calcErr) {
+            throw new Error(`Slot Calculation Error: ${calcErr.message}`);
         }
 
-        return res.status(200).json({ slots }, { headers: corsHeaders });
-    } catch (error) {
-        console.error('Availability API Error:', error);
-        return res.status(500).json({ error: error.message }, { headers: corsHeaders });
+        return res.status(200).json({ slots, debug: debugLogs }, { headers: corsHeaders });
+
+    } catch (fatalError) {
+        console.error('FATAL API ERROR:', fatalError);
+        return res.status(500).json({
+            error: fatalError.message,
+            stack: fatalError.stack
+        }, { headers: corsHeaders });
     }
 }
