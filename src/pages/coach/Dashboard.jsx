@@ -219,6 +219,68 @@ const CoachDashboard = () => {
                             </div>
                         </div>
 
+                        {/* BLOCKING SLOTS CARD */}
+                        <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-xl mb-8">
+                            <h3 className="text-lg font-bold uppercase mb-6 flex items-center gap-2 text-white">
+                                <XCircle className="w-5 h-5 text-red-500" /> Zablokuj Termin
+                            </h3>
+                            <p className="text-zinc-500 text-xs mb-4">Wybierz datę i godzinę, aby wykluczyć ją z dostępności (np. urlop, sprawy prywatne).</p>
+
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Data</label>
+                                        <input
+                                            type="date"
+                                            className="w-full bg-black border border-white/10 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-red-500"
+                                            id="block-date"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-zinc-500 text-xs font-bold uppercase mb-2">Godzina</label>
+                                        <input
+                                            type="time"
+                                            className="w-full bg-black border border-white/10 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-red-500"
+                                            id="block-time"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        const date = document.getElementById('block-date').value;
+                                        const time = document.getElementById('block-time').value;
+                                        if (!date || !time) return alert('Wybierz datę i godzinę');
+
+                                        if (!confirm(`Zablokować termin ${date} ${time}?`)) return;
+
+                                        try {
+                                            const res = await fetch('/api/booking', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    coachId,
+                                                    date,
+                                                    time,
+                                                    clientName: 'BLOKADA',
+                                                    clientEmail: 'coach-block@boxing24.pl', // Fake email
+                                                    clientPhone: '-',
+                                                    notes: 'Zablokowane przez trenera'
+                                                })
+                                            });
+                                            if (!res.ok) throw new Error('Błąd blokowania');
+                                            alert('Termin zablokowany.');
+                                            fetchData(); // Refresh calendar
+                                        } catch (e) {
+                                            alert(e.message);
+                                        }
+                                    }}
+                                    className="w-full py-3 bg-red-900/20 text-red-500 border border-red-900/50 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-900/40 transition-all"
+                                >
+                                    Zablokuj Termin
+                                </button>
+                            </div>
+                        </div>
+
                         {/* GOOGLE INTEGRATION CARD */}
                         <div className={`border p-8 rounded-xl transition-all ${isCalendarConnected ? 'bg-green-900/10 border-green-900/50' : 'bg-zinc-900/50 border-white/5'}`}>
                             <h3 className="text-lg font-bold uppercase mb-6 flex items-center justify-between text-white">
