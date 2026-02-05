@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { coaches } from '../../data/coaches';
-import { Loader2, Calendar, Clock, XCircle, Save, CheckCircle, Smartphone } from 'lucide-react';
+import { Loader2, Calendar, Clock, XCircle, Save, CheckCircle, Smartphone, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useAuth } from '../../context/AuthContext';
@@ -11,19 +11,20 @@ const CoachDashboard = () => {
     const { user } = useAuth();
     const [coachId, setCoachId] = useState(null);
 
-    const [activeTab, setActiveTab] = useState('bookings'); // bookings, settings
+    const [activeTab, setActiveTab] = useState('bookings');
     const [bookings, setBookings] = useState([]);
     const [workHours, setWorkHours] = useState({ start: '08:00', end: '20:00' });
     const [calendarId, setCalendarId] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // DEBUG STATE
+    const [error, setError] = useState(null);
+    const [debugInfo, setDebugInfo] = useState(null);
+
     // Initialize Coach ID
     useEffect(() => {
-        if (user) {
-            setCoachId('wojciech-rewczuk'); // For demo/MVP, pinning to main coach
-        } else {
-            setCoachId('wojciech-rewczuk');
-        }
+        // Fallback or Auth
+        setCoachId('wojciech-rewczuk');
     }, [user]);
 
     useEffect(() => {
@@ -33,16 +34,26 @@ const CoachDashboard = () => {
 
     const fetchData = async () => {
         setLoading(true);
+        setError(null);
         try {
             // 1. Get Settings
-            const { data: settings } = await supabase.from('coach_settings').select('*').eq('coach_id', coachId).single();
+            const { data: settings, error: settingsError } = await supabase.from('coach_settings').select('*').eq('coach_id', coachId).single();
+
+            if (settingsError) {
+                // If code is PGRST116 (0 rows), it's fine, we just haven't saved settings yet.
+                // Anything else is a real error (connection, RLS, missing table).
+                if (settingsError.code !== 'PGRST116') {
+                    throw new Error(`Settings Fetch Error: ${settingsError.message} (${settingsError.code})`);
+                }
+            }
+
             if (settings) {
                 setWorkHours({ start: settings.work_start_time, end: settings.work_end_time });
                 setCalendarId(settings.google_calendar_id || '');
             }
 
             // 2. Get Bookings
-            const { data: bks } = await supabase
+            const { data: bks, error: bookingsError } = await supabase
                 .from('bookings')
                 .select('*')
                 .eq('coach_id', coachId)
@@ -50,9 +61,17 @@ const CoachDashboard = () => {
                 .gte('start_time', new Date().toISOString())
                 .order('start_time', { ascending: true });
 
+            if (bookingsError) {
+                throw new Error(`Bookings Fetch Error: ${bookingsError.message} (${bookingsError.code})`);
+            }
+
             setBookings(bks || []);
+            setDebugInfo({ status: 'Connected', rows: bks?.length || 0 });
+
         } catch (err) {
-            console.error("Error fetching trainer data", err);
+            console.error("Critical Coach Dashboard Error:", err);
+            setError(err.message);
+            setDebugInfo({ status: 'Failed', details: err.message });
         } finally {
             setLoading(false);
         }
@@ -67,13 +86,13 @@ const CoachDashboard = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bookingId, coachId, reason: 'Odwołane przez trenera' })
             });
-            if (!res.ok) throw new Error('Failed');
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to cancel');
 
-            // Remove locally
             setBookings(prev => prev.filter(b => b.id !== bookingId));
             alert('Trening odwołany.');
         } catch (err) {
-            alert('Błąd odwoływania.');
+            alert('Błąd: ' + err.message);
         }
     };
 
@@ -90,7 +109,7 @@ const CoachDashboard = () => {
             alert('Ustawienia zapisane! Dane zsynchronizowane.');
         } catch (err) {
             console.error(err);
-            alert('Błąd zapisu.');
+            alert('Błąd zapisu: ' + err.message);
         }
     };
 
@@ -98,6 +117,18 @@ const CoachDashboard = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
+            {/* ERROR BANNER */}
+            {error && (
+                <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-xl flex items-start gap-4 text-red-200">
+                    <AlertTriangle className="w-6 h-6 shrink-0 text-red-500" />
+                    <div>
+                        <h4 className="font-bold text-red-500">Wystąpił problem z połączeniem</h4>
+                        <p className="text-sm mt-1">{error}</p>
+                        <p className="text-xs mt-2 opacity-70">Sprawdź czy uruchomiłeś skrypt SQL w Supabase i czy klucze API są poprawne.</p>
+                    </div>
+                </div>
+            )}
+
             {/* HEADER */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-white/10 pb-8">
                 <div>
@@ -153,6 +184,9 @@ const CoachDashboard = () => {
                                             <CheckCircle className="w-4 h-4" /> Potwierdzone
                                         </div>
                                     )}
+                                    {/* DEBUG: Show GCal ID */}
+                                    {/* <div className="text-[10px] text-zinc-700">{booking.gcal_event_id}</div> */}
+
                                     <button
                                         onClick={() => handleCancel(booking.id)}
                                         className="px-6 py-2 bg-red-900/10 text-red-500 border border-red-900/20 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-900/30 transition-all flex items-center gap-2"
@@ -164,8 +198,14 @@ const CoachDashboard = () => {
                         ))
                     ) : (
                         <div className="text-center py-20 border border-dashed border-zinc-800 rounded-xl">
-                            <Calendar className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                            <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Brak nadchodzących rezerwacji</p>
+                            {error ? (
+                                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                            ) : (
+                                <Calendar className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                            )}
+                            <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">
+                                {error ? 'Błąd pobierania danych' : 'Brak nadchodzących rezerwacji'}
+                            </p>
                         </div>
                     )}
                 </div>
