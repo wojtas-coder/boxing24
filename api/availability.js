@@ -72,8 +72,9 @@ export default async function handler(req, res) {
         }
 
         if (settings) {
-            workStartStr = settings.work_start_time || '08:00';
-            workEndStr = settings.work_end_time || '20:00';
+            // Fix: Postgres time is "08:00:00", we need "08:00" for strict parsing
+            workStartStr = (settings.work_start_time || '08:00').slice(0, 5);
+            workEndStr = (settings.work_end_time || '20:00').slice(0, 5);
             duration = settings.session_duration_minutes || 60;
         }
 
