@@ -57,8 +57,12 @@ const BookingPage = () => {
                     const dateStr = format(selectedDate, 'yyyy-MM-dd');
                     // Note: This endpoint (/api/availability) must exist. 
                     const res = await fetch(`/api/availability?coachId=${selectedCoach.id}&date=${dateStr}`);
-                    if (!res.ok) throw new Error('Błąd pobierania terminów');
                     const data = await res.json();
+
+                    if (!res.ok) {
+                        alert(`BŁĄD SYSTEMU (${res.status}):\n${data.error}\n\nDEBUG LOG:\n${data.debug ? data.debug.join('\n') : 'Brak logów'}`);
+                        throw new Error('Błąd pobierania terminów');
+                    }
                     setAvailableSlots(data.slots || []);
                 } catch (err) {
                     console.error("Availability Error", err);
