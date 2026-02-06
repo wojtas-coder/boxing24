@@ -88,6 +88,10 @@ const MemberPage = () => {
     // --- MULTI-PLAN ARCHITECTURE ---
     const [myPlans, setMyPlans] = useState([]);
     const [viewingPlanId, setViewingPlanId] = useState(null);
+    const [dbPlans, setDbPlans] = useState([]); // [NEW] Dynamic plans from DB
+
+    // Combine Static + Dynamic Plans
+    const allPlans = [...plansLibrary, ...dbPlans];
 
     // Derived Schedule logic
     // Derived Schedule logic
@@ -95,7 +99,7 @@ const MemberPage = () => {
     const currentScheduleId = viewingPlanId || primaryPlanId;
 
     // SAFE ACCESS
-    const currentPlan = Array.isArray(plansLibrary) ? plansLibrary.find(p => p.id === currentScheduleId) : null;
+    const currentPlan = allPlans.find(p => p.id === currentScheduleId) || allPlans.find(p => p.id == currentScheduleId); // Handle string vs number IDs
     const schedule = currentPlan?.schedule || [];
 
     // --- SESSION DATA ---
@@ -154,6 +158,29 @@ const MemberPage = () => {
             console.error("Failed to fetch client data", e);
         }
     };
+
+    // --- EFFECT: LOAD DYNAMIC PLANS ---
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const res = await fetch('/api/training-plans');
+                if (res.ok) {
+                    const { plans } = await res.json();
+                    // Normalize DB plans to match UI structure
+                    const normalizedPlans = plans.map(p => ({
+                        ...p,
+                        id: p.id.toString(), // Ensure ID is string for comparison
+                        image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2069&auto=format&fit=crop', // Default image
+                        locked: false // DB plans are unlocked by default for now
+                    }));
+                    setDbPlans(normalizedPlans);
+                }
+            } catch (e) {
+                console.error("Failed to fetch training plans", e);
+            }
+        };
+        fetchPlans();
+    }, []);
 
     // --- EFFECT: LOAD WORKOUTS ON TAB CHANGE ---
     useEffect(() => {
@@ -241,6 +268,61 @@ const MemberPage = () => {
 
 
     // --- ACTIONS ---
+
+    const addToMyPlans = async (planId) => {
+        if (!user) return;
+        try {
+            // Optimistic Update
+            setMyPlans(prev => [...prev, planId]);
+
+            const res = await fetch('/api/client-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'add_plan',
+                    userId: user.id,
+                    payload: { planId }
+                })
+            });
+            if (!res.ok) throw new Error('Failed to add plan');
+            fetchClientData(); // Refresh to ensure sync
+            alert('Plan został dodany do Twoich aktywnych programów!');
+            setActiveTab('my_plans');
+        } catch (e) {
+            console.error("Add Plan error:", e);
+            alert("Nie udało się dodać planu.");
+            setMyPlans(prev => prev.filter(id => id !== planId)); // Rollback
+        }
+    };
+
+    const removeFromPlans = async (e, planId) => {
+        e.stopPropagation();
+        if (!confirm('Czy na pewno chcesz porzucić ten plan? Postęp może zostać utracony.')) return;
+        if (!user) return;
+
+        try {
+            // Optimistic
+            setMyPlans(prev => prev.filter(id => id !== planId));
+
+            const res = await fetch('/api/client-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'remove_plan',
+                    userId: user.id,
+                    payload: { planId }
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to remove plan');
+            fetchClientData();
+        } catch (err) {
+            console.error(err);
+            alert("Błąd usuwania planu.");
+            // Fetch to rollback
+            fetchClientData();
+        }
+    };
 
     const openUnit = (unitId) => playUnit(unitId);
 
@@ -549,7 +631,7 @@ const MemberPage = () => {
                                                 </span>
                                                 <span className="text-xs text-gray-500 uppercase font-bold tracking-widest flex items-center gap-2">
                                                     <Circle className="w-2 h-2 fill-current" />
-                                                    {plansLibrary.find(p => p.id === primaryPlanId)?.title}
+                                                    {allPlans.find(p => p.id == primaryPlanId)?.title}
                                                 </span>
                                             </div>
                                             <div className="p-2 transition-colors">
@@ -559,7 +641,7 @@ const MemberPage = () => {
 
                                         <div className="mb-8">
                                             <h2 className="text-4xl md:text-5xl font-light text-white mb-4 uppercase leading-[0.9]">
-                                                {plansLibrary.find(p => p.id === primaryPlanId)?.schedule.flatMap(w => w.units).find(u => u.id === activeUnitId)?.title || "Misja Ukończona"}
+                                                {allPlans.find(p => p.id == primaryPlanId)?.schedule.flatMap(w => w.units).find(u => u.id === activeUnitId)?.title || "Misja Ukończona"}
                                             </h2>
                                             <p className="text-gray-400 text-sm max-w-lg leading-relaxed">
                                                 Twój obecny cel treningowy. Precyzja ruchu i kontrola.
@@ -785,7 +867,7 @@ const MemberPage = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {plansLibrary.filter(plan => {
+                            {allPlans.filter(plan => {
                                 if (activeFilter === 'all') return true;
                                 if (activeFilter === 'basic') return plan.level === 'Basic';
                                 if (activeFilter === 'pro') return plan.level === 'Pro' || plan.level === 'Elite';
