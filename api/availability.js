@@ -1,6 +1,6 @@
 
 import { getSupabase, corsHeaders } from './_utils.js';
-import { startOfDay, endOfDay, addMinutes, isBefore, isAfter, isEqual } from 'date-fns';
+import { startOfDay, endOfDay, addMinutes, isBefore, isAfter, isEqual, format } from 'date-fns';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
 const TIMEZONE = 'Europe/Warsaw';
