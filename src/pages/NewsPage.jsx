@@ -7,27 +7,17 @@ import NewsTicker from '../components/news/NewsTicker';
 import NewsSidebar from '../components/news/NewsSidebar';
 import { mockNews } from '../data/mockNews';
 import { articles } from '../data/articles';
+import fileNews from '../data/news.json';
 
 
 const NewsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     // Prioritize File News (Bot) -> Then Mock News
-    const [newsItems, setNewsItems] = useState(mockNews);
-    const [loading, setLoading] = useState(true);
+    const [newsItems, setNewsItems] = useState([...fileNews, ...mockNews]);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetch('/news.json')
-            .then(res => res.json())
-            .then(data => {
-                setNewsItems([...data, ...mockNews]);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Failed to load news:", err);
-                setNewsItems(mockNews);
-                setLoading(false);
-            });
-    }, []);
+    // Removed manual fetch to ensure JAMSTACK reliability
+    // Content is bundled at build time.
 
     // Filter Logic if Search Term exists
     const filteredNews = newsItems.filter(item =>
