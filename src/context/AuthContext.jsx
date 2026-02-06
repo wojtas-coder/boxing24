@@ -8,6 +8,7 @@ const AuthContext = createContext({});
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+    const [session, setSession] = useState(null);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -68,6 +69,7 @@ export const AuthProvider = ({ children }) => {
                 if (error) throw error;
 
                 if (mounted) {
+                    setSession(session);
                     setUser(session?.user ?? null);
                     if (session?.user) {
                         await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
@@ -86,6 +88,7 @@ export const AuthProvider = ({ children }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mounted) return;
             console.log("Auth Event:", event);
+            setSession(session);
             setUser(session?.user ?? null);
 
             if (session?.user) {
@@ -103,6 +106,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const value = {
+        session,
         user,
         profile,
         loading,
@@ -136,6 +140,7 @@ export const AuthProvider = ({ children }) => {
         },
         logout: async () => {
             await supabase.auth.signOut();
+            setSession(null);
             setUser(null);
             setProfile(null);
         }

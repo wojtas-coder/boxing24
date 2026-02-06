@@ -9,7 +9,7 @@ import { BASIC_TEST, ADVANCED_TEST } from '../../data/fitnessTests';
 import { calculateAssessment } from '../../utils/assessmentLogic';
 
 const CoachClients = () => {
-    const { user } = useAuth();
+    const { user, session } = useAuth();
     const coachId = user?.id; // Standardized to Supabase UUID
 
     const [fighters, setFighters] = useState([]);
@@ -37,7 +37,11 @@ const CoachClients = () => {
     const fetchFighters = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/coach-fighters?coachId=${coachId}`);
+            const res = await fetch(`/api/coach-fighters?coachId=${coachId}`, {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
             if (!res.ok) throw new Error('Failed to fetch fighters');
             const data = await res.json();
             setFighters(data.fighters || []);
@@ -87,7 +91,11 @@ const CoachClients = () => {
             // `user.id` from useAuth is the Coach UUID.
             // The API expects UUIDs.
 
-            const res = await fetch(`/api/messages?user1=${user.id}&user2=${selectedFighter.profile?.id || selectedFighter.id}`);
+            const res = await fetch(`/api/messages?user1=${user.id}&user2=${selectedFighter.profile?.id || selectedFighter.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
             // Note: selectedFighter might be just from clients list, profile.id is the UUID. 
             // IF selectedFighter is a guest (no profile), we can't chat!
 
@@ -114,7 +122,10 @@ const CoachClients = () => {
 
             const res = await fetch('/api/messages', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: JSON.stringify(payload)
             });
 
@@ -149,7 +160,10 @@ const CoachClients = () => {
 
             const res = await fetch('/api/coach-fighter-update', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: JSON.stringify(payload)
             });
 
