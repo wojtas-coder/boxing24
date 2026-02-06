@@ -87,14 +87,45 @@ export default async function handler(req, res) {
                 return res.status(200).json({ success: true }, { headers: corsHeaders });
             }
 
-            if (action === 'join_plan') {
+            if (action === 'join_plan' || action === 'add_plan') {
                 // payload: { planId }
-                const { error } = await supabase.from('user_plans').insert({
+                // Check if exists first to avoid duplicate key error if we didn't use ON CONFLICT
+                // Actually, let's just insert or update active=true
+                const { error } = await supabase.from('user_plans').upsert({
+                    user_id: userId,
+                    plan_id: payload.planId,
+                    active: true,
+                    // Preserve progress if re-adding? Ideally yes, but upsert with just these fields might overwrite progress if we aren't careful.
+                    // Let's doing a check first is safer for MVP, or just insert and ignore conflict?
+                    // Safe approach:
+                }, { onConflict: 'user_id, plan_id' });
+
+                // Better approach for upsert without wiping progress:
+                // We actually want to INSERT if new, or UPDATE active=true if exists.
+                // Supabase upsert overwrites.
+                // Let's try simple insert, if error code 23505 (unique violation), then update.
+
+                const { error: insertError } = await supabase.from('user_plans').insert({
                     user_id: userId,
                     plan_id: payload.planId,
                     active: true,
                     progress: { completed_units: [] }
                 });
+
+                if (insertError) {
+                    if (insertError.code === '23505') {
+                        // Already exists, just set active=true
+                        await supabase.from('user_plans').update({ active: true }).eq('user_id', userId).eq('plan_id', payload.planId);
+                    } else {
+                        throw insertError;
+                    }
+                }
+
+                return res.status(200).json({ success: true }, { headers: corsHeaders });
+            }
+
+            if (action === 'remove_plan') {
+                const { error } = await supabase.from('user_plans').update({ active: false }).eq('user_id', userId).eq('plan_id', payload.planId);
                 if (error) throw error;
                 return res.status(200).json({ success: true }, { headers: corsHeaders });
             }
