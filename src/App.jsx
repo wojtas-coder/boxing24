@@ -24,10 +24,7 @@ import CoachDashboard from './pages/coach/Dashboard';
 import CoachPlans from './pages/coach/CoachPlans';
 import CoachClients from './pages/coach/CoachClients';
 import CoachChat from './pages/coach/CoachChat';
-import AdminSEO from './components/admin/modules/AdminSEO';
-import AdminStats from './components/admin/modules/AdminStats';
-// AdminAds import if exists, assuming module present
-// import AdminAds from './components/admin/modules/AdminAds';
+
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';

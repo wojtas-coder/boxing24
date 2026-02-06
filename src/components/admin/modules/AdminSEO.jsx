@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
-import { Settings, Globe, AlertTriangle, Save } from 'lucide-react';
+import { Settings, Globe, AlertTriangle, Save, Megaphone } from 'lucide-react';
 
 const AdminSEO = () => {
     const [settings, setSettings] = useState({});
@@ -126,8 +126,5 @@ const AdminSEO = () => {
         </div>
     );
 };
-
-// Helper icon import was missing
-import { Megaphone } from 'lucide-react';
 
 export default AdminSEO;
