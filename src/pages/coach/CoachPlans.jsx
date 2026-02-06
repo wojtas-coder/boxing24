@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Dumbbell, Plus, Save, Trash2, Calendar, User, CheckCircle, Loader2 } from 'lucide-react';
+import { Dumbbell, Plus, Save, Trash2, Calendar, User, CheckCircle, Loader2, XCircle } from 'lucide-react';
 import { plansLibrary } from '../../data/trainingPlan';
 
 const CoachPlans = () => {
@@ -14,7 +14,7 @@ const CoachPlans = () => {
     const [loadingPlans, setLoadingPlans] = useState(true);
 
     // Initial Form State
-    const [newPlan, setNewPlan] = useState({ title: '', subtitle: '', description: '', level: 'Basic', duration: '4 Tygodnie' });
+    const [newPlan, setNewPlan] = useState({ title: '', subtitle: '', description: '', level: 'Basic', duration: '4 Tygodnie', schedule: [] });
 
     const [loadingClients, setLoadingClients] = useState(false);
     const [assigning, setAssigning] = useState(false);
@@ -196,18 +196,175 @@ const CoachPlans = () => {
                                 </div>
                             </div>
 
-                            {/* RIGHT: BUILDER (Placeholder for now, but UI ready) */}
-                            <div className="lg:col-span-2 space-y-6">
-                                <div className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl min-h-[400px] flex items-center justify-center border-dashed border-zinc-800">
-                                    <div className="text-center opacity-50">
-                                        <Calendar className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
-                                        <h3 className="text-xl font-bold text-white mb-2">Harmonogram Treningów</h3>
-                                        <p className="text-zinc-500 max-w-md mx-auto">
-                                            W tej wersji MVP, system automatycznie wygeneruje strukturę tygodniową na podstawie wybranego poziomu i czasu trwania.
-                                            <br /><span className="text-xs uppercase tracking-widest mt-2 block">(Pełny drag & drop builder wkrótce)</span>
-                                        </p>
-                                    </div>
+                            {/* RIGHT: BUILDER */}
+                            <div className="lg:col-span-2 space-y-6 h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-bold text-white">Harmonogram Treningów</h3>
+                                    <button
+                                        onClick={() => setNewPlan(prev => ({
+                                            ...prev,
+                                            schedule: [...(prev.schedule || []), {
+                                                id: Date.now(),
+                                                week_name: `Tydzień ${(prev.schedule?.length || 0) + 1}`,
+                                                days: []
+                                            }]
+                                        }))}
+                                        className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                                    >
+                                        <Plus className="w-3 h-3" /> Dodaj Tydzień
+                                    </button>
                                 </div>
+
+                                {(newPlan.schedule || []).map((week, wIndex) => (
+                                    <div key={week.id || wIndex} className="bg-zinc-900/80 border border-white/5 rounded-2xl overflow-hidden mb-6">
+                                        {/* WEEK HEADER */}
+                                        <div className="p-4 bg-white/5 flex justify-between items-center group">
+                                            <input
+                                                className="bg-transparent text-white font-black uppercase italic tracking-tighter text-lg focus:outline-none w-full"
+                                                value={week.week_name}
+                                                onChange={e => {
+                                                    const newSchedule = [...newPlan.schedule];
+                                                    newSchedule[wIndex].week_name = e.target.value;
+                                                    setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                }}
+                                            />
+                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => {
+                                                        const newSchedule = [...newPlan.schedule];
+                                                        newSchedule[wIndex].days.push({ id: Date.now(), day_name: 'Nowy Trening', exercises: [] });
+                                                        setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                    }}
+                                                    className="p-2 bg-blue-600 hover:bg-blue-500 rounded text-white"
+                                                    title="Dodaj Dzień Treningowy"
+                                                >
+                                                    <Calendar className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const newSchedule = newPlan.schedule.filter((_, i) => i !== wIndex);
+                                                        setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                    }}
+                                                    className="p-2 hover:bg-red-500/20 text-red-500 rounded"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* DAYS */}
+                                        <div className="p-4 space-y-4">
+                                            {week.days.length === 0 && (
+                                                <div className="text-center py-8 text-zinc-600 text-sm italic border border-dashed border-zinc-800 rounded-xl">
+                                                    Brak dni treningowych w tym tygodniu.
+                                                </div>
+                                            )}
+                                            {week.days.map((day, dIndex) => (
+                                                <div key={day.id || dIndex} className="bg-black/40 border border-white/5 rounded-xl p-4">
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <input
+                                                            className="bg-transparent text-blue-400 font-bold uppercase text-sm focus:outline-none w-full"
+                                                            value={day.day_name}
+                                                            placeholder="Np. Poniedziałek (Siła)"
+                                                            onChange={e => {
+                                                                const newSchedule = [...newPlan.schedule];
+                                                                newSchedule[wIndex].days[dIndex].day_name = e.target.value;
+                                                                setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                            }}
+                                                        />
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newSchedule = [...newPlan.schedule];
+                                                                    newSchedule[wIndex].days[dIndex].exercises.push({ id: Date.now(), name: '', sets: '3', reps: '10', weight: '' });
+                                                                    setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                                }}
+                                                                className="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-white px-2 py-1 rounded uppercase font-bold"
+                                                            >
+                                                                + Ćwiczenie
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newSchedule = [...newPlan.schedule];
+                                                                    newSchedule[wIndex].days = newSchedule[wIndex].days.filter((_, i) => i !== dIndex);
+                                                                    setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                                }}
+                                                                className="text-zinc-600 hover:text-red-500"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* EXERCISES */}
+                                                    <div className="space-y-2">
+                                                        {day.exercises.map((ex, eIndex) => (
+                                                            <div key={ex.id || eIndex} className="grid grid-cols-12 gap-2 items-center bg-zinc-900/50 p-2 rounded border border-white/5">
+                                                                <div className="col-span-1 text-zinc-500 font-mono text-xs text-center">{eIndex + 1}.</div>
+                                                                <div className="col-span-5">
+                                                                    <input
+                                                                        className="w-full bg-transparent text-white text-xs font-bold focus:outline-none placeholder-zinc-700"
+                                                                        placeholder="Nazwa ćwiczenia"
+                                                                        value={ex.name}
+                                                                        onChange={e => {
+                                                                            const newSchedule = [...newPlan.schedule];
+                                                                            newSchedule[wIndex].days[dIndex].exercises[eIndex].name = e.target.value;
+                                                                            setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-2">
+                                                                    <input
+                                                                        className="w-full bg-transparent text-zinc-400 text-xs text-center focus:outline-none placeholder-zinc-700"
+                                                                        placeholder="Serie"
+                                                                        value={ex.sets}
+                                                                        onChange={e => {
+                                                                            const newSchedule = [...newPlan.schedule];
+                                                                            newSchedule[wIndex].days[dIndex].exercises[eIndex].sets = e.target.value;
+                                                                            setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-2">
+                                                                    <input
+                                                                        className="w-full bg-transparent text-zinc-400 text-xs text-center focus:outline-none placeholder-zinc-700"
+                                                                        placeholder="Powt."
+                                                                        value={ex.reps}
+                                                                        onChange={e => {
+                                                                            const newSchedule = [...newPlan.schedule];
+                                                                            newSchedule[wIndex].days[dIndex].exercises[eIndex].reps = e.target.value;
+                                                                            setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-1 flex justify-end">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const newSchedule = [...newPlan.schedule];
+                                                                            newSchedule[wIndex].days[dIndex].exercises = newSchedule[wIndex].days[dIndex].exercises.filter((_, i) => i !== eIndex);
+                                                                            setNewPlan({ ...newPlan, schedule: newSchedule });
+                                                                        }}
+                                                                        className="text-zinc-700 hover:text-red-500"
+                                                                    >
+                                                                        <XCircle className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {day.exercises.length === 0 && <div className="text-[10px] text-zinc-700 text-center py-2">Brak ćwiczeń</div>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {(!newPlan.schedule || newPlan.schedule.length === 0) && (
+                                    <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-50">
+                                        <Calendar className="w-12 h-12 mb-2" />
+                                        <p className="text-sm">Dodaj pierwszy tydzień, aby rozpocząć budowanie planu.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
