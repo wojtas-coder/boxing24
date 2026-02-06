@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ArrowRight, User, MapPin, Star, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { coaches } from '../data/coaches';
-import { format, addDays, startOfToday, isSameDay } from 'date-fns';
+import { format, addDays, startOfToday, isSameDay, isBefore } from 'date-fns';
 import { pl } from 'date-fns/locale';
 
 const BookingPage = () => {
