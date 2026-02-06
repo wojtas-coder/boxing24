@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, User, CheckCircle, Circle, Play, Eye, ChevronDown, ChevronRight, Clock, Save, ArrowLeft, Calendar, BarChart2, BookOpen, Activity, Flame, Dumbbell, Trophy, Moon, Zap, Smile, AlertCircle, Share2, X, Info, HelpCircle, ArrowRightCircle } from 'lucide-react';
+import { Lock, User, CheckCircle, Circle, Play, Eye, ChevronDown, ChevronRight, Clock, Save, ArrowLeft, Calendar, BarChart2, BookOpen, Activity, Flame, Dumbbell, Trophy, Moon, Zap, Smile, AlertCircle, Share2, X, Info, HelpCircle, ArrowRightCircle, MessageSquare, Send, Loader2 } from 'lucide-react';
+
+const HEAD_COACH_ID = 'e1679220-0798-471b-912e-b1e861e3c30c'; // W. Rewczuk
 import { plansLibrary } from '../data/trainingPlan';
 import { BASIC_TEST, ADVANCED_TEST, FITNESS_CATEGORIES } from '../data/fitnessTests';
 import { calculateAssessment } from '../utils/assessmentLogic';
@@ -98,7 +100,17 @@ const MemberPage = () => {
     const [sessionHistory, setSessionHistory] = useState([]);
     const [showWellnessModal, setShowWellnessModal] = useState(false);
     const [showWellnessLegend, setShowWellnessLegend] = useState(false);
+
     const [wellnessData, setWellnessData] = useState({ energy: 5, sleep: 5, stress: 5, soreness: 5, note: '' });
+
+    // --- WORKOUTS STATE ---
+    const [workouts, setWorkouts] = useState({ upcoming: [], history: [] });
+    const [loadingWorkouts, setLoadingWorkouts] = useState(false);
+
+    // --- CHAT STATE ---
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatInput, setChatInput] = useState('');
+    const [chatLoading, setChatLoading] = useState(false);
 
     // --- ASSESSMENT STATE ---
     const [showAssessmentModal, setShowAssessmentModal] = useState(false);
@@ -135,6 +147,90 @@ const MemberPage = () => {
             setSessionHistory(savedHistory);
         }
     }, [user, profile]);
+
+    // --- EFFECT: LOAD WORKOUTS ON TAB CHANGE ---
+    useEffect(() => {
+        if (activeTab === 'my_workouts' && user?.email) {
+            fetchWorkouts();
+        }
+    }, [activeTab, user]);
+
+    const fetchWorkouts = async () => {
+        setLoadingWorkouts(true);
+        try {
+            const res = await fetch(`/api/client-bookings?email=${encodeURIComponent(user.email.toLowerCase())}`);
+            const data = await res.json();
+            if (res.ok) {
+                setWorkouts(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch workouts:", error);
+        } finally {
+            setLoadingWorkouts(false);
+        }
+    };
+
+
+    // --- CHAT LOGIC ---
+    useEffect(() => {
+        if (activeTab === 'messages' && user?.id) {
+            fetchChatMessages();
+        }
+    }, [activeTab, user]);
+
+    const fetchChatMessages = async () => {
+        if (!user) return;
+        setChatLoading(true);
+        try {
+            // HEAD_COACH_ID is placeholder. If invalid UUID, API might error.
+            if (HEAD_COACH_ID === 'REPLACE_WITH_REAL_COACH_UUID') {
+                console.warn("Head Coach ID not configured");
+                setChatLoading(false);
+                return;
+            }
+
+            const res = await fetch(`/api/messages?user1=${user.id}&user2=${HEAD_COACH_ID}`);
+            if (res.ok) {
+                const data = await res.json();
+                setChatMessages(data);
+            }
+        } catch (error) {
+            console.error("Chat fetch error:", error);
+        } finally {
+            setChatLoading(false);
+        }
+    };
+
+    const sendChatMessage = async () => {
+        if (!chatInput.trim() || !user) return;
+        if (HEAD_COACH_ID === 'REPLACE_WITH_REAL_COACH_UUID') {
+            alert("Konfiguracja czatu niekompletna (Brak ID Trenera).");
+            return;
+        }
+
+        try {
+            const payload = {
+                sender_id: user.id,
+                receiver_id: HEAD_COACH_ID,
+                content: chatInput
+            };
+
+            const res = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const newMsg = await res.json();
+                setChatMessages([...chatMessages, newMsg]);
+                setChatInput('');
+            }
+        } catch (error) {
+            console.error("Chat send error:", error);
+            alert("Nie udało się wysłać wiadomości.");
+        }
+    };
 
 
     // --- ACTIONS ---
@@ -335,6 +431,8 @@ const MemberPage = () => {
                     <div className="bg-zinc-900/50 p-1 rounded-2xl flex border border-white/5">
                         {[
                             { id: 'dashboard', label: 'Pulpit' },
+                            { id: 'my_workouts', label: 'Moje Treningi' },
+                            { id: 'messages', label: 'Wiadomości' },
                             { id: 'my_plans', label: 'Plany' },
                             { id: 'library', label: 'Biblioteka' },
                             { id: 'notebook', label: 'Dziennik' },
@@ -469,6 +567,161 @@ const MemberPage = () => {
                                     </button>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* 1.5 MY WORKOUTS (Bookings) */}
+                {activeTab === 'my_workouts' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-2">
+                                Moje <span className="text-boxing-neon">Treningi</span>
+                            </h2>
+                            <p className="text-gray-400">Twoje nadchodzące rezerwacje i historia spotkań.</p>
+                        </div>
+
+                        {loadingWorkouts ? (
+                            <div className="text-center py-20 text-zinc-500 animate-pulse font-mono text-xs">Ładowanie harmonogramu...</div>
+                        ) : (
+                            <div className="space-y-12">
+                                {/* UPCOMING */}
+                                <div>
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-2 h-2 rounded-full bg-boxing-neon shadow-[0_0_10px_rgba(204,255,0,0.5)]"></div>
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-widest">Nadchodzące</h3>
+                                    </div>
+
+                                    {workouts.upcoming.length === 0 ? (
+                                        <div className="p-8 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/20 text-center">
+                                            <p className="text-zinc-500 text-xs uppercase font-bold tracking-wider mb-4">Brak zaplanowanych treningów</p>
+                                            <a href="/booking" className="inline-block px-6 py-2 bg-white text-black rounded-lg text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                                                Zarezerwuj Termin
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-4">
+                                            {workouts.upcoming.map(booking => (
+                                                <div key={booking.id} className="bg-[#111] p-6 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 group hover:border-boxing-neon/30 transition-all">
+                                                    <div className="flex items-center gap-6 w-full md:w-auto">
+                                                        <div className="w-16 h-16 bg-zinc-900 rounded-xl flex flex-col items-center justify-center border border-white/5 text-zinc-400 group-hover:text-white transition-colors">
+                                                            <span className="text-xs font-bold uppercase">{new Date(booking.start_time).toLocaleDateString('pl-PL', { weekday: 'short' })}</span>
+                                                            <span className="text-xl font-black">{new Date(booking.start_time).getDate()}</span>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-boxing-neon text-[10px] font-bold uppercase tracking-widest mb-1">
+                                                                {new Date(booking.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(booking.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                            <h4 className="text-xl font-black italic text-white uppercase">{booking.coach_name}</h4>
+                                                            <div className="text-xs text-gray-500 font-medium">Trening Personalny</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-full md:w-auto text-center md:text-right">
+                                                        <span className="px-4 py-2 rounded-lg bg-boxing-neon/10 text-boxing-neon border border-boxing-neon/20 text-[10px] font-bold uppercase tracking-widest">
+                                                            Potwierdzony
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* HISTORY */}
+                                <div>
+                                    <div className="flex items-center gap-3 mb-6 opacity-60">
+                                        <div className="w-2 h-2 rounded-full bg-zinc-600"></div>
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-widest">Historia</h3>
+                                    </div>
+
+                                    {workouts.history.length === 0 ? (
+                                        <div className="text-zinc-600 text-xs italic">Brak historii treningów.</div>
+                                    ) : (
+                                        <div className="grid gap-4 opacity-60 hover:opacity-100 transition-opacity">
+                                            {workouts.history.map(booking => (
+                                                <div key={booking.id} className="bg-zinc-900/30 p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-zinc-500 font-mono text-xs">
+                                                            {new Date(booking.start_time).toLocaleDateString()}
+                                                        </div>
+                                                        <div className="font-bold text-white text-sm uppercase">
+                                                            {booking.coach_name}
+                                                        </div>
+                                                    </div>
+                                                    <div className="px-3 py-1 bg-zinc-800 rounded text-[9px] font-bold uppercase text-zinc-500">
+                                                        Ukończony
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 1.6 MESSAGES (Chat) */}
+                {activeTab === 'messages' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto h-[600px] flex flex-col bg-zinc-900/50 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-sm">
+                        {/* Header */}
+                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                            <div>
+                                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
+                                    Twój <span className="text-boxing-neon">Trener</span>
+                                </h2>
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Kanał Bezpośredni</div>
+                            </div>
+                            <div className="w-10 h-10 rounded-full bg-boxing-neon flex items-center justify-center text-black font-bold">
+                                <MessageSquare className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        {/* Messages Body */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            {HEAD_COACH_ID === 'REPLACE_WITH_REAL_COACH_UUID' ? (
+                                <div className="text-center p-8 border border-orange-500/20 bg-orange-500/10 rounded-xl">
+                                    <p className="text-orange-500 font-bold uppercase text-xs mb-2">Konfiguracja Wymagana</p>
+                                    <p className="text-zinc-500 text-xs">ID Trenera nie zostało ustawione w systemie.</p>
+                                </div>
+                            ) : chatLoading ? (
+                                <div className="flex justify-center py-20"><Loader2 className="animate-spin text-zinc-500 w-8 h-8" /></div>
+                            ) : chatMessages.length === 0 ? (
+                                <div className="text-center text-zinc-600 text-xs py-20">
+                                    <p className="uppercase font-bold tracking-widest mb-2">Brak wiadomości</p>
+                                    <p>Napisz do trenera, aby rozpocząć rozmowę.</p>
+                                </div>
+                            ) : (
+                                chatMessages.map(msg => {
+                                    const isMe = msg.sender_id === user.id;
+                                    return (
+                                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[75%] p-4 rounded-2xl text-sm leading-relaxed shadow-lg ${isMe ? 'bg-boxing-neon text-black rounded-br-none font-medium' : 'bg-zinc-800 text-zinc-300 rounded-bl-none border border-white/5'}`}>
+                                                {msg.content}
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            )}
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
+                            <div className="flex gap-4">
+                                <input
+                                    value={chatInput}
+                                    onChange={e => setChatInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                                    placeholder="Wpisz wiadomość..."
+                                    className="flex-1 bg-zinc-900/80 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-boxing-neon/50 outline-none transition-all placeholder:text-zinc-600"
+                                />
+                                <button
+                                    onClick={sendChatMessage}
+                                    className="bg-white text-black w-14 rounded-2xl flex items-center justify-center hover:bg-boxing-neon transition-colors shadow-lg hover:scale-105 active:scale-95 duration-200"
+                                >
+                                    <Send className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

@@ -1,12 +1,10 @@
 
 import { getSupabase, corsHeaders } from './_utils.js';
-import { addMinutes } from 'date-fns';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { addMinutes, parseISO, format } from 'date-fns';
 import { google } from 'googleapis';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const TIMEZONE = 'Europe/Warsaw';
 
 export default async function handler(req, res) {
     if (req.method === 'OPTIONS') {
@@ -17,8 +15,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' }, { headers: corsHeaders });
     }
 
-    const { coachId, date, time, clientName, clientEmail: rawEmail, clientPhone, notes } = req.body;
-    const clientEmail = rawEmail?.toLowerCase();
+    const { coachId, date, time, clientName, clientEmail, clientPhone, notes } = req.body;
 
     if (!coachId || !date || !time || !clientEmail) {
         return res.status(400).json({ error: 'Missing required fields' }, { headers: corsHeaders });
@@ -27,21 +24,13 @@ export default async function handler(req, res) {
     try {
         const supabase = getSupabase();
 
-        // 1. Calculate Timestamps with Timezone
-        // Input: "2024-02-05" and "18:00"
-        // Goal: Create a Date object that refers to 18:00 IN WARSAW
-
-        const dateTimeString = `${date}T${time}:00`;
-        // fromZonedTime takes a string and a timezone, and returns a Date object (UTC) 
-        // representing that local time.
-        // e.g. "2024-02-05T18:00:00" in Warsaw -> Date object (2024-02-05T17:00:00Z)
-        const startDateTime = fromZonedTime(dateTimeString, TIMEZONE);
-
+        // 1. Calculate Timestamps
+        const startDateTime = new Date(`${date}T${time}:00`);
         const { data: settings } = await supabase.from('coach_settings').select('session_duration_minutes, google_calendar_id, coach_id').eq('coach_id', coachId).single();
         const duration = settings?.session_duration_minutes || 60;
         const endDateTime = addMinutes(startDateTime, duration);
 
-        // 2. Insert into Supabase (Store as UTC ISO strings)
+        // 2. Insert into Supabase
         const { data: booking, error: dbError } = await supabase
             .from('bookings')
             .insert({
@@ -75,7 +64,7 @@ export default async function handler(req, res) {
                     requestBody: {
                         summary: `Trening: ${clientName}`,
                         description: `Klient: ${clientName}\nTel: ${clientPhone}\nEmail: ${clientEmail}\nNotatki: ${notes || '-'}`,
-                        start: { dateTime: startDateTime.toISOString() }, // GCal handles ISO UTC fine
+                        start: { dateTime: startDateTime.toISOString() },
                         end: { dateTime: endDateTime.toISOString() },
                     }
                 });
