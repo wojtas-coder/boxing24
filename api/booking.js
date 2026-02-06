@@ -32,14 +32,29 @@ export default async function handler(req, res) {
         // Start time is derived from the "date" (YYYY-MM-DD) and "time" (HH:MM) in Warsaw time.
 
         const dateTimeString = `${date}T${time}:00`;
-        const startDateTime = fromZonedTime(dateTimeString, TIMEZONE);
+        let startDateTime;
+
+        try {
+            startDateTime = fromZonedTime(dateTimeString, TIMEZONE);
+        } catch (dateErr) {
+            console.error("Date Parsing Error (date-fns-tz):", dateErr);
+            // Fallback: treat as ISO-like if simple parse fails, or throw
+            throw new Error(`Invalid Date Format: ${dateTimeString}`);
+        }
 
         // Safety check if date invalid
         if (isNaN(startDateTime.getTime())) {
             throw new Error(`Invalid Date Calculation: ${dateTimeString}`);
         }
 
-        const { data: settings } = await supabase.from('coach_settings').select('session_duration_minutes, google_calendar_id, coach_id').eq('coach_id', coachId).single();
+        console.log(`[Booking] Request: ${coachId}, ${date} ${time} | UTC Start: ${startDateTime.toISOString()}`);
+
+        const { data: settings, error: settingsError } = await supabase.from('coach_settings').select('session_duration_minutes, google_calendar_id, coach_id').eq('coach_id', coachId).single();
+
+        if (settingsError && settingsError.code !== 'PGRST116') { // Ignore "Row not found" (PGRST116) as we have defaults
+            console.error("Settings Fetch Error:", settingsError);
+        }
+
         const duration = settings?.session_duration_minutes || 60;
         const endDateTime = addMinutes(startDateTime, duration);
 

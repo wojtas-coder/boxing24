@@ -144,27 +144,71 @@ const CoachPlans = () => {
                 </button>
             </div>
 
-            {/* CREATE MODAL */}
+            {/* CREATE MODAL / FULL SCREEN BUILDER */}
             {isCreating && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 max-w-lg w-full shadow-2xl space-y-4">
-                        <h3 className="text-2xl font-bold text-white">Nowy Szablon Planu</h3>
-                        <input className="w-full bg-black border border-white/10 p-3 rounded text-white" placeholder="Tytuł (np. Siła Bokserska)" value={newPlan.title} onChange={e => setNewPlan({ ...newPlan, title: e.target.value })} />
-                        <input className="w-full bg-black border border-white/10 p-3 rounded text-white" placeholder="Podtytuł (np. Poziom 1)" value={newPlan.subtitle} onChange={e => setNewPlan({ ...newPlan, subtitle: e.target.value })} />
-                        <textarea className="w-full bg-black border border-white/10 p-3 rounded text-white h-24" placeholder="Opis..." value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} />
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <select className="bg-black border border-white/10 p-3 rounded text-white" value={newPlan.level} onChange={e => setNewPlan({ ...newPlan, level: e.target.value })}>
-                                <option>Basic</option>
-                                <option>Pro</option>
-                                <option>Elite</option>
-                            </select>
-                            <input className="w-full bg-black border border-white/10 p-3 rounded text-white" placeholder="Czas (np. 6 Tygodni)" value={newPlan.duration} onChange={e => setNewPlan({ ...newPlan, duration: e.target.value })} />
+                <div className="fixed inset-0 bg-black z-50 overflow-y-auto">
+                    <div className="max-w-7xl mx-auto p-8">
+                        {/* HEADER */}
+                        <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-6">
+                            <div>
+                                <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">
+                                    Kreator <span className="text-blue-500">Planu</span>
+                                </h2>
+                                <p className="text-zinc-500 text-sm">Zbuduj profesjonalny cykl treningowy</p>
+                            </div>
+                            <div className="flex gap-4">
+                                <button onClick={() => setIsCreating(false)} className="px-6 py-3 text-zinc-400 hover:text-white font-bold uppercase tracking-widest text-xs">Anuluj</button>
+                                <button onClick={handleCreatePlan} className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-blue-900/20 flex items-center gap-2">
+                                    <Save className="w-5 h-5" /> Zapisz Plan
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="flex gap-2 justify-end mt-4">
-                            <button onClick={() => setIsCreating(false)} className="px-4 py-2 text-zinc-500 hover:text-white">Anuluj</button>
-                            <button onClick={handleCreatePlan} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold">Utwórz</button>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* LEFT: SETTINGS */}
+                            <div className="space-y-6">
+                                <div className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl">
+                                    <h3 className="text-lg font-bold text-white mb-4">Ustawienia Główne</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-zinc-500 text-xs font-bold uppercase block mb-2">Nazwa Planu</label>
+                                            <input className="w-full bg-black border border-white/10 p-3 rounded-lg text-white focus:border-blue-500 outline-none font-bold" value={newPlan.title} onChange={e => setNewPlan({ ...newPlan, title: e.target.value })} placeholder="np. Szybkość i Dynamika" />
+                                        </div>
+                                        <div>
+                                            <label className="text-zinc-500 text-xs font-bold uppercase block mb-2">Opis</label>
+                                            <textarea className="w-full bg-black border border-white/10 p-3 rounded-lg text-white focus:border-blue-500 outline-none h-32" value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} placeholder="Dla kogo jest ten plan? Jaki jest cel?" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-zinc-500 text-xs font-bold uppercase block mb-2">Poziom</label>
+                                                <select className="w-full bg-black border border-white/10 p-3 rounded-lg text-white focus:border-blue-500 outline-none" value={newPlan.level} onChange={e => setNewPlan({ ...newPlan, level: e.target.value })}>
+                                                    <option value="Basic">Początkujący</option>
+                                                    <option value="Pro">Średnio-Zaawansowany</option>
+                                                    <option value="Elite">Dla Zawodników</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-zinc-500 text-xs font-bold uppercase block mb-2">Czas Trwania</label>
+                                                <input className="w-full bg-black border border-white/10 p-3 rounded-lg text-white focus:border-blue-500 outline-none" value={newPlan.duration} onChange={e => setNewPlan({ ...newPlan, duration: e.target.value })} placeholder="np. 6 Tygodni" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* RIGHT: BUILDER (Placeholder for now, but UI ready) */}
+                            <div className="lg:col-span-2 space-y-6">
+                                <div className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl min-h-[400px] flex items-center justify-center border-dashed border-zinc-800">
+                                    <div className="text-center opacity-50">
+                                        <Calendar className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
+                                        <h3 className="text-xl font-bold text-white mb-2">Harmonogram Treningów</h3>
+                                        <p className="text-zinc-500 max-w-md mx-auto">
+                                            W tej wersji MVP, system automatycznie wygeneruje strukturę tygodniową na podstawie wybranego poziomu i czasu trwania.
+                                            <br /><span className="text-xs uppercase tracking-widest mt-2 block">(Pełny drag & drop builder wkrótce)</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
