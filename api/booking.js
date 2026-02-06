@@ -27,15 +27,17 @@ export default async function handler(req, res) {
     try {
         const supabase = getSupabase();
 
-        // 1. Calculate Timestamps with Timezone
-        // Input: "2024-02-05" and "18:00"
-        // Goal: Create a Date object that refers to 18:00 IN WARSAW
+        // 1. Calculate Timestamps (UTC)
+        // ensure date-fns-tz dependency is installed!
+        // Start time is derived from the "date" (YYYY-MM-DD) and "time" (HH:MM) in Warsaw time.
 
         const dateTimeString = `${date}T${time}:00`;
-        // fromZonedTime takes a string and a timezone, and returns a Date object (UTC) 
-        // representing that local time.
-        // e.g. "2024-02-05T18:00:00" in Warsaw -> Date object (2024-02-05T17:00:00Z)
         const startDateTime = fromZonedTime(dateTimeString, TIMEZONE);
+
+        // Safety check if date invalid
+        if (isNaN(startDateTime.getTime())) {
+            throw new Error(`Invalid Date Calculation: ${dateTimeString}`);
+        }
 
         const { data: settings } = await supabase.from('coach_settings').select('session_duration_minutes, google_calendar_id, coach_id').eq('coach_id', coachId).single();
         const duration = settings?.session_duration_minutes || 60;

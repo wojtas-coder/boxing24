@@ -31,7 +31,9 @@ const CoachChat = () => {
             // This endpoint should ideally return a list of unique users the coach has spoken to
             // For now, let's reuse coach-fighters to get the list of clients, 
             // and maybe eventually filter by "has_messages" if we optimize.
-            const res = await fetch(`/api/coach-fighters?coachId=${user.id}`, {
+            // TEMPORARY PROD FIX: Hardcode Coach ID
+            const coachId = 'wojciech-rewczuk';
+            const res = await fetch(`/api/coach-fighters?coachId=${coachId}`, {
                 headers: { 'Authorization': `Bearer ${session?.access_token}` }
             });
             if (res.ok) {

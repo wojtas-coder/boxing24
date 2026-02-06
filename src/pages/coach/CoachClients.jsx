@@ -10,7 +10,9 @@ import { calculateAssessment } from '../../utils/assessmentLogic';
 
 const CoachClients = () => {
     const { user, session } = useAuth();
-    const coachId = user?.id; // Standardized to Supabase UUID
+    // TEMPORARY FIX: Hardcode Coach ID to match existing bookings (wojciech-rewczuk)
+    // In future, fetch this from profile.coach_slug
+    const coachId = 'wojciech-rewczuk';  // Standardized to Supabase UUID
 
     const [fighters, setFighters] = useState([]);
     const [loading, setLoading] = useState(true);

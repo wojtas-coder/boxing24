@@ -6,12 +6,66 @@ import { plansLibrary } from '../../data/trainingPlan';
 const CoachPlans = () => {
     const { user, session } = useAuth();
     const [selectedPlan, setSelectedPlan] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
     const [clients, setClients] = useState([]);
+
+    // Plans State
+    const [customPlans, setCustomPlans] = useState([]);
+    const [loadingPlans, setLoadingPlans] = useState(true);
+
+    // Initial Form State
+    const [newPlan, setNewPlan] = useState({ title: '', subtitle: '', description: '', level: 'Basic', duration: '4 Tygodnie' });
+
     const [loadingClients, setLoadingClients] = useState(false);
     const [assigning, setAssigning] = useState(false);
 
-    // Filter only locked/pro plans or show all? Show all.
-    const plans = plansLibrary;
+    useEffect(() => {
+        fetchCustomPlans();
+    }, [user]);
+
+    const fetchCustomPlans = async () => {
+        try {
+            const res = await fetch('/api/training-plans');
+            if (res.ok) {
+                const data = await res.json();
+                setCustomPlans(data.plans || []);
+            }
+        } catch (e) {
+            console.error("Failed to fetch custom plans", e);
+        } finally {
+            setLoadingPlans(false);
+        }
+    };
+
+    const handleCreatePlan = async () => {
+        if (!newPlan.title) return alert("Podaj tytuł planu");
+
+        try {
+            const res = await fetch('/api/training-plans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...newPlan,
+                    creator_id: user.id
+                })
+            });
+            if (res.ok) {
+                alert("Plan utworzony!");
+                setIsCreating(false);
+                setNewPlan({ title: '', subtitle: '', description: '', level: 'Basic', duration: '4 Tygodnie' });
+                fetchCustomPlans();
+            } else {
+                throw new Error("Błąd tworzenia");
+            }
+        } catch (e) {
+            alert(e.message);
+        }
+    };
+
+    // Combine Static + Custom
+    // Custom plans coming from DB might have different structure, ensure compatibility
+    // DB: { id, title, subtitle, description, level, duration }
+    const allPlans = [...customPlans, ...plansLibrary];
 
     const handleAssignClick = (plan) => {
         setSelectedPlan(plan);
@@ -20,8 +74,10 @@ const CoachPlans = () => {
 
     const fetchClients = async () => {
         setLoadingClients(true);
+        // Standardized Coach ID
+        const coachId = 'wojciech-rewczuk';
         try {
-            const res = await fetch(`/api/coach-fighters?coachId=${user.id}`, {
+            const res = await fetch(`/api/coach-fighters?coachId=${coachId}`, {
                 headers: { 'Authorization': `Bearer ${session?.access_token}` }
             });
             if (res.ok) {
@@ -80,13 +136,42 @@ const CoachPlans = () => {
                     </h1>
                     <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Biblioteka i Przypisywanie</p>
                 </div>
-                {/* <button className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 font-bold flex items-center gap-2 rounded-xl transition-all">
-                    <Plus className="w-4 h-4" /> Nowy Plan
-                </button> */}
+                <button
+                    onClick={() => setIsCreating(true)}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 font-bold flex items-center gap-2 rounded-xl transition-all"
+                >
+                    <Plus className="w-4 h-4" /> Nowy Szablon
+                </button>
             </div>
 
+            {/* CREATE MODAL */}
+            {isCreating && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 max-w-lg w-full shadow-2xl space-y-4">
+                        <h3 className="text-2xl font-bold text-white">Nowy Szablon Planu</h3>
+                        <input className="w-full bg-black border border-white/10 p-3 rounded text-white" placeholder="Tytuł (np. Siła Bokserska)" value={newPlan.title} onChange={e => setNewPlan({ ...newPlan, title: e.target.value })} />
+                        <input className="w-full bg-black border border-white/10 p-3 rounded text-white" placeholder="Podtytuł (np. Poziom 1)" value={newPlan.subtitle} onChange={e => setNewPlan({ ...newPlan, subtitle: e.target.value })} />
+                        <textarea className="w-full bg-black border border-white/10 p-3 rounded text-white h-24" placeholder="Opis..." value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <select className="bg-black border border-white/10 p-3 rounded text-white" value={newPlan.level} onChange={e => setNewPlan({ ...newPlan, level: e.target.value })}>
+                                <option>Basic</option>
+                                <option>Pro</option>
+                                <option>Elite</option>
+                            </select>
+                            <input className="w-full bg-black border border-white/10 p-3 rounded text-white" placeholder="Czas (np. 6 Tygodni)" value={newPlan.duration} onChange={e => setNewPlan({ ...newPlan, duration: e.target.value })} />
+                        </div>
+
+                        <div className="flex gap-2 justify-end mt-4">
+                            <button onClick={() => setIsCreating(false)} className="px-4 py-2 text-zinc-500 hover:text-white">Anuluj</button>
+                            <button onClick={handleCreatePlan} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold">Utwórz</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {plans.map(plan => (
+                {allPlans.map(plan => (
                     <div key={plan.id} className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl hover:border-blue-500/50 transition-all group flex flex-col">
                         <div className="flex justify-between items-start mb-4">
                             <div className={`p-3 rounded-lg ${plan.level === 'Elite' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
