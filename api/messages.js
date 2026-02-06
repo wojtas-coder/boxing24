@@ -27,7 +27,8 @@ export default async function handler(req, res) {
             const { data, error } = await supabase
                 .from('messages')
                 .select('*')
-                .or(`and(sender_id.eq.${user1},receiver_id.eq.${user2}),and(sender_id.eq.${user2},receiver_id.eq.${user1})`)
+                .or(`sender_id.eq.${user1},receiver_id.eq.${user1}`)
+                .or(`sender_id.eq.${user2},receiver_id.eq.${user2}`)
                 .order('created_at', { ascending: true });
 
             if (error) throw error;

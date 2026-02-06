@@ -46,6 +46,8 @@ export default async function handler(req, res) {
 
         if (bookingsError) throw bookingsError;
 
+        const clientsMap = new Map();
+
         bookings.forEach(b => {
             const email = b.client_email?.toLowerCase();
             if (!email) return;

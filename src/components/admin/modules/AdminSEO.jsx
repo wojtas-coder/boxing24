@@ -12,7 +12,7 @@ const AdminSEO = () => {
     }, []);
 
     const fetchSettings = async () => {
-        const { data } = await supabase.from('site_settings').select('*');
+        const { data } = await supabase.from('app_settings').select('*');
         if (data) {
             const settingsMap = {};
             data.forEach(item => settingsMap[item.key] = item.value);
@@ -32,7 +32,7 @@ const AdminSEO = () => {
             value: settings[key]
         }));
 
-        const { error } = await supabase.from('site_settings').upsert(updates);
+        const { error } = await supabase.from('app_settings').upsert(updates);
         if (error) alert("Błąd zapisu: " + error.message);
         setSaving(false);
     };

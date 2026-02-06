@@ -62,8 +62,10 @@ const MemberPage = () => {
     const [shareData, setShareData] = useState(null);
 
     // --- GAMIFICATION LOGIC (Derived) ---
-    // Simple logic: Each completed session = 100 XP.
-    // Level = floor(XP / 500) + 1.
+    // These defaults will be overwritten by API data
+    const [level, setLevel] = useState(1);
+    const [xp, setXp] = useState(0);
+    const [nextLevelXp, setNextLevelXp] = useState(500);
     // We calculate this from sessionHistory to keep it synced.
 
     // We need to access sessionHistory here, but it is defined below. 
@@ -122,31 +124,36 @@ const MemberPage = () => {
     // --- EFFECT: LOAD USER DATA FROM DB ---
     useEffect(() => {
         if (user) {
-            // 1. Parse Boxing Index Results
-            // Check if profile exists; if not, fallback to empty/defaults to prevent crash
-            const savedResults = profile?.boxing_index_results || {};
-            setStats({
-                strength: savedResults.categoryScores?.strength || 0,
-                knowledge: savedResults.categoryScores?.foundation || 0,
-                discipline: savedResults.categoryScores?.capacity || 0,
-                overall: savedResults.globalScore || 0
-            });
-
-            // 2. Load Plans (We can store this in a separate table later, for now we might still use localStorage or a JSON column in profile)
-            // For MVP: Let's keep Plans and History in localStorage OR create new tables. 
-            // The prompt asked for "results to database". Let's assume Profile stores the main Stats.
-            // We can add a 'data' column to profile for lightweight storage of plans/history if we don't make full tables yet.
-            // For now, I will KEEP localStorage for Plans/History to reduce risk of data loss during migration without full backend tables for them,
-            // BUT I will save the Fitness Test Results (Boxing Index) to Supabase permanently.
-
-            // Sync local storage plan data
-            const savedPlans = JSON.parse(localStorage.getItem('boxing24_my_plans') || '[]');
-            setMyPlans(savedPlans);
-
-            const savedHistory = JSON.parse(localStorage.getItem('boxing24_history') || '[]');
-            setSessionHistory(savedHistory);
+            fetchClientData();
         }
     }, [user, profile]);
+
+    const fetchClientData = async () => {
+        if (!user) return;
+        try {
+            const res = await fetch(`/api/client-data?userId=${user.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                // Map active plans to ID array for compatibility
+                setMyPlans(data.plans.map(p => p.plan_id));
+
+                // Map session history
+                setSessionHistory(data.history.map(s => ({
+                    ...s.stats, // spread stats JSON
+                    id: s.id,
+                    date: new Date(s.date).toLocaleDateString(),
+                    title: s.title,
+                    xp: s.xp_earned
+                })));
+
+                // Update Gamification
+                setLevel(data.gamification?.level || 1);
+                setXp(data.gamification?.currentLevelXp || 0);
+            }
+        } catch (e) {
+            console.error("Failed to fetch client data", e);
+        }
+    };
 
     // --- EFFECT: LOAD WORKOUTS ON TAB CHANGE ---
     useEffect(() => {
@@ -253,18 +260,40 @@ const MemberPage = () => {
         setCompletedUnits(newCompleted);
         localStorage.setItem('boxing24_completed_units', JSON.stringify(newCompleted));
 
-        // 2. Save history entry (Local Logic for now, could be DB)
+        // 2. Save history entry to DB
         const unitTitle = schedule.flatMap(w => w.units).find(u => u.id === unitId)?.title || "Trening";
+
+        // Optimistic Update
         const newEntry = {
             id: Date.now(),
             date: new Date().toLocaleDateString(),
             title: unitTitle,
-            wellness: { ...wellnessData },
-            stats: stats
+            stats: { wellness: { ...wellnessData }, stats: stats },
+            xp: 100
         };
-        const newHistory = [newEntry, ...sessionHistory];
-        setSessionHistory(newHistory);
-        localStorage.setItem('boxing24_history', JSON.stringify(newHistory));
+        setSessionHistory([newEntry, ...sessionHistory]);
+
+        // API Call
+        if (user) {
+            fetch('/api/client-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'complete_session',
+                    userId: user.id,
+                    payload: {
+                        title: unitTitle,
+                        stats: { wellness: wellnessData, ...stats },
+                        xp: 100,
+                        planId: primaryPlanId,
+                        unitId: unitId
+                    }
+                })
+            }).then(() => fetchClientData()); // Refresh to get precise server state
+        }
+
+        setViewUnitId(null);
+        setActiveTab('dashboard'); // Back to dashboard
 
         setViewUnitId(null);
         setActiveTab('dashboard'); // Back to dashboard
@@ -390,12 +419,7 @@ const MemberPage = () => {
     };
 
     // --- DERIVED STATE (Moved here to have access to sessionHistory) ---
-    const totalXp = (sessionHistory || []).length * 100;
-    // Level formula: Level 1 (0-499), Level 2 (500-999), etc.
-    const level = Math.floor(totalXp / 500) + 1;
-    const currentLevelBaseXp = (level - 1) * 500;
-    const nextLevelXp = 500; // XP needed FOR next level (relative)
-    const xp = totalXp - currentLevelBaseXp; // Current relative XP
+    // --- DERIVED STATE REMOVED (Handled by API State) ---
 
     return (
         <div className="pt-28 pb-20 min-h-screen bg-[#050505] text-white selection:bg-boxing-green selection:text-white font-sans">
