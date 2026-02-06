@@ -23,7 +23,18 @@ export default async function handler(req, res) {
     }
 
     try {
-        const supabase = supabaseAdmin;
+        // Dynamic Init with Auth Header
+        const supabaseUrl = process.env.VITE_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+        const options = {};
+
+        if (req.headers.authorization) {
+            options.global = {
+                headers: { Authorization: req.headers.authorization }
+            };
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey, options);
 
         // 1. Get unique clients from bookings
         const { data: bookings, error: bookingsError } = await supabase
