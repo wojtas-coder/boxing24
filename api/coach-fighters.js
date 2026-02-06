@@ -4,7 +4,7 @@ import { corsHeaders } from './_utils.js';
 
 const supabaseAdmin = createClient(
     process.env.VITE_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
 );
 
 export default async function handler(req, res) {
