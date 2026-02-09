@@ -1,0 +1,159 @@
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { Loader2 } from 'lucide-react';
+
+const AuthContext = createContext({});
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+    const [session, setSession] = useState(null);
+    const [user, setUser] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchProfile = async (userId, email = null, userMeta = null) => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (data) {
+                console.log("Profile loaded:", data); // DEBUG
+                setProfile(data);
+            } else {
+                console.warn("Profile missing. Attempting to create one...");
+                if (email) {
+                    const newProfile = {
+                        id: userId,
+                        email: email,
+                        full_name: userMeta?.full_name || email?.split('@')[0],
+                        role: 'client',
+                        membership_status: 'Free'
+                    };
+
+                    const { error: insertError } = await supabase
+                        .from('profiles')
+                        .insert([newProfile]);
+
+                    if (!insertError) {
+                        setProfile(newProfile);
+                    } else {
+                        console.error("Failed to create profile manualy:", insertError);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Unexpected error fetching profile:", err);
+        }
+    };
+
+    useEffect(() => {
+        let mounted = true;
+
+        const initAuth = async () => {
+            try {
+                // Failsafe timeout
+                const timeoutId = setTimeout(() => {
+                    if (mounted && loading) {
+                        console.warn("Auth stuck, forcing load");
+                        setLoading(false);
+                    }
+                }, 5000);
+
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) throw error;
+
+                if (mounted) {
+                    setSession(session);
+                    setUser(session?.user ?? null);
+                    if (session?.user) {
+                        await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
+                    }
+                }
+                clearTimeout(timeoutId);
+            } catch (err) {
+                console.error("Auth Init Error:", err);
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+
+        initAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!mounted) return;
+            console.log("Auth Event:", event);
+            setSession(session);
+            setUser(session?.user ?? null);
+
+            if (session?.user) {
+                await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
+            } else {
+                setProfile(null);
+            }
+            setLoading(false);
+        });
+
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    const value = {
+        session,
+        user,
+        profile,
+        loading,
+        isAdmin: profile?.role === 'admin' || false,
+        isTrainer: profile?.role === 'trainer' || false,
+        userRole: profile?.role || 'client',
+        membershipStatus: profile?.membership_status || 'Free',
+        login: async (email, password) => {
+            // Timeout promise
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Request timout')), 10000));
+
+            const request = supabase.auth.signInWithPassword({ email, password });
+
+            const { error } = await Promise.race([request, timeout]);
+            if (error) throw error;
+        },
+        signUp: async (email, password, fullName) => {
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Request timout')), 10000));
+
+            const request = supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { full_name: fullName }
+                }
+            });
+
+            const { data, error } = await Promise.race([request, timeout]);
+            if (error) throw error;
+            return data;
+        },
+        logout: async () => {
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+        }
+    };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {loading ? (
+                <div className="min-h-screen bg-black flex flex-col items-center justify-center text-boxing-green">
+                    <Loader2 className="w-12 h-12 animate-spin mb-4" />
+                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Ładowanie systemu...</p>
+                </div>
+            ) : children}
+        </AuthContext.Provider>
+    );
+};
