@@ -123,6 +123,34 @@ export const AuthProvider = ({ children }) => {
             const { error } = await Promise.race([request, timeout]);
             if (error) throw error;
         },
+        loginSocial: async (provider) => {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: provider,
+                options: {
+                    redirectTo: `${window.location.origin}/members`, // Auto-redirect to members area
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                },
+            });
+            if (error) throw error;
+            return data;
+        },
+        sendMagicLink: async (email) => {
+            const { data, error } = await supabase.auth.signInWithOtp({
+                email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/members`,
+                    shouldCreateUser: true, // Allow registration via magic link
+                    data: {
+                        full_name: email.split('@')[0], // Fallback name
+                    }
+                },
+            });
+            if (error) throw error;
+            return data;
+        },
         signUp: async (email, password, fullName) => {
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Request timout')), 10000));
 
