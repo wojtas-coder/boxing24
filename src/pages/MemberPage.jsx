@@ -55,7 +55,7 @@ const SurveySlider = ({ icon: Icon, label, value, onChange }) => (
 
 
 const MemberPage = () => {
-    const { user, profile, loading: authLoading } = useAuth();
+    const { user, profile, session, loading: authLoading } = useAuth();
     // Local UI states
     const [activeTab, setActiveTab] = useState('dashboard');
     const [activeFilter, setActiveFilter] = useState('all');
@@ -129,15 +129,19 @@ const MemberPage = () => {
 
     // --- EFFECT: LOAD USER DATA FROM DB ---
     useEffect(() => {
-        if (user) {
+        if (user && session) {
             fetchClientData();
         }
-    }, [user, profile]);
+    }, [user, session]); // Dependency on session for token
 
     const fetchClientData = async () => {
-        if (!user) return;
+        if (!user || !session) return;
         try {
-            const res = await fetch(`/api/client-data?userId=${user.id}`);
+            const res = await fetch(`/api/client-data`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 // Map active plans to ID array for compatibility
@@ -186,15 +190,20 @@ const MemberPage = () => {
 
     // --- EFFECT: LOAD WORKOUTS ON TAB CHANGE ---
     useEffect(() => {
-        if (activeTab === 'my_workouts' && user?.email) {
+        if (activeTab === 'my_workouts' && user?.email && session) {
             fetchWorkouts();
         }
-    }, [activeTab, user]);
+    }, [activeTab, user, session]);
 
     const fetchWorkouts = async () => {
         setLoadingWorkouts(true);
         try {
-            const res = await fetch(`/api/client-bookings?email=${encodeURIComponent(user.email.toLowerCase())}`);
+            // No params needed, token identifies user/mail
+            const res = await fetch(`/api/client-bookings`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
             const data = await res.json();
             if (res.ok) {
                 setWorkouts(data);
@@ -272,17 +281,20 @@ const MemberPage = () => {
     // --- ACTIONS ---
 
     const addToMyPlans = async (planId) => {
-        if (!user) return;
+        if (!user || !session) return;
         try {
             // Optimistic Update
             setMyPlans(prev => [...prev, planId]);
 
             const res = await fetch('/api/client-data', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({
                     action: 'add_plan',
-                    userId: user.id,
+                    // userId: user.id, // Removed, handled by token
                     payload: { planId }
                 })
             });
@@ -300,7 +312,7 @@ const MemberPage = () => {
     const removeFromPlans = async (e, planId) => {
         e.stopPropagation();
         if (!confirm('Czy na pewno chcesz porzucić ten plan? Postęp może zostać utracony.')) return;
-        if (!user) return;
+        if (!user || !session) return;
 
         try {
             // Optimistic
@@ -308,10 +320,13 @@ const MemberPage = () => {
 
             const res = await fetch('/api/client-data', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({
                     action: 'remove_plan',
-                    userId: user.id,
+                    // userId: user.id,
                     payload: { planId }
                 })
             });
@@ -358,13 +373,16 @@ const MemberPage = () => {
         setSessionHistory([newEntry, ...sessionHistory]);
 
         // API Call
-        if (user) {
+        if (user && session) {
             fetch('/api/client-data', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({
                     action: 'complete_session',
-                    userId: user.id,
+                    // userId: user.id,
                     payload: {
                         title: unitTitle,
                         stats: { wellness: wellnessData, ...stats },
@@ -510,22 +528,22 @@ const MemberPage = () => {
             <div className="max-w-6xl mx-auto px-4 md:px-8">
 
                 {/* --- HEADER: PROFILE --- */}
-                <div className="flex flex-col md:flex-row items-end justify-between gap-8 mb-16 pb-8 border-b border-white/5 bg-gradient-to-r from-zinc-900/20 to-transparent p-8 rounded-3xl backdrop-blur-sm">
-                    <div className="flex items-center gap-8">
+                <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8 mb-16 pb-8 border-b border-white/5 bg-gradient-to-r from-zinc-900/20 to-transparent p-6 md:p-8 rounded-3xl backdrop-blur-sm">
+                    <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 text-center md:text-left">
                         {/* Avatar Container */}
                         <div className="relative group">
                             <div className="absolute inset-0 bg-boxing-green/20 blur-xl rounded-full opacity-0 group-hover:opacity-40 transition-opacity duration-500"></div>
                             <div className="w-24 h-24 rounded-3xl bg-black border border-white/10 flex items-center justify-center text-white font-thin text-4xl shadow-2xl relative z-10 overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-                                W
+                                {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'M'}
                             </div>
                         </div>
 
                         <div>
-                            <h1 className="text-5xl font-thin text-white tracking-tighter mb-1 leading-none">
+                            <h1 className="text-3xl md:text-5xl font-thin text-white tracking-tighter mb-1 leading-none">
                                 {profile?.full_name || user?.email?.split('@')[0] || 'Member'}
                             </h1>
-                            <div className="flex items-center gap-3 mb-6">
+                            <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
                                 <div className="h-px w-8 bg-boxing-green/50"></div>
                                 <div className="text-[10px] font-black text-boxing-green uppercase tracking-[0.3em] drop-shadow-[0_0_5px_rgba(0,255,0,0.5)]">Elite Member</div>
                             </div>
@@ -535,26 +553,28 @@ const MemberPage = () => {
                         </div>
                     </div>
 
-                    {/* TABS (Minimalist Pill) */}
-                    <div className="bg-zinc-900/50 p-1 rounded-2xl flex border border-white/5">
-                        {[
-                            { id: 'dashboard', label: 'Pulpit' },
-                            { id: 'my_workouts', label: 'Moje Treningi' },
-                            { id: 'messages', label: 'Wiadomości' },
-                            { id: 'my_plans', label: 'Plany' },
-                            { id: 'library', label: 'Biblioteka' },
-                            { id: 'notebook', label: 'Dziennik' },
-                        ].map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`px-6 py-2.5 rounded-xl text-xs font-medium uppercase tracking-wider transition-all
-                                    ${activeTab === tab.id ? 'bg-white text-black shadow-none' : 'text-gray-500 hover:text-white'}
-                                `}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                    {/* TABS (Scrollable on Mobile) */}
+                    <div className="w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0">
+                        <div className="bg-zinc-900/50 p-1 rounded-2xl flex border border-white/5 min-w-max">
+                            {[
+                                { id: 'dashboard', label: 'Pulpit' },
+                                { id: 'my_workouts', label: 'Moje Treningi' },
+                                { id: 'messages', label: 'Wiadomości' },
+                                { id: 'my_plans', label: 'Plany' },
+                                { id: 'library', label: 'Biblioteka' },
+                                { id: 'notebook', label: 'Dziennik' },
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`px-6 py-2.5 rounded-xl text-xs font-medium uppercase tracking-wider transition-all whitespace-nowrap
+                                        ${activeTab === tab.id ? 'bg-white text-black shadow-none' : 'text-gray-500 hover:text-white'}
+                                    `}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -838,10 +858,334 @@ const MemberPage = () => {
 
 
                 {/* REST OF TABS (Library, Notebook, Plans) - Keeping existing logic but simplified in view for brevity */}
-                {(activeTab === 'library' || activeTab === 'notebook' || activeTab === 'my_plans') && (
-                    <div className="text-center py-20 text-zinc-500">
-                        <p>Sekcja w trakcie przebudowy...</p>
-                        <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-boxing-neon hover:text-white underline">Wróć do Pulpitu</button>
+
+                {/* 2. MY PLANS */}
+                {activeTab === 'my_plans' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
+                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-8">
+                            Moje <span className="text-boxing-neon">Plany</span>
+                        </h2>
+
+                        {myPlans.length > 0 ? (
+                            <div className="space-y-6">
+                                {myPlans.map(planId => {
+                                    const plan = allPlans.find(p => p.id == planId);
+                                    if (!plan) return null;
+                                    return (
+                                        <div key={plan.id} className="bg-[#111] rounded-3xl p-6 border border-white/5 flex flex-col md:flex-row gap-6 relative overflow-hidden group">
+                                            <div className="absolute inset-0 bg-gradient-to-r from-boxing-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+                                            <div className="w-full md:w-48 h-32 md:h-auto shrink-0 rounded-2xl overflow-hidden relative">
+                                                <img src={plan.image} alt={plan.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <div className="text-[10px] bg-white/10 text-white px-2 py-1 rounded inline-block mb-2 uppercase font-bold tracking-wider">{plan.level}</div>
+                                                        <h3 className="text-2xl font-black text-white uppercase italic mb-1">{plan.title}</h3>
+                                                        <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold">{plan.subtitle}</p>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => { setViewingPlanId(plan.id); setActiveTab('notebook'); }}
+                                                            className="p-3 bg-white text-black rounded-xl hover:bg-zinc-200 transition-colors"
+                                                            title="Otwórz Plan"
+                                                        >
+                                                            <BookOpen className="w-5 h-5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => removeFromPlans(e, plan.id)}
+                                                            className="p-3 bg-zinc-900 text-zinc-500 rounded-xl hover:bg-red-500/20 hover:text-red-500 transition-colors"
+                                                            title="Usuń Plan"
+                                                        >
+                                                            <X className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-6 flex items-center gap-4 text-xs font-mono text-zinc-400">
+                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {plan.duration}</span>
+                                                    <span>•</span>
+                                                    <span>{plan.schedule?.length || 0} Tygodni</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-20 border border-dashed border-zinc-800 rounded-3xl">
+                                <p className="text-zinc-500 text-sm mb-4">Nie masz aktywnych planów treningowych.</p>
+                                <button onClick={() => setActiveTab('library')} className="text-boxing-neon hover:text-white underline uppercase font-bold text-xs tracking-widest">
+                                    Przejdź do Biblioteki
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 3. LIBRARY */}
+                {activeTab === 'library' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">
+                                Biblioteka <span className="text-boxing-green">Programów</span>
+                            </h2>
+                            <p className="text-gray-400 max-w-xl mx-auto text-sm">
+                                Wybierz ścieżkę rozwoju dopasowaną do Twojego celu. Od fundamentów techniki po elitarną siłę eksplozywną.
+                            </p>
+
+                            {/* Filter Pills */}
+                            <div className="flex flex-wrap justify-center gap-2 mt-8">
+                                {[
+                                    { id: 'all', label: 'Wszystkie' },
+                                    { id: 'Basic', label: 'Początkujący' },
+                                    { id: 'Pro', label: 'Zaawansowany' },
+                                    { id: 'Elite', label: 'Elita' }
+                                ].map(filter => (
+                                    <button
+                                        key={filter.id}
+                                        onClick={() => setActiveFilter(filter.id)}
+                                        className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all
+                                            ${activeFilter === filter.id
+                                                ? 'bg-white text-black border-white'
+                                                : 'bg-transparent text-zinc-500 border-zinc-800 hover:border-zinc-600'}
+                                        `}
+                                    >
+                                        {filter.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {allPlans
+                                .filter(p => activeFilter === 'all' || p.level === activeFilter)
+                                .map(plan => {
+                                    const isAdded = myPlans.includes(plan.id);
+                                    return (
+                                        <div key={plan.id} className="group bg-[#111] rounded-3xl overflow-hidden border border-white/5 hover:border-boxing-green/50 transition-all flex flex-col relative h-full">
+                                            {plan.locked && (
+                                                <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center backdrop-blur-[2px]">
+                                                    <div className="flex items-center gap-2 text-white/50 font-bold uppercase tracking-widest text-xs">
+                                                        <Lock className="w-4 h-4" /> Dostęp Zablokowany
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="h-48 overflow-hidden relative">
+                                                <div className="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent z-10"></div>
+                                                <img
+                                                    src={plan.image || "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?q=80&w=2000&auto=format&fit=crop"}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-60 group-hover:opacity-80"
+                                                    alt={plan.title}
+                                                />
+                                                <div className="absolute top-4 right-4 z-20">
+                                                    <span className={`px-3 py-1 rounded backdrop-blur-md text-[10px] font-bold uppercase tracking-widest border ${plan.level === 'Elite' ? 'bg-amber-500/20 border-amber-500/50 text-amber-500' :
+                                                        plan.level === 'Pro' ? 'bg-blue-500/20 border-blue-500/50 text-blue-500' :
+                                                            'bg-white/20 border-white/50 text-white'
+                                                        }`}>
+                                                        {plan.level}
+                                                    </span>
+                                                </div>
+                                                <div className="absolute bottom-4 left-4 z-20">
+                                                    <h3 className="text-2xl font-black text-white uppercase italic leading-none">{plan.title}</h3>
+                                                    <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mt-1">{plan.subtitle}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 flex-1 flex flex-col">
+                                                <p className="text-zinc-500 text-xs leading-relaxed mb-6 whitespace-pre-line">
+                                                    {plan.description}
+                                                </p>
+
+                                                <div className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
+                                                    <div className="text-xs font-mono text-zinc-400">
+                                                        <Clock className="w-3 h-3 inline mr-2 text-boxing-green" />
+                                                        {plan.duration}
+                                                    </div>
+
+                                                    {isAdded ? (
+                                                        <button disabled className="px-4 py-2 bg-zinc-800 text-zinc-500 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-default flex items-center gap-2">
+                                                            <CheckCircle className="w-3 h-3" /> Dodano
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => addToMyPlans(plan.id)}
+                                                            disabled={plan.locked}
+                                                            className="px-4 py-2 bg-white text-black hover:bg-boxing-green transition-colors rounded-lg text-[10px] font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            Rozpocznij
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    </div>
+                )}
+
+                {/* 4. NOTEBOOK (Workout View) */}
+                {activeTab === 'notebook' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
+                        {!currentPlan ? (
+                            <div className="text-center py-20">
+                                <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <BookOpen className="w-8 h-8 text-zinc-700" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">Dziennik jest pusty</h3>
+                                <p className="text-zinc-500 text-sm mb-6">Wybierz plan treningowy, aby zobaczyć swoje jednostki.</p>
+                                <button onClick={() => setActiveTab('library')} className="px-8 py-3 bg-white text-black rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-zinc-200">
+                                    Otwórz Bibliotekę
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                                {/* WEEK SELECTOR (Left) */}
+                                <div className="lg:col-span-1 space-y-8">
+                                    <div>
+                                        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Twój Plan</h3>
+                                        <div className="bg-[#111] p-4 rounded-xl border border-white/5">
+                                            <div className="text-lg font-black text-white uppercase italic">{currentPlan.title}</div>
+                                            <div className="text-[10px] text-boxing-green font-bold uppercase tracking-widest mt-1">{currentPlan.duration}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Harmonogram</h3>
+                                        {schedule.map((week) => (
+                                            <div key={week.id} className="space-y-1">
+                                                <div className="text-[10px] uppercase font-bold text-zinc-600 pl-2 mt-4 mb-2">{week.title}</div>
+                                                {week.units.map((unit) => {
+                                                    const status = getUnitStatus(unit.id);
+                                                    const isSelected = viewUnitId === unit.id;
+
+                                                    return (
+                                                        <button
+                                                            key={unit.id}
+                                                            onClick={() => setViewUnitId(unit.id)}
+                                                            className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all border
+                                                                ${isSelected ? 'bg-zinc-800 border-zinc-700' : 'hover:bg-zinc-900 border-transparent'}
+                                                                ${status === 'LOCKED' ? 'opacity-50' : 'opacity-100'}
+                                                            `}
+                                                        >
+                                                            <div className={`w-2 h-2 rounded-full 
+                                                                ${status === 'DONE' ? 'bg-boxing-green' : status === 'ACTIVE' ? 'bg-white' : 'bg-zinc-700'}
+                                                            `}></div>
+                                                            <div className="flex-1">
+                                                                <div className={`text-xs font-bold uppercase tracking-wide
+                                                                    ${isSelected ? 'text-white' : 'text-zinc-400'}
+                                                                `}>
+                                                                    {unit.title}
+                                                                </div>
+                                                                <div className="text-[9px] text-zinc-600 font-bold uppercase">{unit.type} BLOCK</div>
+                                                            </div>
+                                                            {status === 'DONE' && <CheckCircle className="w-3 h-3 text-boxing-green" />}
+                                                            {status === 'LOCKED' && <Lock className="w-3 h-3 text-zinc-700" />}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* UNIT VIEW (Center/Right) */}
+                                <div className="lg:col-span-3">
+                                    {schedule.flatMap(w => w.units).find(u => u.id === viewUnitId) ? (
+                                        (() => {
+                                            const unit = schedule.flatMap(w => w.units).find(u => u.id === viewUnitId);
+                                            const isDone = completedUnits.includes(unit.id);
+
+                                            return (
+                                                <div className="bg-[#111] rounded-3xl overflow-hidden border border-white/5 relative min-h-[600px]">
+                                                    {/* Header */}
+                                                    <div className="p-8 border-b border-white/5 bg-black/40 flex justify-between items-start">
+                                                        <div>
+                                                            <div className="text-[10px] font-bold text-boxing-green uppercase tracking-[0.3em] mb-2">{currentPlan.title} • {unit.type} BLOCK</div>
+                                                            <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">{unit.title}</h2>
+                                                            <p className="text-zinc-500 text-sm mt-2">{unit.data.subtitle} • {unit.data.title}</p>
+                                                        </div>
+                                                        {isDone && (
+                                                            <div className="bg-boxing-green/10 text-boxing-green px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-boxing-green/20 flex items-center gap-2">
+                                                                <CheckCircle className="w-4 h-4" /> Ukończono
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="p-8 space-y-8">
+                                                        {/* TIPS */}
+                                                        {unit.data.tips && (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {unit.data.tips.map((tip, idx) => (
+                                                                    <div key={idx} className={`p-4 rounded-xl border text-xs font-medium leading-relaxed
+                                                                        ${tip.type === 'coach' ? 'bg-blue-900/10 border-blue-500/20 text-blue-200' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}
+                                                                    `}>
+                                                                        <span className="block font-bold uppercase mb-1 opacity-70">{tip.type === 'coach' ? 'Trener' : 'Info'}</span>
+                                                                        {tip.text}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {/* SECTIONS */}
+                                                        {unit.data.sections.map(section => (
+                                                            <div key={section.id}>
+                                                                <div className={`flex items-center gap-3 mb-4 pb-2 border-b border-zinc-800 ${section.color.replace('border-', 'text-')}`}>
+                                                                    <div className={`w-3 h-3 rounded-sm ${section.color.replace('border-', 'bg-')}`}></div>
+                                                                    <h3 className="text-sm font-black uppercase tracking-widest text-white">{section.title}</h3>
+                                                                </div>
+
+                                                                <div className="space-y-1">
+                                                                    {section.rows.map(row => (
+                                                                        <div key={row.id} className="grid grid-cols-12 gap-4 py-3 px-4 hover:bg-white/5 rounded-lg transition-colors items-center group">
+                                                                            <div className="col-span-6 font-bold text-white text-sm">{row.exercise}</div>
+                                                                            <div className="col-span-2 text-zinc-400 text-xs text-center border-l border-zinc-800">{row.sets} <span className="text-[9px] uppercase opacity-50 block">Serie</span></div>
+                                                                            <div className="col-span-2 text-zinc-400 text-xs text-center border-l border-zinc-800">{row.reps} <span className="text-[9px] uppercase opacity-50 block">Powt.</span></div>
+                                                                            <div className="col-span-2 text-right">
+                                                                                {row.input ? (
+                                                                                    <div className="flex items-center justify-end gap-1">
+                                                                                        <input type="text" placeholder="KG" className="w-12 bg-black border border-zinc-700 rounded text-center text-xs py-1 text-white focus:border-boxing-green outline-none" />
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    row.rest && <span className="text-[10px] font-mono text-zinc-600 bg-zinc-900 px-2 py-1 rounded">{row.rest}</span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Footer Action */}
+                                                    <div className="p-8 border-t border-white/5 bg-black/40 flex justify-end sticky bottom-0 backdrop-blur-md">
+                                                        {isDone ? (
+                                                            <button disabled className="px-8 py-4 bg-zinc-800 text-zinc-500 rounded-xl font-black uppercase text-xs tracking-widest cursor-default">
+                                                                Trening Zaliczony
+                                                            </button>
+                                                        ) : (
+                                                            <button onClick={triggerFinish} className="px-8 py-4 bg-boxing-green text-black rounded-xl font-black uppercase text-xs tracking-widest hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(34,197,94,0.4)] flex items-center gap-2">
+                                                                <CheckCircle className="w-5 h-5" /> Oznacz jako Wykonany
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/10 min-h-[400px]">
+                                            <p className="uppercase font-bold tracking-widest text-xs mb-2">Wybierz jednostkę treningową</p>
+                                            <p className="text-[10px]">Kliknij na listę po lewej stronie, aby zobaczyć szczegóły.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -861,7 +1205,7 @@ const MemberPage = () => {
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-hidden relative">
+                        <div className="flex-1 overflow-y-auto relative">
                             <BookingCalendar
                                 calLink={import.meta.env.VITE_CAL_LINK_WOJCIECH || 'wojciech'}
                                 onBookingSuccess={() => {

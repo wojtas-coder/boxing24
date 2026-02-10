@@ -131,13 +131,13 @@ const Layout = () => {
                         className="fixed inset-0 z-40 bg-black pt-24 px-6 md:hidden"
                     >
                         <div className="flex flex-col space-y-6 text-center">
-                            <Link to="/membership" className="text-2xl font-bold uppercase tracking-widest text-[#22c55e]">Oferta Online</Link>
-                            <Link to="/calendar" className="text-2xl font-bold uppercase tracking-widest text-white">Kalendarz</Link>
-                            <Link to="/booking" className="text-2xl font-bold uppercase tracking-widest text-white">Treningi Personalne</Link>
-                            <Link to="/knowledge" className="text-2xl font-bold uppercase tracking-widest text-white">Wiedza</Link>
-                            <Link to="/boutique" className="text-2xl font-bold uppercase tracking-widest text-white">Sklep</Link>
-                            <Link to="/boutique" className="text-2xl font-bold uppercase tracking-widest text-white">Butik</Link>
-                            <Link to="/members" className="text-2xl font-bold uppercase tracking-widest text-[#22c55e]">Strefa Klienta</Link>
+                            <Link to="/news" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Aktualności</Link>
+                            <Link to="/membership" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-[#22c55e]">Oferta Online</Link>
+                            <Link to="/calendar" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Kalendarz</Link>
+                            <Link to="/booking" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Treningi Personalne</Link>
+                            <Link to="/knowledge" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Wiedza</Link>
+                            <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep Premium</Link>
+                            <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-[#22c55e]">Strefa Klienta</Link>
                             {user && (
                                 <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="text-lg font-bold uppercase tracking-widest text-red-500 mt-4">
                                     Wyloguj się

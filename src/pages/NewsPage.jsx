@@ -1,37 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Search, ChevronRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../lib/supabaseClient';
 import NewsCard from '../components/news/NewsCard';
 import NewsTicker from '../components/news/NewsTicker';
 import NewsSidebar from '../components/news/NewsSidebar';
-import { mockNews } from '../data/mockNews';
 import { articles } from '../data/articles';
-import fileNews from '../data/news.json';
-
 
 const NewsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    // Prioritize File News (Bot) -> Then Mock News
-    const [newsItems, setNewsItems] = useState([...fileNews, ...mockNews]);
-    const [loading, setLoading] = useState(false);
 
-    // Removed manual fetch to ensure JAMSTACK reliability
-    // Content is bundled at build time.
+    // Fetch News from Supabase
+    const { data: newsItems = [], isLoading } = useQuery({
+        queryKey: ['news'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('news')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
 
-    // Filter Logic if Search Term exists
+            if (error) throw error;
+
+            return data.map(item => ({
+                ...item,
+                excerpt: item.lead, // Map lead to excerpt for NewsCard
+                published_at: item.created_at,
+                author: item.author_name
+            }));
+        }
+    });
+
     const filteredNews = newsItems.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const displayItems = searchTerm ? filteredNews : newsItems.slice(0, 15);
+    const displayItems = searchTerm ? filteredNews : newsItems;
 
-    // Separate main featured article from the rest
-    const featuredNews = displayItems[0] || mockNews[0];
-
-    // Combine remaining News with selected Expert Articles
-    const remainingNews = displayItems.slice(1);
-
+    // Expert Articles Logic
     const keyArticles = articles
         .filter(a => ['psychology-flow', 'biomechanics-kinetic', 'recovery-sleep'].includes(a.id))
         .map(a => {
@@ -49,36 +57,51 @@ const NewsPage = () => {
                 ...a,
                 slug: a.id,
                 image_url: a.image,
-                published_at: new Date().toISOString(),
+                published_at: new Date().toISOString(), // Or keep fixed date
                 category: categoryMap[a.category] || a.category,
-                is_article: true
+                is_article: true,
+                excerpt: a.intro || a.content.substring(0, 100) + '...'
             };
         });
 
     // Create a mixed feed (alternating)
     const mixedFeed = [];
-    let nIdx = 0;
 
-    // Pattern: 2 News -> 1 Article -> repeat
-    if (keyArticles[0]) mixedFeed.push(keyArticles[0]);
-    if (remainingNews[0]) mixedFeed.push(remainingNews[0]);
-    if (remainingNews[1]) mixedFeed.push(remainingNews[1]);
-    if (keyArticles[1]) mixedFeed.push(keyArticles[1]);
-    if (remainingNews[2]) mixedFeed.push(remainingNews[2]);
-    if (remainingNews[3]) mixedFeed.push(remainingNews[3]);
-    if (keyArticles[2]) mixedFeed.push(keyArticles[2]);
+    // If we have news, prioritize them, but weave in articles
+    if (displayItems.length > 0) {
+        // First item is always the latest news
+        mixedFeed.push(displayItems[0]);
 
-    // Fill rest
-    while (nIdx < remainingNews.length) {
-        if (!mixedFeed.includes(remainingNews[nIdx])) {
-            mixedFeed.push(remainingNews[nIdx]);
+        let newsIndex = 1;
+        let articleIndex = 0;
+
+        // Pattern: 2 News, 1 Article, Repeat
+        while (newsIndex < displayItems.length || articleIndex < keyArticles.length) {
+            // Add up to 2 news items
+            if (newsIndex < displayItems.length) mixedFeed.push(displayItems[newsIndex++]);
+            if (newsIndex < displayItems.length) mixedFeed.push(displayItems[newsIndex++]);
+
+            // Add 1 article
+            if (articleIndex < keyArticles.length) {
+                // Ensure we don't duplicate if logic gets complex, here it's simple lists
+                mixedFeed.push(keyArticles[articleIndex++]);
+            }
         }
-        nIdx++;
+    } else {
+        // Fallback if no news (e.g. initial load or empty DB)
+        mixedFeed.push(...keyArticles);
     }
 
-    // Split for layout (Top Row vs Bottom Grid)
-    const secondaryNews = mixedFeed.slice(0, 2);
-    const gridNews = mixedFeed.slice(2);
+    // Featured logic
+    const featuredNews = mixedFeed[0] || {
+        title: "Ładowanie newsów...",
+        excerpt: "Pobieranie najnowszych informacji ze świata boksu.",
+        slug: "#",
+        image_url: "/api/placeholder/800/600"
+    };
+
+    const secondaryNews = mixedFeed.slice(1, 3);
+    const gridNews = mixedFeed.slice(3);
 
     return (
         <div className="min-h-screen bg-black text-white pt-[64px]">
@@ -110,73 +133,77 @@ const NewsPage = () => {
                     </div>
                 </div>
 
-                {/* Main Content Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-                    {/* Left Column (Content) - Spans 3 columns */}
-                    <div className="lg:col-span-3 space-y-8">
-
-                        {/* Hero Section: Bento Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto md:h-[500px]">
-                            {/* Main Feature */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="relative md:col-span-2 md:row-span-2 group overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer"
-                            >
-                                <Link to={`/news/${featuredNews.slug}`} className="absolute inset-0 z-20" aria-label={featuredNews.title} />
-                                <img
-                                    src={featuredNews.image_url}
-                                    alt={featuredNews.title}
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-60"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                                <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full">
-                                    <span className="bg-red-600 text-white text-xs font-bold uppercase tracking-widest px-2 py-1 mb-3 inline-block">
-                                        Temat Dnia
-                                    </span>
-                                    <h2 className="text-2xl md:text-4xl font-black text-white mb-2 leading-none group-hover:text-red-500 transition-colors">
-                                        {featuredNews.title}
-                                    </h2>
-                                    <p className="text-zinc-300 text-sm md:text-base line-clamp-2 max-w-2xl">
-                                        {featuredNews.excerpt}
-                                    </p>
-                                </div>
-                            </motion.div>
-                        </div>
-
-                        {/* Secondary Stories Row */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {secondaryNews.map((news, idx) => (
-                                <NewsCard key={news.id || news.slug} news={news} index={idx} />
-                            ))}
-                        </div>
-
-                        {/* Latest News Header */}
-                        <div className="flex items-center justify-between border-l-4 border-red-600 pl-4 mt-12 mb-6">
-                            <h3 className="text-xl font-bold uppercase tracking-wider text-white">
-                                Najnowsze Doniesienia
-                            </h3>
-                            <button className="text-xs text-zinc-500 hover:text-white uppercase font-bold flex items-center gap-1 transition-colors">
-                                Zobacz Archiwum <ChevronRight className="w-3 h-3" />
-                            </button>
-                        </div>
-
-                        {/* Standard Grid for the rest */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {gridNews.map((news, idx) => (
-                                <NewsCard key={news.id || news.slug} news={news} index={idx + 2} />
-                            ))}
-                        </div>
-
+                {isLoading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
                     </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-                    {/* Right Column (Sidebar) - Spans 1 column */}
-                    <div className="lg:col-span-1 border-l border-zinc-800 lg:pl-8">
-                        <NewsSidebar />
+                        {/* Left Column (Content) - Spans 3 columns */}
+                        <div className="lg:col-span-3 space-y-8">
+
+                            {/* Hero Section: Bento Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto md:h-[500px]">
+                                {/* Main Feature */}
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="relative md:col-span-2 md:row-span-2 group overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer"
+                                >
+                                    <Link to={`/news/${featuredNews.slug}`} className="absolute inset-0 z-20" aria-label={featuredNews.title} />
+                                    <img
+                                        src={featuredNews.image_url}
+                                        alt={featuredNews.title}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-60"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                                    <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full">
+                                        <span className="bg-red-600 text-white text-xs font-bold uppercase tracking-widest px-2 py-1 mb-3 inline-block">
+                                            {featuredNews.is_article ? 'Wiedza' : 'Temat Dnia'}
+                                        </span>
+                                        <h2 className="text-2xl md:text-4xl font-black text-white mb-2 leading-none group-hover:text-red-500 transition-colors">
+                                            {featuredNews.title}
+                                        </h2>
+                                        <p className="text-zinc-300 text-sm md:text-base line-clamp-2 max-w-2xl">
+                                            {featuredNews.excerpt}
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            </div>
+
+                            {/* Secondary Stories Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {secondaryNews.map((news, idx) => (
+                                    <NewsCard key={news.id || news.slug + idx} news={news} index={idx} />
+                                ))}
+                            </div>
+
+                            {/* Latest News Header */}
+                            <div className="flex items-center justify-between border-l-4 border-red-600 pl-4 mt-12 mb-6">
+                                <h3 className="text-xl font-bold uppercase tracking-wider text-white">
+                                    Najnowsze Doniesienia
+                                </h3>
+                                <button className="text-xs text-zinc-500 hover:text-white uppercase font-bold flex items-center gap-1 transition-colors">
+                                    Zobacz Archiwum <ChevronRight className="w-3 h-3" />
+                                </button>
+                            </div>
+
+                            {/* Standard Grid for the rest */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {gridNews.map((news, idx) => (
+                                    <NewsCard key={news.id || news.slug + idx} news={news} index={idx + 2} />
+                                ))}
+                            </div>
+
+                        </div>
+
+                        {/* Right Column (Sidebar) - Spans 1 column */}
+                        <div className="lg:col-span-1 border-l border-zinc-800 lg:pl-8">
+                            <NewsSidebar />
+                        </div>
                     </div>
-
-                </div>
+                )}
 
                 {/* Footer Ad Banner */}
                 <div className="mt-16 bg-zinc-900 border border-zinc-800 p-8 text-center">

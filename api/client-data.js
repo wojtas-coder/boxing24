@@ -1,4 +1,4 @@
-import { getSupabase, corsHeaders } from './_utils.js';
+import { getSupabase, corsHeaders, validateSession } from './_utils.js';
 
 export default async function handler(req, res) {
     if (req.method === 'OPTIONS') {
@@ -6,15 +6,21 @@ export default async function handler(req, res) {
     }
 
     const supabase = getSupabase();
+    let user;
+
+    try {
+        user = await validateSession(req);
+    } catch (err) {
+        return res.status(401).json({ error: 'Unauthorized: ' + err.message }, { headers: corsHeaders });
+    }
+
+    const userId = user.id; // Securely obtained from session
 
     // GET: Fetch User Data (Plans & History)
     if (req.method === 'GET') {
-        const { userId } = req.query;
-        if (!userId) return res.status(400).json({ error: 'Missing userId' }, { headers: corsHeaders });
-
         try {
             // Parallel Fetch
-            const plansPromise = supabase.from('user_plans').select('*').eq('user_id', userId).eq('active', true);
+            constplansPromise = supabase.from('user_plans').select('*').eq('user_id', userId).eq('active', true);
             const sessionsPromise = supabase.from('user_sessions').select('*').eq('user_id', userId).order('date', { ascending: false });
 
             const [plansRes, sessionsRes] = await Promise.all([plansPromise, sessionsPromise]);
@@ -48,10 +54,10 @@ export default async function handler(req, res) {
 
     // POST: Save Session or Update Plan
     if (req.method === 'POST') {
-        const { action, userId, payload } = req.body;
+        const { action, payload } = req.body;
         // action: 'complete_session' | 'update_plan' | 'join_plan'
 
-        if (!userId || !action) return res.status(400).json({ error: 'Missing fields' }, { headers: corsHeaders });
+        if (!action) return res.status(400).json({ error: 'Missing fields' }, { headers: corsHeaders });
 
         try {
             if (action === 'complete_session') {
@@ -89,21 +95,6 @@ export default async function handler(req, res) {
 
             if (action === 'join_plan' || action === 'add_plan') {
                 // payload: { planId }
-                // Check if exists first to avoid duplicate key error if we didn't use ON CONFLICT
-                // Actually, let's just insert or update active=true
-                const { error } = await supabase.from('user_plans').upsert({
-                    user_id: userId,
-                    plan_id: payload.planId,
-                    active: true,
-                    // Preserve progress if re-adding? Ideally yes, but upsert with just these fields might overwrite progress if we aren't careful.
-                    // Let's doing a check first is safer for MVP, or just insert and ignore conflict?
-                    // Safe approach:
-                }, { onConflict: 'user_id, plan_id' });
-
-                // Better approach for upsert without wiping progress:
-                // We actually want to INSERT if new, or UPDATE active=true if exists.
-                // Supabase upsert overwrites.
-                // Let's try simple insert, if error code 23505 (unique violation), then update.
 
                 const { error: insertError } = await supabase.from('user_plans').insert({
                     user_id: userId,

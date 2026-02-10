@@ -10,7 +10,7 @@ const BookingPage = () => {
 
     // --- VIEW: COACH SELECTION ---
     if (step === 'coach_selection') return (
-        <div className="min-h-screen bg-black pt-32 pb-20 px-4">
+        <div className="min-h-screen bg-black pt-24 md:pt-32 pb-20 px-4">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16 relative">
                     {/* HERO SECTION - UNDERGROUND VIBE */}
@@ -96,7 +96,7 @@ const BookingPage = () => {
 
     // --- VIEW: CALENDAR ---
     if (step === 'calendar') return (
-        <div className="min-h-screen bg-black pt-32 pb-20 px-4">
+        <div className="min-h-screen bg-black pt-24 md:pt-32 pb-20 px-4">
             <div className="max-w-6xl mx-auto">
                 <button
                     onClick={() => setStep('coach_selection')}

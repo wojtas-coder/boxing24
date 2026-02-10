@@ -40,10 +40,10 @@ const HomePage = () => {
             <TickerTape />
 
             {/* 3. METHODOLOGY SECTION */}
-            <section className="py-32 px-4 relative overflow-hidden">
+            <section className="py-20 md:py-32 px-4 relative overflow-hidden">
                 <div className="absolute inset-0 bg-dotted-pattern opacity-10 pointer-events-none" />
 
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-20 items-center">
                     <div>
                         <span className="text-boxing-green font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Filozofia B24</span>
                         <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase mb-8 leading-none">
@@ -85,7 +85,7 @@ const HomePage = () => {
             </section>
 
             {/* 4. CALL TO ACTION */}
-            <section className="py-32 px-4 border-t border-white/5 bg-[#050505] text-center">
+            <section className="py-20 md:py-32 px-4 border-t border-white/5 bg-[#050505] text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-8 text-stroke-white opacity-20">
                         READY TO FIGHT?

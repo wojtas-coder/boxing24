@@ -16,3 +16,15 @@ export const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+export const validateSession = async (req) => {
+    const supabase = getSupabase();
+    const authHeader = req.headers.authorization;
+    if (!authHeader) throw new Error('Missing Authorization header');
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) throw new Error('Invalid or expired token');
+    return user;
+};

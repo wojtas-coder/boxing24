@@ -1,76 +1,56 @@
-
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
-import { mockNews } from '../data/mockNews';
-import { articles } from '../data/articles';
 import { supabase } from '../lib/supabaseClient';
-
+import { articles } from '../data/articles';
 
 const NewsArticlePage = () => {
     const { slug } = useParams();
-    const [article, setArticle] = useState(null);
-    const [loading, setLoading] = useState(true);
 
-    React.useEffect(() => {
-        const fetchArticle = async () => {
-            setLoading(true);
-            try {
-                let found = null;
+    const { data: article, isLoading, isError } = useQuery({
+        queryKey: ['article', slug],
+        queryFn: async () => {
+            // 1. Try fetching from Supabase
+            const { data, error } = await supabase
+                .from('news')
+                .select('*')
+                .eq('slug', slug)
+                .single();
 
-                // 1. Check Local File (Bot Data) - DYNAMIC FETCH
-                try {
-                    const response = await fetch('/news.json');
-                    const fileNews = await response.json();
-                    if (Array.isArray(fileNews)) {
-                        found = fileNews.find(item => item.slug === slug);
-                    }
-                } catch (e) {
-                    console.warn("Could not fetch news.json", e);
-                }
+            if (data) return data;
 
-                // 2. Fallback: Expert Articles (Static Data)
-                if (!found) {
-                    const foundArticle = articles.find(a => a.id === slug);
-                    if (foundArticle) {
-                        found = {
-                            ...foundArticle,
-                            slug: foundArticle.id,
-                            image_url: foundArticle.image,
-                            published_at: new Date().toISOString(),
-                            content: foundArticle.freeContent || foundArticle.content,
-                            category: foundArticle.category || 'Wiedza Ekspercka',
-                            author: foundArticle.author || 'Ekspert B24'
-                        };
-                    }
-                }
-
-                // 3. Fallback: Mock News
-                if (!found) {
-                    found = mockNews.find(item => item.slug === slug);
-                }
-
-                setArticle(found);
-
-                // VIEW TRACKING (Fire & Forget)
-                if (found && found.title) {
-                    supabase.rpc('increment_view', {
-                        p_slug: slug,
-                        p_title: found.title
-                    }).catch(() => { });
-                }
-            } catch (err) {
-                console.error("Critical Article Error:", err);
-            } finally {
-                setLoading(false);
+            // 2. Fallback: Expert Articles (Static Data)
+            const foundArticle = articles.find(a => a.id === slug);
+            if (foundArticle) {
+                return {
+                    ...foundArticle,
+                    slug: foundArticle.id,
+                    image_url: foundArticle.image,
+                    published_at: new Date().toISOString(),
+                    content: foundArticle.freeContent || foundArticle.content,
+                    category: foundArticle.category || 'Wiedza Ekspercka',
+                    author: foundArticle.author || 'Ekspert B24'
+                };
             }
-        };
 
-        fetchArticle();
-    }, [slug]);
+            return null;
+        }
+    });
+
+    // View Tracking
+    useEffect(() => {
+        if (article && article.id && !article.is_article) { // Only track database news
+            supabase.rpc('increment_view', {
+                p_slug: slug,
+                p_title: article.title
+            }).catch(() => { });
+        }
+    }, [article, slug]);
+
 
     // Loading State
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
@@ -119,11 +99,11 @@ const NewsArticlePage = () => {
                     <div className="flex items-center gap-6 text-zinc-400 text-sm">
                         <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
-                            {new Date(article.published_at).toLocaleDateString()}
+                            {new Date(article.published_at || article.created_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
-                            {article.author}
+                            {article.author || article.author_name}
                         </div>
                     </div>
                 </div>
@@ -132,7 +112,7 @@ const NewsArticlePage = () => {
             {/* Content */}
             <article className="max-w-3xl mx-auto px-4 py-12">
                 <p className="text-xl md:text-2xl font-light leading-relaxed text-zinc-300 mb-12 border-l-4 border-red-600 pl-6 italic">
-                    {article.excerpt}
+                    {article.excerpt || article.lead}
                 </p>
 
                 <div

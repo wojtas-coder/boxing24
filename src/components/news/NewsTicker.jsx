@@ -1,14 +1,27 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
 
 const NewsTicker = () => {
-    const headlines = [
-        "PILNE: Zuffa Boxing ogłasza kalendarz na 2026 rok!",
-        "Wynik: Callum Walsh dominuje Ocampo (100-90, 100-90, 99-91)",
-        "Plotki: Usyk vs Fury 3 w planach na lato?",
-        "Trening: Nowy plan 'Elite Cardio' już dostępny w strefie klienta!",
-        "Ważenie: Knyba 108kg, Kabayel 105kg - rewanż wisi w powietrzu."
+    const { data: headlines } = useQuery({
+        queryKey: ['breakingNews'],
+        queryFn: async () => {
+            const { data } = await supabase
+                .from('news')
+                .select('title')
+                .eq('is_breaking', true)
+                .order('created_at', { ascending: false })
+                .limit(5);
+            return data?.map(n => n.title) || [];
+        },
+        staleTime: 60000,
+    });
+
+    const displayHeadlines = headlines?.length > 0 ? headlines : [
+        "PILNE: System Newsów Boxing24 wdrożony - zapraszamy do lektury!",
+        "Strefa Wiedzy: Sprawdź nowe artykuły o psychologii sportu.",
+        "Trening: Rezerwuj terminy online w kalendarzu."
     ];
 
     return (
@@ -20,10 +33,10 @@ const NewsTicker = () => {
                 <div className="flex-1 overflow-hidden relative h-5">
                     <motion.div
                         className="whitespace-nowrap absolute"
-                        animate={{ x: [1000, -1000] }}
+                        animate={{ x: [1000, -1000] }} // Adjust logic for smoother loop if needed, but keeping simple for now
                         transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
                     >
-                        {headlines.map((item, index) => (
+                        {displayHeadlines.map((item, index) => (
                             <span key={index} className="mr-12 text-sm font-medium">
                                 {item} •
                             </span>

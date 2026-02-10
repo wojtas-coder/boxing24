@@ -55,7 +55,7 @@ const MembershipPage = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="bg-[#050505] min-h-screen pt-32 pb-20 px-4">
+        <div className="bg-[#050505] min-h-screen pt-24 md:pt-32 pb-20 px-4">
 
             {/* HEADLINE */}
             <div className="text-center max-w-3xl mx-auto mb-20">
@@ -123,7 +123,7 @@ const MembershipPage = () => {
             </div>
 
             {/* FAQ SECTION */}
-            <div className="max-w-3xl mx-auto mt-32 space-y-12 border-t border-white/5 pt-20">
+            <div className="max-w-3xl mx-auto mt-20 md:mt-32 space-y-12 border-t border-white/5 pt-20">
                 <h2 className="text-2xl font-black text-white uppercase text-center mb-12">Częste Pytania</h2>
 
                 {[

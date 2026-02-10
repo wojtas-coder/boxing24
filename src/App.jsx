@@ -9,7 +9,7 @@ import MemberPage from './pages/MemberPage';
 import BoutiquePage from './pages/BoutiquePage';
 import ProductPage from './pages/ProductPage';
 import LoginPage from './pages/LoginPage';
-import AdminPage from './pages/AdminPage'; // Keeping for reference/fallback if needed
+// import AdminPage from './pages/AdminPage'; // Removed legacy import
 import AdminLayout from './layout/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminNews from './pages/admin/News';

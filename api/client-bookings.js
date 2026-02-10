@@ -1,4 +1,4 @@
-import { getSupabase, corsHeaders } from './_utils.js';
+import { getSupabase, corsHeaders, validateSession } from './_utils.js';
 
 // Simple mapping for MVP since we don't have a coaches table yet
 const COACH_MAP = {
@@ -13,23 +13,24 @@ export default async function handler(req, res) {
         return res.status(200).json({}, { headers: corsHeaders });
     }
 
-    const { email } = req.query;
-    if (!email) {
-        return res.status(400).json({ error: 'Missing email' }, { headers: corsHeaders });
+    // Validate Session & Get User
+    let user;
+    try {
+        user = await validateSession(req);
+    } catch (err) {
+        return res.status(401).json({ error: 'Unauthorized' }, { headers: corsHeaders });
     }
+
+    const email = user.email; // TRUST THE TOKEN, NOT THE QUERY param
 
     const supabase = getSupabase();
 
     try {
         // Fetch all bookings for this email
-        // We use ILIKE? No, we lowercased it in booking.js, so simple eq should work if client input is consistent.
-        // But better to be safe? The booking.js does data.client_email?.toLowerCase().
-        // So we should query with lower case too.
-
         const { data: bookings, error } = await supabase
             .from('bookings')
             .select('*')
-            .eq('client_email', email.toLowerCase())
+            .eq('client_email', email) // Case sensitive? Standard emails usually LC.
             .neq('client_name', 'BLOKADA') // Filter out admin blocks
             .order('start_time', { ascending: true });
 
