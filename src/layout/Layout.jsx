@@ -148,19 +148,9 @@ const Layout = () => {
                 )}
             </AnimatePresence>
 
-            {/* Page Content with Transition */}
+            {/* Page Content - Animations Removed for Debugging */}
             <main className="flex-grow pt-0">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={location.pathname}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.4 }}
-                    >
-                        <Outlet />
-                    </motion.div>
-                </AnimatePresence>
+                <Outlet />
             </main>
 
             <AICoachWidget /> {/* Added AICoachWidget here */}

@@ -1,50 +1,50 @@
 export const calendarEvents = [
     {
-        id: '1',
-        date: '2026-02-07',
-        title: 'I Kolejka Poznańskiej Ligi Bokserskiej',
-        location: 'Poznań, ul. Racjonalizatorów',
-        description: 'Potwierdzone',
-        type: 'AMATEUR'
-    },
-    {
-        id: '2',
-        date: '2026-02-08',
-        title: '114. Warszawska Granda na Pięści',
-        location: 'Warszawa, Legia Fight Club',
-        description: 'Potwierdzone',
-        type: 'AMATEUR'
-    },
-    {
-        id: '3',
+        id: 'c1',
         date: '2026-02-14',
-        title: 'Sobota Bokserska (DOZB)',
-        location: 'Wrocław / Region',
-        description: 'Główny news regionalny',
+        title: 'Sobota Bokserska DOZB',
+        location: 'Wrocław (Krupnicza)',
+        description: 'Regionalne (REKORD)',
         type: 'AMATEUR'
     },
     {
-        id: '4',
+        id: 'c2',
         date: '2026-02-15',
-        title: 'Warszawska Granda – Liga K-1',
-        location: 'Warszawa, ul. Łazienkowska',
-        description: 'Sprawdź klasy A/B',
-        type: 'K1'
-    },
-    {
-        id: '5',
-        date: '2026-03-08', // Range 08-15
-        title: 'World Boxing U-19 Futures Cup',
-        location: 'Bangkok, Tajlandia',
-        description: 'Ranga światowa',
-        type: 'OLYMPIC'
-    },
-    {
-        id: '6',
-        date: '2026-03-12', // Range 12-15
-        title: 'I Turniej Kw. do OOM Kadetek',
-        location: 'Polska (TBD)',
-        description: 'Kluczowe dla młodzieży',
+        title: 'Turniej o Puchar Burmistrza',
+        location: 'Kłodzko',
+        description: 'Amatorski',
         type: 'AMATEUR'
+    },
+    {
+        id: 'c3',
+        date: '2026-02-21',
+        title: 'Otwarty Turniej o Pas Wałbrzycha',
+        location: 'Wałbrzych',
+        description: 'Dolny Śląsk',
+        type: 'AMATEUR'
+    },
+    {
+        id: 'c4',
+        date: '2026-02-21',
+        title: 'II Kolejka Poznańskiej Ligi',
+        location: 'Poznań',
+        description: 'Regionalne',
+        type: 'AMATEUR'
+    },
+    {
+        id: 'c5',
+        date: '2026-03-06',
+        title: 'MB Boxing Night 27: Bloody Friday',
+        location: 'Wrocław (Hala Orbita)',
+        description: 'PRO (PRESTIŻ)',
+        type: 'PRO'
+    },
+    {
+        id: 'c6',
+        date: '2026-09-19',
+        title: 'Anthony Joshua vs Daniel Dubois II',
+        location: 'Londyn (Wembley)',
+        description: 'WORLD PRO',
+        type: 'PRO'
     }
 ];

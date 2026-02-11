@@ -1,59 +1,94 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Calendar, User, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { articles } from '../data/articles';
 
 const NewsArticlePage = () => {
     const { slug } = useParams();
+    const [imageError, setImageError] = useState(false);
 
-    const { data: article, isLoading, isError } = useQuery({
+    // console.log('DEBUG: NewsArticlePage Loaded. View Tracking DISABLED to prevent crash.', slug);
+
+    const { data: article, isLoading, error } = useQuery({
         queryKey: ['article', slug],
         queryFn: async () => {
-            // 1. Try fetching from Supabase
-            const { data, error } = await supabase
-                .from('news')
-                .select('*')
-                .eq('slug', slug)
-                .single();
+            console.log("DEBUG: Fetching article from Supabase...");
+            try {
+                // 1. Try fetching from Supabase
+                const { data, error } = await supabase
+                    .from('news')
+                    .select('*')
+                    .eq('slug', slug)
+                    .single();
 
-            if (data) return data;
+                if (error && error.code !== 'PGRST116') {
+                    console.error("DEBUG: Supabase error:", error);
+                    throw error;
+                }
 
-            // 2. Fallback: Expert Articles (Static Data)
-            const foundArticle = articles.find(a => a.id === slug);
-            if (foundArticle) {
-                return {
-                    ...foundArticle,
-                    slug: foundArticle.id,
-                    image_url: foundArticle.image,
-                    published_at: new Date().toISOString(),
-                    content: foundArticle.freeContent || foundArticle.content,
-                    category: foundArticle.category || 'Wiedza Ekspercka',
-                    author: foundArticle.author || 'Ekspert B24'
-                };
+                if (data) {
+                    console.log("DEBUG: Found in Supabase:", data.title);
+                    return data;
+                }
+
+                // 2. Fallback: Expert Articles (Static Data)
+                console.log("DEBUG: Not found in DB, checking static articles...");
+                const foundArticle = articles.find(a => a.id === slug);
+                if (foundArticle) {
+                    console.log("DEBUG: Found in static articles:", foundArticle.title);
+                    return {
+                        ...foundArticle,
+                        slug: foundArticle.id,
+                        image_url: foundArticle.image,
+                        published_at: new Date().toISOString(),
+                        content: foundArticle.freeContent || foundArticle.content,
+                        category: foundArticle.category || 'Wiedza Ekspercka',
+                        author: foundArticle.author || 'Ekspert B24'
+                    };
+                }
+
+                console.warn("DEBUG: Article not found anywhere.");
+                return null;
+            } catch (err) {
+                console.error("DEBUG: Fetch Error exception:", err);
+                throw err;
             }
-
-            return null;
-        }
+        },
+        retry: false
     });
 
-    // View Tracking
-    useEffect(() => {
-        if (article && article.id && !article.is_article) { // Only track database news
-            supabase.rpc('increment_view', {
-                p_slug: slug,
-                p_title: article.title
-            }).catch(() => { });
-        }
-    }, [article, slug]);
+    // View Tracking REMOVED to prevent crash (rpc(...).catch is not a function)
+    // useEffect(() => {
+    //     if (article && article.id && !article.is_article) {
+    //         supabase.rpc('increment_view', {
+    //             p_slug: slug,
+    //             p_title: article.title
+    //         }).catch(e => console.error("View tracking error:", e));
+    //     }
+    // }, [article, slug]);
 
-
-    // Loading State
     if (isLoading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-black text-white pt-32 px-4 flex flex-col items-center justify-center">
+                <AlertTriangle className="w-12 h-12 text-red-600 mb-4" />
+                <h1 className="text-2xl font-bold mb-2">Błąd ładowania</h1>
+                <p className="text-zinc-400 mb-6 text-center">
+                    Wystąpił błąd podczas pobierania artykułu.<br />
+                    <span className="text-xs font-mono text-red-900">{error.message}</span>
+                </p>
+                <Link to="/news" className="text-white hover:text-red-500 transition-colors flex items-center gap-2">
+                    <ArrowLeft className="w-4 h-4" /> Wróć do aktualności
+                </Link>
             </div>
         );
     }
@@ -70,71 +105,89 @@ const NewsArticlePage = () => {
         );
     }
 
-    // Check if it's an Expert Article (based on Category or Source)
-    const isExpertArticle = [
+    // Safe Date Parsing
+    const getArticleDate = () => {
+        try {
+            const dateStr = article.published_at || article.created_at;
+            if (!dateStr) return new Date().toLocaleDateString();
+            return new Date(dateStr).toLocaleDateString();
+        } catch (e) {
+            return "Data nieznana";
+        }
+    };
+
+    const isExpertArticle = article.category && [
         'Wiedza Ekspercka', 'HISTORIA', 'DIETETYKA', 'BEZPIECZEŃSTWO',
         'TAKTYKA', 'PSYCHOLOGIA', 'NAUKA', 'RECOVERY'
     ].includes(article.category);
 
+    const hasValidImage = article.image_url && !imageError;
+
     return (
         <div className="min-h-screen bg-black text-white pt-24 pb-20">
-            {/* Hero Image */}
-            <div className="w-full h-[60vh] relative">
+            <div className="w-full h-[60vh] relative bg-zinc-900 overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10" />
-                <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full h-full object-cover"
-                />
-                <div className="absolute bottom-0 left-0 w-full z-20 p-4 md:p-12 max-w-7xl mx-auto">
-                    <div className="flex items-center gap-4 mb-4">
-                        <span className={`text-white text-xs font-bold uppercase tracking-widest px-3 py-1 ${isExpertArticle ? 'bg-blue-600' : 'bg-red-600'
-                            }`}>
-                            {article.category}
+
+                {hasValidImage ? (
+                    <img
+                        src={article.image_url}
+                        alt={article.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-black flex items-center justify-center relative">
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+                        <span className="text-zinc-700 text-6xl md:text-8xl font-black opacity-20 uppercase tracking-tighter select-none">
+                            B24 NEWS
                         </span>
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-6 max-w-4xl leading-none">
+                )}
+
+                <div className="absolute bottom-0 left-0 w-full z-20 p-4 md:p-8 max-w-7xl mx-auto">
+                    <div className="flex items-center gap-4 mb-3">
+                        <span className={`text-white text-[10px] md:text-xs font-bold uppercase tracking-widest px-2 py-1 ${isExpertArticle ? 'bg-blue-600' : 'bg-red-600'}`}>
+                            {article.category || 'News'}
+                        </span>
+                    </div>
+                    <h1 className="text-xl md:text-3xl lg:text-4xl font-black uppercase tracking-tighter mb-4 max-w-5xl leading-tight drop-shadow-xl text-balance">
                         {article.title}
                     </h1>
-                    <div className="flex items-center gap-6 text-zinc-400 text-sm">
+                    <div className="flex items-center gap-6 text-zinc-300 text-xs md:text-sm font-medium">
                         <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(article.published_at || article.created_at).toLocaleDateString()}
+                            <Calendar className="w-4 h-4 text-red-500" />
+                            {getArticleDate()}
                         </div>
                         <div className="flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            {article.author || article.author_name}
+                            <User className="w-4 h-4 text-red-500" />
+                            {article.author || article.author_name || 'Redakcja'}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Content */}
             <article className="max-w-3xl mx-auto px-4 py-12">
-                <p className="text-xl md:text-2xl font-light leading-relaxed text-zinc-300 mb-12 border-l-4 border-red-600 pl-6 italic">
-                    {article.excerpt || article.lead}
-                </p>
+                {(article.excerpt || article.lead) && (
+                    <p className="text-xl md:text-2xl font-light leading-relaxed text-zinc-300 mb-12 border-l-4 border-red-600 pl-6 italic">
+                        {article.excerpt || article.lead}
+                    </p>
+                )}
 
                 <div
-                    className="prose prose-invert prose-lg max-w-none text-zinc-300 [&>h3]:text-red-500 [&>h3]:text-2xl [&>h3]:font-bold [&>h3]:mt-8 [&>h3]:mb-4 [&>p]:mb-4 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-6 [&>li]:mb-2"
-                    dangerouslySetInnerHTML={{ __html: article.content }}
+                    className="prose prose-invert prose-lg max-w-none text-zinc-300 prose-headings:text-red-500 prose-a:text-red-400 prose-strong:text-white"
+                    dangerouslySetInnerHTML={{ __html: article.content || '<p>Brak treści.</p>' }}
                 />
 
-                {/* PREMIUM CTA - Only for Expert Articles */}
                 {isExpertArticle && (
                     <div className="mt-16 bg-gradient-to-br from-zinc-900 to-black border border-blue-900/50 p-8 md:p-12 text-center rounded-2xl relative overflow-hidden group">
-                        {/* Glow Effect */}
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-blue-600/5 blur-[100px] pointer-events-none" />
-
                         <h3 className="text-2xl md:text-3xl font-black text-white mb-4 uppercase italic relative z-10">
                             Chcesz Wiedzieć Więcej?
                         </h3>
                         <p className="text-zinc-400 mb-8 max-w-2xl mx-auto text-sm md:text-base relative z-10">
                             To tylko <span className="text-blue-500 font-bold">darmowy skrót</span> tego zagadnienia.
-                            Pełna analiza, szczegółowe plany treningowe, materiały wideo i konsultacje z ekspertami dostępne są wyłącznie w pakiecie <span className="text-white font-bold">PREMIUM</span>.
                             Dołącz do elity i trenuj świadomie.
                         </p>
-
                         <Link
                             to="/pricing"
                             className="relative z-10 inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-10 rounded-full uppercase tracking-widest transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(37,99,235,0.4)]"

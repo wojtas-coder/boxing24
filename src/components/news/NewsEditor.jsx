@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
-import { Save, Eye, X, Image as ImageIcon } from 'lucide-react';
+import { Save, Eye, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import NewsCard from './NewsCard'; // Reuse for preview if suitable, or just custom preview
+// import ImageUploader from './ImageUploader';
 
 const NewsEditor = ({ article, onClose, onSave }) => {
     const queryClient = useQueryClient();
@@ -19,6 +20,7 @@ const NewsEditor = ({ article, onClose, onSave }) => {
     });
 
     const [showPreview, setShowPreview] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         if (article) {
@@ -31,26 +33,42 @@ const NewsEditor = ({ article, onClose, onSave }) => {
         }
     }, [article]);
 
+    // Reset image error when URL changes
+    useEffect(() => {
+        setImageError(false);
+    }, [formData.image_url]);
+
     const mutation = useMutation({
         mutationFn: async (newArticle) => {
             // Clean up payload (remove non-db fields if any)
             const payload = { ...newArticle };
             if (payload.published_at) delete payload.published_at; // Ensure we don't send this if it somehow got in
 
+            console.log("Saving article payload:", payload);
+
             const { data, error } = article?.id
                 ? await supabase.from('news').update(payload).eq('id', article.id).select()
                 : await supabase.from('news').insert([payload]).select();
 
-            if (error) throw new Error(error.message);
+            if (error) {
+                console.error("Supabase Error:", error);
+                throw new Error(error.message || 'Unknown Supabase error');
+            }
             return data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['news'] });
             onSave();
             onClose();
+            alert('Sukces! Artykuł został zapisany.');
         },
         onError: (error) => {
-            alert(`Błąd: ${error.message}`);
+            console.error("Mutation failed:", error);
+            if (error.message.includes('policy')) {
+                alert(`BŁĄD UPRAWNIEŃ (RLS): \nTwoja baza danych blokuje zapis. \n\nUpewnij się, że wykonałeś skrypt SQL "supabase_news_fix.sql" w panelu Supabase.`);
+            } else {
+                alert(`Błąd zapisu: ${error.message}`);
+            }
         }
 
     });
@@ -91,7 +109,12 @@ const NewsEditor = ({ article, onClose, onSave }) => {
                     <h2 className="text-2xl font-bold text-white mb-4">Podgląd Artykułu</h2>
 
                     <div className="prose prose-invert max-w-none">
-                        <img src={formData.image_url || "/api/placeholder/800/400"} alt="Preview" className="w-full h-64 object-cover rounded mb-6" />
+                        <img
+                            src={!imageError ? formData.image_url : "https://via.placeholder.com/800x400?text=Brak+Zdjecia+lub+Bledny+Link"}
+                            alt="Preview"
+                            className="w-full h-64 object-cover rounded mb-6"
+                            onError={() => setImageError(true)}
+                        />
                         <div className="flex gap-2 mb-4">
                             <span className="bg-red-600 text-white text-xs px-2 py-1 rounded uppercase font-bold">{formData.category}</span>
                             <span className="text-zinc-400 text-xs py-1">{new Date().toLocaleDateString()}</span>
@@ -164,18 +187,23 @@ const NewsEditor = ({ article, onClose, onSave }) => {
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-zinc-400 text-sm">Zdjęcie (URL)</label>
-                            <div className="flex gap-2">
-                                <input
-                                    name="image_url"
-                                    value={formData.image_url}
-                                    onChange={handleChange}
-                                    placeholder="https://..."
-                                    className="w-full bg-black border border-zinc-700 p-3 text-white rounded focus:border-red-600 outline-none transition-colors"
-                                />
-                                {formData.image_url && (
-                                    <img src={formData.image_url} alt="Miniatura" className="h-12 w-12 object-cover rounded border border-zinc-700" />
-                                )}
+                            <label className="text-zinc-400 text-sm">Zdjęcie (Wgraj lub Wklej URL)</label>
+                            <div className="space-y-2">
+                                {/* <ImageUploader
+                                        currentImage={formData.image_url}
+                                        onUploadComplete={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                                    /> */}
+                                <div className="flex gap-2 items-center">
+                                    <span className="text-xs text-zinc-500">lub wklej link:</span>
+                                    <input
+                                        name="image_url"
+                                        value={formData.image_url}
+                                        onChange={handleChange}
+                                        placeholder="https://..."
+                                        className="flex-1 bg-black border border-zinc-700 p-2 text-white text-xs rounded focus:border-red-600 outline-none transition-colors"
+                                    />
+                                </div>
+                                {imageError && <p className="text-xs text-red-500 mt-1">Link jest uszkodzony lub to nie jest bezpośredni plik obrazka.</p>}
                             </div>
                         </div>
                         <div className="space-y-2">
@@ -186,6 +214,19 @@ const NewsEditor = ({ article, onClose, onSave }) => {
                                 onChange={handleChange}
                                 className="w-full bg-black border border-zinc-700 p-3 text-white rounded focus:border-red-600 outline-none transition-colors"
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-zinc-400 text-sm">Pozycja Zdjęcia (Focus)</label>
+                            <select
+                                name="image_position"
+                                value={formData.image_position || 'center'}
+                                onChange={handleChange}
+                                className="w-full bg-black border border-zinc-700 p-3 text-white rounded focus:border-red-600 outline-none transition-colors"
+                            >
+                                <option value="top">Góra (Twarze)</option>
+                                <option value="center">Środek</option>
+                                <option value="bottom">Dół</option>
+                            </select>
                         </div>
                     </div>
 

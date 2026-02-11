@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Users, Newspaper, Activity, TrendingUp, ShieldAlert, RefreshCw, Plus, Trash2, Edit } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Edit, Wand2 } from 'lucide-react';
 import NewsEditor from '../../components/news/NewsEditor';
-import { generateDailyNews } from '../../utils/aiEditor';
+import NewsReformatter from '../../components/news/NewsReformatter';
 
 const AdminNews = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [isReformatterOpen, setIsReformatterOpen] = useState(false);
     const [currentArticle, setCurrentArticle] = useState(null);
-    const [generating, setGenerating] = useState(false);
 
     useEffect(() => {
         fetchNews();
@@ -20,29 +20,17 @@ const AdminNews = () => {
         const { data, error } = await supabase
             .from('news')
             .select('*')
-            .order('created_at', { ascending: false }); // Use created_at or published_at
+            .order('created_at', { ascending: false });
 
         if (data) setNews(data);
         if (error) console.error("Error fetching news:", error);
         setLoading(false);
     };
 
-    const handleGenerate = async () => {
-        if (!window.confirm("Czy na pewno chcesz wygenerować nowe newsy przez AI?")) return;
-        setGenerating(true);
-        try {
-            const result = await generateDailyNews();
-            if (result && result.success) {
-                alert(`Sukces! Dodano ${result.count} nowych artykułów.`);
-                fetchNews();
-            } else {
-                alert(`Błąd generatora: ${result?.error || 'Nieznany błąd'}`);
-            }
-        } catch (e) {
-            alert("Błąd krytyczny AI: " + e.message);
-        } finally {
-            setGenerating(false);
-        }
+    const handleFormattedNews = (articleData) => {
+        // AI returned a formatted article. Open editor with this data.
+        setCurrentArticle(articleData);
+        setIsEditorOpen(true);
     };
 
     const handleDelete = async (id) => {
@@ -64,14 +52,11 @@ const AdminNews = () => {
 
                 <div className="flex gap-4">
                     <button
-                        onClick={handleGenerate}
-                        disabled={generating}
-                        className={`px-6 py-3 font-bold flex items-center gap-2 rounded-xl transition-all shadow-lg
-                            ${generating ? 'bg-zinc-800 text-zinc-500' : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-500/20 hover:shadow-purple-500/40'}
-                        `}
+                        onClick={() => setIsReformatterOpen(true)}
+                        className="px-6 py-3 font-bold flex items-center gap-2 rounded-xl transition-all shadow-lg bg-purple-600 hover:bg-purple-500 text-white shadow-purple-500/20 hover:shadow-purple-500/40"
                     >
-                        <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
-                        {generating ? 'Generowanie...' : 'AI Autopilot'}
+                        <Wand2 className="w-4 h-4" />
+                        AI Asystent
                     </button>
 
                     <button
@@ -83,13 +68,18 @@ const AdminNews = () => {
                 </div>
             </div>
 
+            <NewsReformatter
+                isOpen={isReformatterOpen}
+                onClose={() => setIsReformatterOpen(false)}
+                onFormatted={handleFormattedNews}
+            />
+
             {isEditorOpen && (
                 <NewsEditor
                     article={currentArticle}
                     onClose={() => { setIsEditorOpen(false); setCurrentArticle(null); }}
                     onSave={() => {
                         fetchNews();
-                        // No need to alert manually, NewsEditor handles success or we can just refresh
                     }}
                 />
             )}

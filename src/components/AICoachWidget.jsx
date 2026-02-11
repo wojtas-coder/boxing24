@@ -23,32 +23,69 @@ const AICoachWidget = () => {
         scrollToBottom();
     }, [messages]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!inputValue.trim()) return;
 
-        // User Message
         const userMsg = { id: Date.now(), sender: 'user', text: inputValue };
         setMessages(prev => [...prev, userMsg]);
         setInputValue('');
         setIsTyping(true);
 
-        // Simulated AI Response (Ekspercki ton)
-        setTimeout(() => {
-            const responses = [
-                "Analizuję Twój profil... Wykryłem potencjalną asymetrię w rotacji biodra przy ciosie prostym. Sugeruję skupienie się na module 'Internal Rotation' w sekcji Compendium.",
-                "Z biologicznego punktu widzenia, Twój układ nerwowy wymaga teraz 48h regeneracji (HRV dropped). Zalecam protokół sauny i suplementację magnezem.",
-                "Jeśli przeciwnik jest wyższy, musisz skrócić dystans używając balansu tułowiem (Slip & Roll). Nie wchodź w linię prostą, bo nadziejesz się na kontrę.",
-                "To pytanie wymaga głębszej analizy Twojego stylu walki. Zapraszam do sekcji VIP na konsultację."
-            ];
-            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        // Przygotuj nową wiadomość AI, która będzie aktualizowana
+        const requestId = Date.now() + 1;
+        setMessages(prev => [...prev, { id: requestId, sender: 'ai', text: '' }]);
 
-            setMessages(prev => [...prev, {
-                id: Date.now() + 1,
-                sender: 'ai',
-                text: randomResponse
-            }]);
+        try {
+            const response = await fetch('/api/cornerman', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: messages.concat(userMsg).map(m => ({
+                        role: m.sender === 'user' ? 'user' : 'model',
+                        content: m.text
+                    }))
+                })
+            });
+
+            if (!response.ok) throw new Error('Błąd połączenia z CornerManem');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataStr = line.slice(6);
+                        if (dataStr === '[DONE]') break;
+                        try {
+                            const data = JSON.parse(dataStr);
+                            if (data.text) {
+                                fullText += data.text;
+                                setMessages(prev => prev.map(msg =>
+                                    msg.id === requestId ? { ...msg, text: fullText } : msg
+                                ));
+                            }
+                        } catch (e) {
+                            console.error("Błąd parsowania streamu:", e);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Chat Error:', error);
+            setMessages(prev => prev.map(msg =>
+                msg.id === requestId ? { ...msg, text: "Błąd połączenia. Upewnij się, że API Gemini jest skonfigurowane." } : msg
+            ));
+        } finally {
             setIsTyping(false);
-        }, 2000);
+        }
     };
 
     return (
@@ -87,8 +124,8 @@ const AICoachWidget = () => {
                             {messages.map(msg => (
                                 <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${msg.sender === 'user'
-                                            ? 'bg-zinc-800 text-white rounded-br-none'
-                                            : 'bg-boxing-neon/10 text-gray-200 border border-boxing-neon/20 rounded-bl-none'
+                                        ? 'bg-zinc-800 text-white rounded-br-none'
+                                        : 'bg-boxing-neon/10 text-gray-200 border border-boxing-neon/20 rounded-bl-none'
                                         }`}>
                                         {msg.text}
                                     </div>
