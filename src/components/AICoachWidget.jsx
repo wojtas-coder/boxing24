@@ -115,7 +115,7 @@ const AICoachWidget = () => {
                             <div className="w-2 h-2 rounded-full bg-boxing-neon animate-pulse"></div>
                             <div>
                                 <h3 className="text-white font-bold text-sm tracking-wider uppercase">CornerMan AI</h3>
-                                <p className="text-xs text-gray-400">System Analityczny v1.0</p>
+                                <p className="text-xs text-gray-400">System Analityczny v1.1-LIVE</p>
                             </div>
                         </div>
 
