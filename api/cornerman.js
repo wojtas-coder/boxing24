@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: `Jesteś CornerMan AI - elitarnym, bezkompromisowym trenerem z Boxing24 we Wrocławiu. 
 Twoim celem jest przekazanie twardej, naukowej i taktycznej wiedzy bokserskiej. 
 
