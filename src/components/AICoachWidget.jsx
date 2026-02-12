@@ -2,6 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const BoxingGloveIcon = ({ className }) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M19,8c0-2.21-1.79-4-4-4h-1.1c-0.61,0-1.17,0.26-1.55,0.72c-0.38-0.46-0.94-0.72-1.55-0.72h-1.1c-0.61,0-1.17,0.26-1.55,0.72 C7.77,4.26,7.21,4,6.6,4H5.5c-2.21,0-4,1.79-4,4v6.5c0,3.59,2.91,6.5,6.5,6.5h6c3.59,0,6.5-2.91,6.5-6.5V8z M14.5,13h-2.5V8.5 c0-0.83,0.67-1.5,1.5-1.5h0.5c0.83,0,1.5,0.67,1.5,1.5V13z M9.5,13H7V8.5c0-0.83,0.67-1.5,1.5-1.5h0.5c0.83,0,1.5,0.67,1.5,1.5V13 z M18.5,14.5c0,2.48-2.02,4.5-4.5,4.5h-6c-2.48,0-4.5-2.02-4.5-4.5V8.5C3.5,7.67,4.17,7,5,7h0.5c0.83,0,1.5,0.67,1.5,1.5V11 c0,0.55,0.45,1,1,1h1.5v2.5h1V12h1.5c0.55,0,1-0.45,1-1V8.5C11.5,7.67,12.17,7,13,7h0.5c0.83,0,1.5,0.67,1.5,1.5V11 c0,0.55,0.45,1,1,1h1.5v2.5h1V12H17c0.55,0,1-0.45,1-1V8.5C18,7.67,18.67,7,19.5,7c0.83,0,1.5,0.67,1.5,1.5V14.5z" />
+    </svg>
+);
+
 const AICoachWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
@@ -99,13 +105,20 @@ const AICoachWidget = () => {
         <>
             {/* Toggle Button */}
             <motion.button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                whileHover={{ scale: 1.1 }}
+                initial={{ x: 100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                whileHover={{ scale: 1.05, x: -5 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 z-50 bg-boxing-neon text-black p-4 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.4)] border border-white/20"
+                className="fixed bottom-6 right-6 z-50 bg-boxing-neon text-black px-6 py-4 rounded-full shadow-[0_0_30px_rgba(204,255,0,0.6)] border border-white/20 flex items-center gap-3 font-black tracking-widest text-sm group"
             >
-                {isOpen ? <X className="w-6 h-6" /> : <Brain className="w-6 h-6" />}
+                {isOpen ? (
+                    <X className="w-6 h-6" />
+                ) : (
+                    <>
+                        <BoxingGloveIcon className="w-6 h-6 animate-pulse group-hover:rotate-12 transition-transform" />
+                        <span className="hidden md:block">CORNERMAN AI</span>
+                    </>
+                )}
             </motion.button>
 
             {/* Chat Window */}
