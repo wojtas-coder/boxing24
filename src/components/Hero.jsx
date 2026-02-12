@@ -17,7 +17,7 @@ const Hero = () => {
                     transition={{ duration: 0.8 }}
                 >
                     <span className="block text-boxing-green font-bold tracking-[0.3em] uppercase mb-6 text-sm md:text-base">
-                        Elite Performance for Leaders
+                        Portal z pasji do boksu
                     </span>
 
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white italic leading-tight mb-8 tracking-wide">
@@ -28,7 +28,7 @@ const Hero = () => {
                     </h1>
 
                     <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-                        Optymalizacja Wydajności. Elite Performance dla Liderów.<br />
+                        Twoje centrum bokserskie. Portal stworzony z pasji do boksu.<br />
                         Ekskluzywny coaching bokserski we Wrocławiu.
                     </p>
 

@@ -10,7 +10,7 @@ const Footer = () => {
                 <div className="text-gray-500 text-sm text-center md:text-right">
                     <p>Wrocław, Polska</p>
                     <p>kontakt@boxing24.pl</p>
-                    <p className="mt-4 opacity-50">&copy; 2024 Boxing24 Elite Performance. All rights reserved.</p>
+                    <p className="mt-4 opacity-50">&copy; 2024 Boxing24. Portal z pasji do boksu. All rights reserved.</p>
                 </div>
             </div>
         </footer>

@@ -10,7 +10,7 @@ const TickerTape = () => {
             <div className="flex whitespace-nowrap animate-marquee">
                 {[...Array(10)].map((_, i) => (
                     <span key={i} className="mx-8 font-black uppercase text-sm tracking-widest flex items-center gap-4">
-                        Boxing24 Elite Performance <Star className="w-3 h-3 fill-black" />
+                        Boxing24 — Portal z pasji do boksu <Star className="w-3 h-3 fill-black" />
                         Data Driven <Star className="w-3 h-3 fill-black" />
                         Fight Science <Star className="w-3 h-3 fill-black" />
                     </span>

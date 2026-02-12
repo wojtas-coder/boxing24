@@ -47,7 +47,7 @@ const Hero3D = () => {
                         transition={{ duration: 0.8 }}
                     >
                         <h2 className="text-sm md:text-xl font-bold text-boxing-neon uppercase tracking-[0.5em] mb-6">
-                            Elite Performance Lab
+                            Pasja • Technika • Społeczność
                         </h2>
                     </motion.div>
 
@@ -76,7 +76,7 @@ const Hero3D = () => {
                         onClick={() => navigate('/membership')}
                         className="bg-white text-black px-8 py-4 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2"
                     >
-                        Dołącz do Elity <ArrowRight className="w-5 h-5" />
+                        Zacznij tutaj <ArrowRight className="w-5 h-5" />
                     </button>
 
                     <button
