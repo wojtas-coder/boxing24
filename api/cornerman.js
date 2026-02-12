@@ -53,11 +53,24 @@ KONTEKST Z TWOJEJ BAZY WIEDZY:
 ${contextData}`,
         });
 
+        // Gemini history MUST start with 'user' and alternate user/model.
+        // If the first message is from 'model' (like the greeting), we skip it or give it a dummy user prefix.
+        let chatHistory = messages.slice(0, -1).map(m => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }],
+        }));
+
+        // Find the first 'user' message index
+        const firstUserIndex = chatHistory.findIndex(m => m.role === 'user');
+        if (firstUserIndex > 0) {
+            chatHistory = chatHistory.slice(firstUserIndex);
+        } else if (firstUserIndex === -1 && chatHistory.length > 0) {
+            // If no user message was found in history, clear it
+            chatHistory = [];
+        }
+
         const chat = model.startChat({
-            history: messages.slice(0, -1).map(m => ({
-                role: m.role === 'user' ? 'user' : 'model',
-                parts: [{ text: m.content }],
-            })),
+            history: chatHistory,
         });
 
         const result = await chat.sendMessageStream(userMessage);
@@ -76,7 +89,19 @@ ${contextData}`,
         res.end();
 
     } catch (error) {
-        console.error('Gemini Error:', error);
-        res.status(500).json({ error: 'Błąd połączenia z CornerManem. Spróbuj za chwilę.' });
+        console.error('CRITICAL Gemini Error:', {
+            message: error.message,
+            stack: error.stack,
+            apiKeyPresent: !!apiKey,
+            apiKeyLength: apiKey.length
+        });
+
+        // Return a more descriptive error for debugging (will show up in widget error message)
+        return new Response(JSON.stringify({
+            error: `Błąd CornerMana: ${error.message}. Sprawdź konfigurację API.`
+        }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }

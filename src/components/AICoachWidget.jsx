@@ -47,7 +47,10 @@ const AICoachWidget = () => {
                 })
             });
 
-            if (!response.ok) throw new Error('Błąd połączenia z CornerManem');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Błąd połączenia z CornerManem');
+            }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -80,8 +83,12 @@ const AICoachWidget = () => {
             }
         } catch (error) {
             console.error('Chat Error:', error);
+            const errorMessage = error.message.includes('Błąd CornerMana')
+                ? error.message
+                : "Błąd połączenia. Spróbuj za chwilę.";
+
             setMessages(prev => prev.map(msg =>
-                msg.id === requestId ? { ...msg, text: "Błąd połączenia. Upewnij się, że API Gemini jest skonfigurowane." } : msg
+                msg.id === requestId ? { ...msg, text: errorMessage } : msg
             ));
         } finally {
             setIsTyping(false);
@@ -115,7 +122,7 @@ const AICoachWidget = () => {
                             <div className="w-2 h-2 rounded-full bg-boxing-neon animate-pulse"></div>
                             <div>
                                 <h3 className="text-white font-bold text-sm tracking-wider uppercase">CornerMan AI</h3>
-                                <p className="text-xs text-gray-400">System Analityczny v1.1-LIVE</p>
+                                <p className="text-xs text-gray-400">System Analityczny v1.2-LIVE</p>
                             </div>
                         </div>
 
