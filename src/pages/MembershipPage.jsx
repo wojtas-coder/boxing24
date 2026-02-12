@@ -74,7 +74,7 @@ const MembershipPage = () => {
                 {/* TIER 1: SCOUT */}
                 <PricingCard
                     title="Digital Pass"
-                    price="9.99"
+                    price="19.99"
                     tier="basic"
                     onClick={() => alert("Przekierowanie do płatności subskrypcyjnej...")}
                     features={[
