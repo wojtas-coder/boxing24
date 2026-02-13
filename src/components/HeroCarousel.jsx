@@ -158,8 +158,8 @@ const HeroCarousel = () => {
                                             transition={{ delay: 0.8 }}
                                             className="bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl w-64 shadow-2xl"
                                         >
-                                            <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-1">Schedule</div>
-                                            <div className="text-white font-black text-lg">Next session: 18:00</div>
+                                            <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-1">Harmonogram</div>
+                                            <div className="text-white font-black text-lg">Następna sesja: 18:00</div>
                                             <div className="w-full bg-zinc-800 h-1 mt-3 rounded-full overflow-hidden">
                                                 <motion.div
                                                     animate={{ width: ["0%", "85%"] }}
@@ -179,7 +179,7 @@ const HeroCarousel = () => {
                                                 <div className="w-8 h-8 rounded-full bg-red-500 animate-pulse" />
                                             </div>
                                             <div>
-                                                <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Heart Rate</div>
+                                                <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Tętno</div>
                                                 <div className="text-white font-black text-xl">145 BPM</div>
                                             </div>
                                         </motion.div>
@@ -193,7 +193,7 @@ const HeroCarousel = () => {
                                             <div className="text-boxing-green text-[10px] uppercase font-bold tracking-widest mb-1">Status</div>
                                             <div className="text-white font-black text-lg flex items-center gap-2">
                                                 <div className="w-2 h-2 rounded-full bg-boxing-green animate-ping" />
-                                                READY TO WORKOUT
+                                                GOTOWY DO TRENINGU
                                             </div>
                                         </motion.div>
                                     </div>
