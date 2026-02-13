@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, MapPin, Trophy, Users, Star, RefreshCw } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { calendarEvents as mockEvents } from '../data/calendarData';
 import fileEvents from '../data/calendar.json';
 
@@ -19,9 +20,17 @@ const CalendarPage = () => {
     ].sort((a, b) => new Date(a.date) - new Date(b.date));
 
 
+    const [searchParams] = useSearchParams();
     const [events, setEvents] = useState(combinedEvents);
-    const [filter, setFilter] = useState('PRO'); // Default to PRO as requested
-    const [loading, setLoading] = useState(false); // No loading, instant JSON
+    const [filter, setFilter] = useState('PRO'); // Default to PRO
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const view = searchParams.get('view');
+        if (view && ['PRO', 'AMATEUR'].includes(view)) {
+            setFilter(view);
+        }
+    }, [searchParams]);
 
     // Helper to get icon based on event type
     const getEventIcon = (type) => {
