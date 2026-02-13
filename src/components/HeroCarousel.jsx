@@ -25,7 +25,7 @@ const slides = [
         title: "B24 ONLINE",
         subtitle: "Aplikacja & Mentoring",
         description: "Twój kieszonkowy trener. Plany treningowe, analiza wideo, dieta i suplementacja. Trenuj gdziekolwiek jesteś.",
-        image: onlineBanner,
+        image: "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=1974&auto=format&fit=crop",
         link: "/membership",
         cta: "Dołącz do Programu",
         color: "text-blue-500"
