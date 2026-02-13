@@ -149,127 +149,127 @@ const HeroCarousel = () => {
                                     </motion.div>
                                 </div>
 
-                                {/* Premium UI Widgets overlay */}
+                                {/* Premium UI Widgets - Flexible layout to fill space between text and right side */}
                                 {slide.isPremium && (
-                                    <div className="absolute right-4 md:right-20 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-6">
-                                        {/* Harmonogram */}
-                                        <motion.div
-                                            initial={{ x: 50, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.8 }}
-                                            className="bg-black/60 backdrop-blur-xl border border-white/10 p-5 rounded-2xl w-72 shadow-2xl relative overflow-hidden group"
-                                        >
-                                            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
-                                                <Calendar className="w-12 h-12 text-white" />
-                                            </div>
-                                            <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-1">Harmonogram</div>
-                                            <div className="text-white font-black text-lg">Następna sesja: 18:00</div>
-                                            <div className="text-zinc-400 text-xs mt-1">Trening Siłowy / Technika</div>
-                                            <div className="w-full bg-zinc-800 h-1 mt-4 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    animate={{ width: ["0%", "85%"] }}
-                                                    transition={{ duration: 1.5, delay: 1 }}
-                                                    className="h-full bg-boxing-green shadow-[0_0_10px_#22c55e]"
-                                                />
-                                            </div>
-                                        </motion.div>
-
-                                        {/* Biblioteka Planów */}
-                                        <motion.div
-                                            initial={{ x: 50, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 1.1 }}
-                                            className="bg-black/60 backdrop-blur-xl border border-white/10 p-5 rounded-2xl w-72 shadow-2xl"
-                                        >
-                                            <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-3 flex justify-between items-center">
-                                                <span>Biblioteka Planów</span>
-                                                <span className="text-boxing-green">Zobacz wszystkie</span>
-                                            </div>
-                                            <div className="space-y-3">
-                                                {[
-                                                    { name: "Fundamentals 101", level: "Początkujący", active: true },
-                                                    { name: "Power & Explosiveness", level: "Zaawansowany", active: false }
-                                                ].map((plan, i) => (
-                                                    <div key={i} className={`p-2 rounded-lg border ${plan.active ? 'border-boxing-green/30 bg-boxing-green/5' : 'border-white/5 bg-white/5'} transition-colors hover:bg-white/10 cursor-pointer`}>
-                                                        <div className="text-white text-xs font-bold">{plan.name}</div>
-                                                        <div className="text-zinc-500 text-[10px]">{plan.level}</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-
-                                        {/* Tętno i Aktualny Plan Row */}
-                                        <div className="flex gap-4">
+                                    <div className="flex-1 hidden lg:grid grid-cols-2 gap-6 ml-12 items-center max-w-4xl">
+                                        <div className="space-y-6">
+                                            {/* Harmonogram */}
                                             <motion.div
                                                 initial={{ x: 50, opacity: 0 }}
                                                 animate={{ x: 0, opacity: 1 }}
-                                                transition={{ delay: 1.3 }}
-                                                className="bg-black/60 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex-1 shadow-2xl flex items-center gap-4"
+                                                transition={{ delay: 0.8 }}
+                                                className="bg-black/60 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-2xl relative overflow-hidden group"
                                             >
-                                                <div className="w-10 h-10 rounded-full border-2 border-red-500/30 flex items-center justify-center shrink-0">
-                                                    <div className="w-6 h-6 rounded-full bg-red-500 animate-pulse" />
+                                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
+                                                    <Calendar className="w-12 h-12 text-white" />
                                                 </div>
-                                                <div>
-                                                    <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest leading-none">Tętno</div>
-                                                    <div className="text-white font-black text-lg">145 BPM</div>
+                                                <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-1">Harmonogram</div>
+                                                <div className="text-white font-black text-lg">Następna sesja: 18:00</div>
+                                                <div className="text-zinc-400 text-xs mt-1">Trening Siłowy / Technika</div>
+                                                <div className="w-full bg-zinc-800 h-1 mt-4 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        animate={{ width: ["0%", "85%"] }}
+                                                        transition={{ duration: 1.5, delay: 1 }}
+                                                        className="h-full bg-boxing-green shadow-[0_0_10px_#22c55e]"
+                                                    />
                                                 </div>
                                             </motion.div>
 
+                                            {/* Biblioteka Planów */}
                                             <motion.div
                                                 initial={{ x: 50, opacity: 0 }}
                                                 animate={{ x: 0, opacity: 1 }}
-                                                transition={{ delay: 1.5 }}
-                                                className="bg-boxing-green text-black p-5 rounded-2xl flex-1 shadow-[0_10px_20px_rgba(34,197,94,0.2)] flex items-center gap-3 group relative overflow-hidden"
+                                                transition={{ delay: 1.1 }}
+                                                className="bg-black/60 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-2xl"
                                             >
-                                                <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-110 transition-transform">
-                                                    <Brain className="w-12 h-12" />
+                                                <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-3 flex justify-between items-center">
+                                                    <span>Biblioteka Planów</span>
+                                                    <span className="text-boxing-green">Wszystkie</span>
                                                 </div>
-                                                <div className="shrink-0">
-                                                    <div className="w-2 h-2 rounded-full bg-black animate-ping" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-black/60 text-[10px] uppercase font-bold tracking-widest leading-none mb-1">Status AI</div>
-                                                    <div className="text-black font-black text-sm">GOTOWY</div>
+                                                <div className="space-y-3">
+                                                    {[
+                                                        { name: "Fundamentals 101", level: "Początkujący", active: true },
+                                                        { name: "Power & Explosiveness", level: "Zaawansowany", active: false }
+                                                    ].map((plan, i) => (
+                                                        <div key={i} className={`p-2 rounded-lg border ${plan.active ? 'border-boxing-green/30 bg-boxing-green/5' : 'border-white/5 bg-white/5'} transition-colors hover:bg-white/10 cursor-pointer`}>
+                                                            <div className="text-white text-xs font-bold">{plan.name}</div>
+                                                            <div className="text-zinc-500 text-[10px]">{plan.level}</div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </motion.div>
                                         </div>
 
-                                        {/* Aktywny Trening Detail */}
-                                        <motion.div
-                                            initial={{ x: 50, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 1.7 }}
-                                            className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl w-72 shadow-2xl"
-                                        >
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div>
-                                                    <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-1">Aktywny Plan</div>
-                                                    <div className="text-white font-black text-base uppercase">PRO BOXER v2.0</div>
-                                                </div>
-                                                <div className="text-boxing-green text-xs font-bold leading-none bg-boxing-green/10 px-2 py-1 rounded border border-boxing-green/20">W TOKU</div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between text-[10px] uppercase tracking-widest">
-                                                    <span className="text-zinc-400">Postęp planu</span>
-                                                    <span className="text-white font-bold">64%</span>
-                                                </div>
-                                                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                                                    <motion.div
-                                                        animate={{ width: ["0%", "64%"] }}
-                                                        transition={{ duration: 1.5, delay: 2 }}
-                                                        className="h-full bg-boxing-green"
-                                                    />
-                                                </div>
-                                                <div className="flex items-center gap-3 text-xs text-zinc-300">
-                                                    <div className="flex -space-x-2">
-                                                        {[1, 2, 3].map(i => (
-                                                            <div key={i} className="w-6 h-6 rounded-full border border-black bg-zinc-800 flex items-center justify-center text-[8px] font-bold">W{i}</div>
-                                                        ))}
+                                        <div className="space-y-6">
+                                            {/* Tętno i Status AI Row */}
+                                            <div className="flex gap-4">
+                                                <motion.div
+                                                    initial={{ x: 50, opacity: 0 }}
+                                                    animate={{ x: 0, opacity: 1 }}
+                                                    transition={{ delay: 1.3 }}
+                                                    className="bg-black/60 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex-1 shadow-2xl flex items-center gap-4"
+                                                >
+                                                    <div className="w-10 h-10 rounded-full border-2 border-red-500/30 flex items-center justify-center shrink-0">
+                                                        <div className="w-6 h-6 rounded-full bg-red-500 animate-pulse" />
                                                     </div>
-                                                    <span>Tydzień 3 z 8</span>
-                                                </div>
+                                                    <div>
+                                                        <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest leading-none">Tętno</div>
+                                                        <div className="text-white font-black text-lg">145 BPM</div>
+                                                    </div>
+                                                </motion.div>
+
+                                                <motion.div
+                                                    initial={{ x: 50, opacity: 0 }}
+                                                    animate={{ x: 0, opacity: 1 }}
+                                                    transition={{ delay: 1.5 }}
+                                                    className="bg-boxing-green text-black p-5 rounded-2xl flex-1 shadow-[0_10px_20px_rgba(34,197,94,0.2)] flex items-center gap-3 group relative overflow-hidden"
+                                                >
+                                                    <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-110 transition-transform">
+                                                        <Brain className="w-12 h-12" />
+                                                    </div>
+                                                    <div className="shrink-0">
+                                                        <div className="w-2 h-2 rounded-full bg-black animate-ping" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-black/60 text-[10px] uppercase font-bold tracking-widest leading-none mb-1">AI</div>
+                                                        <div className="text-black font-black text-xs">ONLINE</div>
+                                                    </div>
+                                                </motion.div>
                                             </div>
-                                        </motion.div>
+
+                                            {/* Aktywny Trening Detail */}
+                                            <motion.div
+                                                initial={{ x: 50, opacity: 0 }}
+                                                animate={{ x: 0, opacity: 1 }}
+                                                transition={{ delay: 1.7 }}
+                                                className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-2xl"
+                                            >
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div>
+                                                        <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-1">Postęp Planu</div>
+                                                        <div className="text-white font-black text-base uppercase">PRO BOXER v2.0</div>
+                                                    </div>
+                                                    <div className="text-boxing-green text-[8px] font-bold leading-none bg-boxing-green/10 px-1.5 py-0.5 rounded border border-boxing-green/20">W TOKU</div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            animate={{ width: ["0%", "64%"] }}
+                                                            transition={{ duration: 1.5, delay: 2 }}
+                                                            className="h-full bg-boxing-green"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[10px] text-zinc-300">
+                                                        <div className="flex -space-x-1">
+                                                            {[1, 2, 3].map(i => (
+                                                                <div key={i} className={`w-5 h-5 rounded-full border border-black flex items-center justify-center text-[7px] font-bold ${i === 3 ? 'bg-boxing-green text-black' : 'bg-zinc-800 text-white'}`}>W{i}</div>
+                                                            ))}
+                                                        </div>
+                                                        <span>Tydzień 3 z 8</span>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
