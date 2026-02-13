@@ -2,12 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const BoxingFistIcon = ({ className }) => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-        <path d="M20,10.25C20,9.08 19.11,8.12 18,8C17.75,8 17.51,8.04 17.29,8.12C16.92,7.46 16.27,7 15.5,7C15.2,7 14.92,7.07 14.66,7.19C14.33,6.48 13.62,6 12.8,6C12.43,6 12.09,6.1 11.79,6.29C11.41,5.52 10.63,5 9.75,5C8.23,5 7,6.23 7,7.75L7,11.5L6,11.5C4.34,11.5 3,12.84 3,14.5L3,16C3,19.31 5.69,22 9,22L15,22C18.31,22 21,19.31 21,16L21,11C21,10.59 20.87,10.21 20.66,9.88C20.87,10 21,10.12 21,10.25ZM18,14L17,14L17,10C17,9.45 17.45,9 18,9C18.55,9 19,9.45 19,10L19,14ZM15,14L14,14L14,9C14,8.45 14.45,8 15,8C15.55,8 16,8.45 16,9L16,14ZM12,14L11,14L11,8C11,7.45 11.45,7 12,7C12.55,7 13,7.45 13,8L13,14ZM9,14L8,14L8,7.75C8,6.78 8.78,6 9.75,6C10.72,6 11.5,6.78 11.5,7.75L11.5,14Z" />
-    </svg>
-);
-
 const AICoachWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
@@ -115,7 +109,7 @@ const AICoachWidget = () => {
                     <X className="w-6 h-6" />
                 ) : (
                     <>
-                        <BoxingFistIcon className="w-6 h-6 animate-pulse group-hover:rotate-12 transition-transform" />
+                        <Brain className="w-6 h-6 animate-pulse group-hover:rotate-12 transition-transform" />
                         <span className="hidden md:block">CORNERMAN AI</span>
                     </>
                 )}
