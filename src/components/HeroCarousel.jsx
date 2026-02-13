@@ -6,8 +6,15 @@ import { Link } from 'react-router-dom';
 // Import banners
 import studioBanner from '../assets/banners/banner-studio.png';
 import onlineBanner from '../assets/banners/banner-online.png';
-import shopBanner from '../assets/banners/banner-shop.png';
 import knowledgeBanner from '../assets/banners/banner-knowledge.png';
+
+// Import shop lifestyle images for background showcase
+import paddlesDrill from '../assets/shop/lifestyle/paddles-drill.png';
+import bomberStreet from '../assets/shop/lifestyle/bomber-street.png';
+import teeRope from '../assets/shop/lifestyle/tee-rope.png';
+import mittsPadwork from '../assets/shop/lifestyle/mitts-padwork.png';
+import wrapsClose from '../assets/shop/lifestyle/wraps-close.png';
+import glovesSparring from '../assets/shop/lifestyle/gloves-sparring.png';
 
 const slides = [
     {
@@ -36,7 +43,7 @@ const slides = [
         title: "SKLEP PUNCHIN'™",
         subtitle: "SPRZĘT PREMIUM",
         description: "Autorska kolekcja sprzętu stworzona dla profesjonalistów. Worki, tarcze i odzież, które przetrwają każdą rundę.",
-        image: "https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?q=80&w=2000&auto=format&fit=crop", // Cinematic gloves/gear details
+        isShop: true,
         link: "/boutique",
         cta: "Przejdź do Sklepu",
         color: "text-white/90"
@@ -86,14 +93,37 @@ const HeroCarousel = () => {
                             transition={{ duration: 0.8 }}
                             className="absolute inset-0 w-full h-full"
                         >
-                            {/* Background Image with Zoom Effect */}
-                            <motion.div
-                                className="absolute inset-0 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${slide.image})` }}
-                                initial={{ scale: 1.1 }}
-                                animate={{ scale: 1 }}
-                                transition={{ duration: 6, ease: "linear" }}
-                            />
+                            {/* Background Image with Zoom Effect or Shop Showcase */}
+                            {slide.isShop ? (
+                                <div className="absolute inset-0 bg-zinc-950 overflow-hidden">
+                                    <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-3 gap-1 opacity-40">
+                                        {[paddlesDrill, bomberStreet, teeRope, mittsPadwork, wrapsClose, glovesSparring].map((img, i) => (
+                                            <motion.div
+                                                key={i}
+                                                className="relative h-full overflow-hidden"
+                                                initial={{ scale: 1.2, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                transition={{ duration: 1.2, delay: i * 0.1 }}
+                                            >
+                                                <img
+                                                    src={img}
+                                                    className="w-full h-full object-cover grayscale brightness-50"
+                                                    alt="PunchIn Gear"
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+                                </div>
+                            ) : (
+                                <motion.div
+                                    className="absolute inset-0 bg-cover bg-center"
+                                    style={{ backgroundImage: `url(${slide.image})` }}
+                                    initial={{ scale: 1.1 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 6, ease: "linear" }}
+                                />
+                            )}
 
                             {/* Overlay Gradient */}
                             <div className={`absolute inset-0 ${slide.isPremium
