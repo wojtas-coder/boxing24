@@ -178,7 +178,7 @@ const Layout = () => {
 
                         <Link to="/members">
                             <button className="px-6 py-2 border border-white/20 text-[10px] font-bold tracking-widest uppercase hover:bg-boxing-green hover:border-boxing-green hover:text-black transition-all rounded-sm">
-                                {user ? 'Twój Panel' : 'Strefa Klienta'}
+                                {user ? 'Twój Panel' : 'Strefa Premium'}
                             </button>
                         </Link>
 
@@ -241,7 +241,7 @@ const Layout = () => {
                             </div>
 
                             <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep Premium</Link>
-                            <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-boxing-green">Strefa Klienta</Link>
+                            <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-boxing-green">Strefa Premium</Link>
                             {user && (
                                 <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="text-lg font-bold uppercase tracking-widest text-red-500 mt-4">
                                     Wyloguj się
