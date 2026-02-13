@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const BoxingGloveIcon = ({ className }) => (
+const BoxingFistIcon = ({ className }) => (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-        <path d="M19,8c0-2.21-1.79-4-4-4h-1.1c-0.61,0-1.17,0.26-1.55,0.72c-0.38-0.46-0.94-0.72-1.55-0.72h-1.1c-0.61,0-1.17,0.26-1.55,0.72 C7.77,4.26,7.21,4,6.6,4H5.5c-2.21,0-4,1.79-4,4v6.5c0,3.59,2.91,6.5,6.5,6.5h6c3.59,0,6.5-2.91,6.5-6.5V8z M14.5,13h-2.5V8.5 c0-0.83,0.67-1.5,1.5-1.5h0.5c0.83,0,1.5,0.67,1.5,1.5V13z M9.5,13H7V8.5c0-0.83,0.67-1.5,1.5-1.5h0.5c0.83,0,1.5,0.67,1.5,1.5V13 z M18.5,14.5c0,2.48-2.02,4.5-4.5,4.5h-6c-2.48,0-4.5-2.02-4.5-4.5V8.5C3.5,7.67,4.17,7,5,7h0.5c0.83,0,1.5,0.67,1.5,1.5V11 c0,0.55,0.45,1,1,1h1.5v2.5h1V12h1.5c0.55,0,1-0.45,1-1V8.5C11.5,7.67,12.17,7,13,7h0.5c0.83,0,1.5,0.67,1.5,1.5V11 c0,0.55,0.45,1,1,1h1.5v2.5h1V12H17c0.55,0,1-0.45,1-1V8.5C18,7.67,18.67,7,19.5,7c0.83,0,1.5,0.67,1.5,1.5V14.5z" />
+        <path d="M19 10c0-1.66-1.34-3-3-3h-1.5c-.6 0-1.15.2-1.6.5-.45-.3-1-.5-1.65-.5H9.5c-.65 0-1.2.2-1.65.5-.45-.3-1-.5-1.6-.5H5C3.34 7 2 8.34 2 10v4c0 1.66 1.34 3 3 3h.5v2c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-2h.5c1.66 0 3-1.34 3-3v-4z" />
     </svg>
 );
 
@@ -115,7 +115,7 @@ const AICoachWidget = () => {
                     <X className="w-6 h-6" />
                 ) : (
                     <>
-                        <BoxingGloveIcon className="w-6 h-6 animate-pulse group-hover:rotate-12 transition-transform" />
+                        <BoxingFistIcon className="w-6 h-6 animate-pulse group-hover:rotate-12 transition-transform" />
                         <span className="hidden md:block">CORNERMAN AI</span>
                     </>
                 )}
