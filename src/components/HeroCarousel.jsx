@@ -33,13 +33,13 @@ const slides = [
     },
     {
         id: 3,
-        title: "BUTIK PUNCHIN'™",
-        subtitle: "Sprzęt Premium",
-        description: "Tylko sprawdzony sprzęt. Kolekcja PunchIn' - worki, tarcze, odzież. Jakość, która przetrwa każdą rundę.",
-        image: shopBanner,
+        title: "SKLEP PUNCHIN'™",
+        subtitle: "SPRZĘT PREMIUM",
+        description: "Autorska kolekcja sprzętu stworzona dla profesjonalistów. Worki, tarcze i odzież, które przetrwają każdą rundę.",
+        image: "https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?q=80&w=2000&auto=format&fit=crop", // Cinematic gloves/gear details
         link: "/boutique",
         cta: "Przejdź do Sklepu",
-        color: "text-purple-500"
+        color: "text-white/90"
     },
     {
         id: 4,

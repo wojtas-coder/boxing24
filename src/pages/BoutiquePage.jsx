@@ -12,9 +12,9 @@ const BoutiquePage = () => {
                     <div>
                         <div className="flex items-center gap-3 text-boxing-green mb-2">
                             <ShoppingBag className="w-5 h-5" />
-                            <span className="font-bold uppercase tracking-widest text-sm">Official Store</span>
+                            <span className="font-bold uppercase tracking-widest text-sm">Official PunchIn Store</span>
                         </div>
-                        <h1 className="text-5xl font-black text-white italic uppercase">Boxer's Shop</h1>
+                        <h1 className="text-5xl font-black text-white italic uppercase tracking-tighter">SKLEP PUNCHIN'</h1>
                     </div>
                     <p className="text-gray-400 max-w-md text-right mt-6 md:mt-0">
                         Wyselekcjonowany sprzęt. <br />

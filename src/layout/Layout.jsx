@@ -166,7 +166,7 @@ const Layout = () => {
                             to="/boutique"
                             className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all relative group text-zinc-400 hover:text-white"
                         >
-                            Sklep
+                            Sklep PunchIn
                             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-current transition-all group-hover:w-full opacity-0 group-hover:opacity-100"></span>
                         </Link>
                     </div>
@@ -240,7 +240,7 @@ const Layout = () => {
                                 <Link to="/knowledge?view=reviews" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Recenzje</Link>
                             </div>
 
-                            <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep Premium</Link>
+                            <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep PunchIn</Link>
                             <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-boxing-green">Strefa Premium</Link>
                             {user && (
                                 <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="text-lg font-bold uppercase tracking-widest text-red-500 mt-4">
