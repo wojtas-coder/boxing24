@@ -25,10 +25,11 @@ const slides = [
         title: "B24 ONLINE",
         subtitle: "Aplikacja & Mentoring",
         description: "Twój kieszonkowy trener. Plany treningowe, analiza wideo, dieta i suplementacja. Trenuj gdziekolwiek jesteś.",
-        image: "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=1974&auto=format&fit=crop",
+        image: "https://images.unsplash.com/photo-1510671022204-f37071665a3d?q=80&w=2070&auto=format&fit=crop", // Cinematic wraps detail
         link: "/membership",
         cta: "Dołącz do Programu",
-        color: "text-blue-500"
+        color: "text-white/80",
+        isPremium: true
     },
     {
         id: 3,
@@ -95,7 +96,10 @@ const HeroCarousel = () => {
                             />
 
                             {/* Overlay Gradient */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+                            <div className={`absolute inset-0 ${slide.isPremium
+                                ? 'bg-gradient-to-t from-black via-black/40 to-transparent shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]'
+                                : 'bg-gradient-to-r from-black via-black/60 to-transparent'
+                                }`} />
 
                             {/* Content */}
                             <div className="absolute inset-0 flex items-center px-4 md:px-20">
@@ -113,7 +117,7 @@ const HeroCarousel = () => {
                                         initial={{ y: 30, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{ delay: 0.4 }}
-                                        className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-6 leading-none shadow-black drop-shadow-lg"
+                                        className={`text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-6 leading-none drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] ${slide.isPremium ? 'text-stroke-sm' : ''}`}
                                     >
                                         {slide.title}
                                     </motion.h1>
@@ -134,13 +138,66 @@ const HeroCarousel = () => {
                                     >
                                         <Link
                                             to={slide.link}
-                                            className="group inline-flex items-center gap-3 px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-boxing-green hover:border-boxing-green transition-all duration-300"
+                                            className={`group inline-flex items-center gap-3 px-8 py-4 font-bold uppercase tracking-widest transition-all duration-300 ${slide.isPremium
+                                                ? 'bg-boxing-green text-black hover:bg-white hover:scale-105 shadow-[0_10px_20px_rgba(34,197,94,0.3)]'
+                                                : 'bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-boxing-green hover:border-boxing-green'
+                                                }`}
                                         >
                                             {slide.cta}
-                                            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                            <ChevronRight className={`w-5 h-5 group-hover:translate-x-1 transition-transform ${slide.isPremium ? 'text-black' : ''}`} />
                                         </Link>
                                     </motion.div>
                                 </div>
+
+                                {/* Premium UI Widgets overlay */}
+                                {slide.isPremium && (
+                                    <div className="absolute right-4 md:right-20 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-6">
+                                        <motion.div
+                                            initial={{ x: 50, opacity: 0 }}
+                                            animate={{ x: 0, opacity: 1 }}
+                                            transition={{ delay: 0.8 }}
+                                            className="bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl w-64 shadow-2xl"
+                                        >
+                                            <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mb-1">Schedule</div>
+                                            <div className="text-white font-black text-lg">Next session: 18:00</div>
+                                            <div className="w-full bg-zinc-800 h-1 mt-3 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    animate={{ width: ["0%", "85%"] }}
+                                                    transition={{ duration: 1.5, delay: 1 }}
+                                                    className="h-full bg-boxing-green"
+                                                />
+                                            </div>
+                                        </motion.div>
+
+                                        <motion.div
+                                            initial={{ x: 50, opacity: 0 }}
+                                            animate={{ x: 0, opacity: 1 }}
+                                            transition={{ delay: 1 }}
+                                            className="bg-black/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl w-64 shadow-2xl flex items-center gap-4"
+                                        >
+                                            <div className="w-12 h-12 rounded-full border-2 border-red-500/30 flex items-center justify-center">
+                                                <div className="w-8 h-8 rounded-full bg-red-500 animate-pulse" />
+                                            </div>
+                                            <div>
+                                                <div className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Heart Rate</div>
+                                                <div className="text-white font-black text-xl">145 BPM</div>
+                                            </div>
+                                        </motion.div>
+
+                                        <motion.div
+                                            initial={{ x: 50, opacity: 0 }}
+                                            animate={{ x: 0, opacity: 1 }}
+                                            transition={{ delay: 1.2 }}
+                                            className="bg-boxing-green/10 backdrop-blur-xl border border-boxing-green/20 p-6 rounded-2xl w-64 shadow-2xl"
+                                        >
+                                            <div className="text-boxing-green text-[10px] uppercase font-bold tracking-widest mb-1">Status</div>
+                                            <div className="text-white font-black text-lg flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-boxing-green animate-ping" />
+                                                READY TO WORKOUT
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     )

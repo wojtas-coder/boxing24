@@ -37,6 +37,10 @@ body {
   color: transparent;
 }
 
+.text-stroke-sm {
+  -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.4);
+}
+
 .perspective-1000 {
   perspective: 1000px;
 }
