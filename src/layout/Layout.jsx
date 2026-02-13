@@ -108,13 +108,39 @@ const Layout = () => {
                             </div>
                         </div>
 
-                        <Link
-                            to="/knowledge"
-                            className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all relative group text-zinc-400 hover:text-white"
-                        >
-                            Wiedza
-                            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-current transition-all group-hover:w-full opacity-0 group-hover:opacity-100"></span>
-                        </Link>
+                        {/* DROPDOWN: WIEDZA */}
+                        <div className="relative group/dropdown py-2">
+                            <button className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-zinc-400 group-hover/dropdown:text-white">
+                                Wiedza
+                                <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
+                                <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/10 p-2 rounded shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-w-[180px]">
+                                    <Link
+                                        to="/knowledge?view=articles"
+                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded transition-all"
+                                    >
+                                        Artykuły
+                                    </Link>
+                                    <Link
+                                        to="/knowledge?view=compendium"
+                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded transition-all"
+                                    >
+                                        Kompendium
+                                    </Link>
+                                    <Link
+                                        to="/knowledge?view=reviews"
+                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded transition-all"
+                                    >
+                                        Recenzje
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
 
                         <Link
                             to="/boutique"
@@ -182,7 +208,13 @@ const Layout = () => {
                                 <Link to="/booking" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Treningi Personalne</Link>
                             </div>
 
-                            <Link to="/knowledge" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Wiedza</Link>
+                            <div className="flex flex-col space-y-4">
+                                <div className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500">Wiedza</div>
+                                <Link to="/knowledge?view=articles" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Artykuły</Link>
+                                <Link to="/knowledge?view=compendium" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Kompendium</Link>
+                                <Link to="/knowledge?view=reviews" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Recenzje</Link>
+                            </div>
+
                             <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep Premium</Link>
                             <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-boxing-green">Strefa Klienta</Link>
                             {user && (

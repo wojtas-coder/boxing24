@@ -1,14 +1,22 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, BookOpen, X, Lock, Crown, Filter, CheckCircle, ChevronRight, PlayCircle, GraduationCap, Star, ShoppingBag, Microscope, Database, Menu, ChevronDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { articles } from '../data/articles';
 import { compendium } from '../data/compendium';
 import { reviews } from '../data/reviews';
 
 const KnowledgePage = () => {
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('articles'); // articles, compendium, reviews
     const [isVip, setIsVip] = useState(false);
+
+    useEffect(() => {
+        const view = searchParams.get('view');
+        if (view && ['articles', 'compendium', 'reviews'].includes(view)) {
+            setActiveTab(view);
+        }
+    }, [searchParams]);
 
     // Articles State
     const [selectedArticle, setSelectedArticle] = useState(null);
