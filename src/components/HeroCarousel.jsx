@@ -9,12 +9,9 @@ import onlineBanner from '../assets/banners/banner-online.png';
 import knowledgeBanner from '../assets/banners/banner-knowledge.png';
 
 // Import shop lifestyle images for background showcase
-import paddlesDrill from '../assets/shop/lifestyle/paddles-drill.png';
-import bomberStreet from '../assets/shop/lifestyle/bomber-street.png';
-import teeRope from '../assets/shop/lifestyle/tee-rope.png';
-import mittsPadwork from '../assets/shop/lifestyle/mitts-padwork.png';
-import wrapsClose from '../assets/shop/lifestyle/wraps-close.png';
-import glovesSparring from '../assets/shop/lifestyle/gloves-sparring.png';
+import paddlesReal from '../assets/shop/lifestyle/paddles-real.jpg';
+import teeReal from '../assets/shop/lifestyle/tee-real.jpg';
+import bomberReal from '../assets/shop/lifestyle/bomber-real.jpg';
 
 const slides = [
     {
@@ -97,7 +94,7 @@ const HeroCarousel = () => {
                             {slide.isShop ? (
                                 <div className="absolute inset-0 bg-zinc-950 overflow-hidden">
                                     <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-3 gap-1 opacity-40">
-                                        {[paddlesDrill, bomberStreet, teeRope, mittsPadwork, wrapsClose, glovesSparring].map((img, i) => (
+                                        {[paddlesReal, teeReal, bomberReal, paddlesReal, teeReal, bomberReal].map((img, i) => (
                                             <motion.div
                                                 key={i}
                                                 className="relative h-full overflow-hidden"
@@ -108,7 +105,7 @@ const HeroCarousel = () => {
                                                 <img
                                                     src={img}
                                                     className="w-full h-full object-cover grayscale brightness-50"
-                                                    alt="PunchIn Gear"
+                                                    alt="PunchIn Gear Real"
                                                 />
                                             </motion.div>
                                         ))}
