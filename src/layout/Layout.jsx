@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 import AICoachWidget from '../components/AICoachWidget';
+import PremiumSidebar from '../components/PremiumSidebar';
 
 import { useAuth } from '../context/AuthContext';
 import { useAnalytics } from '../hooks/useAnalytics';
@@ -258,6 +259,7 @@ const Layout = () => {
             </main>
 
             <AICoachWidget /> {/* Added AICoachWidget here */}
+            <PremiumSidebar />
             <Footer />
         </div>
     );
