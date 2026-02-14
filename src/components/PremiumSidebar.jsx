@@ -9,16 +9,25 @@ import {
     LayoutGrid,
     TrendingUp,
     Clock,
-    Zap
+    Zap,
+    Trophy,
+    Target
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useClientData } from '../hooks/useClientData';
 
 const PremiumSidebar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const { user, profile } = useAuth();
+    const { bookings, gamification, plans, allPlans, loading } = useClientData();
 
     if (!user) return null;
+
+    // Logic to find the next session
+    const nextSession = bookings?.upcoming?.[0];
+    const activePlanId = plans?.[0];
+    const currentPlan = allPlans.find(p => p.id == activePlanId);
 
     return (
         <div className="fixed right-0 top-0 h-screen z-[60] flex items-center">
@@ -64,9 +73,9 @@ const PremiumSidebar = () => {
                                     <div className="p-2 bg-boxing-green/10 rounded-lg border border-boxing-green/20">
                                         <Zap className="w-5 h-5 text-boxing-green" />
                                     </div>
-                                    <div>
-                                        <h3 className="text-white font-black text-sm tracking-wider uppercase">System Aktywny</h3>
-                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{profile?.full_name || 'Użytkownik'}</p>
+                                    <div className="overflow-hidden">
+                                        <h3 className="text-white font-black text-xs tracking-wider uppercase truncate">System Aktywny</h3>
+                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest truncate">{profile?.full_name || user?.email?.split('@')[0]}</p>
                                     </div>
                                 </div>
                                 <button
@@ -80,82 +89,103 @@ const PremiumSidebar = () => {
                             {/* Widgets Container */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
 
-                                {/* WIDGET: Schedule (Harmonogram) */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between px-1">
-                                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Harmonogram</span>
-                                        <Calendar className="w-4 h-4 text-zinc-600" />
+                                {loading ? (
+                                    <div className="flex flex-col items-center justify-center h-full space-y-4 opacity-50">
+                                        <div className="w-8 h-8 border-2 border-boxing-green border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Synchronizacja danych...</p>
                                     </div>
-                                    <div className="bg-white/[0.03] border border-white/5 p-5 rounded-2xl group hover:bg-white/[0.05] transition-all cursor-pointer relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-boxing-green" />
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div>
-                                                <h4 className="text-white font-bold text-lg mb-1 italic">Następna sesja: 18:00</h4>
-                                                <p className="text-zinc-400 text-xs">Trening Siłowy / Technika</p>
+                                ) : (
+                                    <>
+                                        {/* WIDGET: Schedule (Harmonogram) */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between px-1">
+                                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Najbliższy Trening</span>
+                                                <Calendar className="w-4 h-4 text-zinc-600" />
                                             </div>
-                                            <Clock className="w-5 h-5 text-boxing-green opacity-50" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] text-zinc-500 font-bold">
-                                                <span>PROGRES DNIA</span>
-                                                <span className="text-boxing-green">65%</span>
-                                            </div>
-                                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: '65%' }}
-                                                    className="h-full bg-boxing-green shadow-[0_0_10px_#ccff00]"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {/* WIDGET: Biometrics (Tętno) */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-red-500/30 transition-all">
-                                        <Activity className="w-5 h-5 text-red-500 animate-[pulse_1s_infinite]" />
-                                        <div className="text-center">
-                                            <span className="block text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Tętno</span>
-                                            <span className="text-2xl font-black text-white italic">145 <span className="text-[10px] not-italic text-zinc-500">BPM</span></span>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-boxing-green/30 transition-all">
-                                        <TrendingUp className="w-5 h-5 text-boxing-green" />
-                                        <div className="text-center">
-                                            <span className="block text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Wydajność</span>
-                                            <span className="text-2xl font-black text-white italic">A+</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* WIDGET: Plan Library (Biblioteka) */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between px-1">
-                                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Biblioteka Planów</span>
-                                        <Link to="/membership" className="text-[10px] font-black text-boxing-green uppercase tracking-[0.2em] hover:brightness-125 transition-all">WSZYSTKIE</Link>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {[
-                                            { name: 'Fundamentals 101', level: 'Początkujący' },
-                                            { name: 'Power & Explosiveness', level: 'Zaawansowany' }
-                                        ].map((plan, i) => (
-                                            <Link
-                                                key={plan.name}
-                                                to="/membership"
-                                                className="block p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.06] hover:border-white/10 transition-all group"
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h5 className="text-white font-bold text-xs group-hover:text-boxing-green transition-colors">{plan.name}</h5>
-                                                        <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest font-bold">{plan.level}</p>
+                                            {nextSession ? (
+                                                <Link to="/members">
+                                                    <div className="bg-white/[0.03] border border-white/5 p-5 rounded-2xl group hover:bg-white/[0.05] transition-all cursor-pointer relative overflow-hidden">
+                                                        <div className="absolute top-0 left-0 w-1 h-full bg-boxing-green shadow-[0_0_10px_#ccff00]" />
+                                                        <div className="flex items-start justify-between mb-4">
+                                                            <div>
+                                                                <h4 className="text-white font-bold text-lg mb-1 italic">
+                                                                    {new Date(nextSession.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </h4>
+                                                                <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">{nextSession.coach_name}</p>
+                                                            </div>
+                                                            <Clock className="w-5 h-5 text-boxing-green opacity-50" />
+                                                        </div>
+                                                        <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                                                            <Target className="w-3 h-3" />
+                                                            {new Date(nextSession.start_time).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                        </div>
                                                     </div>
-                                                    <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-all transform group-hover:translate-x-1" />
+                                                </Link>
+                                            ) : (
+                                                <div className="bg-white/[0.01] border border-dashed border-white/10 p-5 rounded-2xl text-center">
+                                                    <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Brak rezerwacji</p>
+                                                    <Link to="/booking" className="text-boxing-green text-[10px] font-black uppercase tracking-widest mt-2 block hover:underline">Zarezerwuj teraz</Link>
                                                 </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* WIDGET: Biometrics / Gamification */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-boxing-green/30 transition-all">
+                                                <Trophy className="w-5 h-5 text-boxing-green" />
+                                                <div className="text-center">
+                                                    <span className="block text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Poziom</span>
+                                                    <span className="text-2xl font-black text-white italic">{gamification?.level || 1}</span>
+                                                </div>
+                                            </div>
+                                            <div className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-boxing-green/30 transition-all">
+                                                <div className="relative w-10 h-10 flex items-center justify-center">
+                                                    <svg className="w-full h-full -rotate-90">
+                                                        <circle cx="20" cy="20" r="18" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                                                        <motion.circle
+                                                            cx="20" cy="20" r="18" fill="transparent" stroke="#ccff00" strokeWidth="3" strokeDasharray="113"
+                                                            initial={{ strokeDashoffset: 113 }}
+                                                            animate={{ strokeDashoffset: 113 - (113 * (gamification?.currentLevelXp / gamification?.nextLevelXp)) }}
+                                                            transition={{ duration: 1.5, ease: "easeOut" }}
+                                                        />
+                                                    </svg>
+                                                    <Activity className="absolute w-4 h-4 text-boxing-green" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <span className="block text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Postęp</span>
+                                                    <span className="text-[10px] font-black text-white uppercase italic">{gamification?.currentLevelXp}/{gamification?.nextLevelXp} XP</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* WIDGET: Your Active Plan */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between px-1">
+                                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Twój Program</span>
+                                                <BookOpen className="w-4 h-4 text-zinc-600" />
+                                            </div>
+
+                                            {currentPlan ? (
+                                                <Link to="/members" className="block p-5 bg-white/[0.03] border border-white/5 rounded-2xl hover:bg-white/[0.05] transition-all group">
+                                                    <h5 className="text-white font-black text-sm uppercase italic group-hover:text-boxing-green transition-colors">{currentPlan.title}</h5>
+                                                    <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest font-bold">Poziom: {currentPlan.level}</p>
+
+                                                    <div className="mt-4 flex items-center gap-2">
+                                                        <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-boxing-green w-[30%]" />
+                                                        </div>
+                                                        <span className="text-[9px] font-black text-zinc-500">30%</span>
+                                                    </div>
+                                                </Link>
+                                            ) : (
+                                                <div className="bg-white/[0.01] border border-dashed border-white/10 p-5 rounded-2xl text-center">
+                                                    <Link to="/knowledge" className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">Wybierz plan treningowy</Link>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
 
                             </div>
 
