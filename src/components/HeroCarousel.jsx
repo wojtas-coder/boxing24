@@ -50,7 +50,7 @@ const slides = [
         title: "BOXING24 NEWS",
         subtitle: "Najnowsze Wydarzenia",
         description: "Bądź na bieżąco ze światem boksu. Relacje z gal, wywiady i analizy najciekawszych walk. Twoje źródło bokserskiej prawdy.",
-        image: "https://images.unsplash.com/photo-1517438476312-10d79c67556d?q=80&w=2000&auto=format&fit=crop", // Bright boxing ring action
+        image: "https://images.unsplash.com/photo-1509356847919-248233f0663c?q=80&w=2000&auto=format&fit=crop", // Very bright, reliable boxing action
         isNews: true,
         link: "/news",
         cta: "Zobacz Newsy",
@@ -141,8 +141,8 @@ const HeroCarousel = () => {
 
                             {/* Overlay Gradient */}
                             <div className={`absolute inset-0 ${slide.isPremium ? 'bg-gradient-to-t from-black via-black/40 to-transparent shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]' :
-                                    slide.isNews ? 'bg-gradient-to-r from-black/80 via-black/20 to-transparent' :
-                                        'bg-gradient-to-r from-black via-black/60 to-transparent'
+                                slide.isNews ? 'bg-gradient-to-r from-black/80 via-black/20 to-transparent' :
+                                    'bg-gradient-to-r from-black via-black/60 to-transparent'
                                 }`} />
 
                             {/* Content */}
