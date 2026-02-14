@@ -50,7 +50,7 @@ const slides = [
         title: "BOKSOPEDIA",
         subtitle: "Wiedza & Nauka",
         description: "Encyklopedia fight-science. Artykuły o taktyce, psychologii i biomechanice ciosu. Czytaj i wygrywaj.",
-        image: knowledgeBanner,
+        image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=2000&auto=format&fit=crop", // Cinematic old books/library
         link: "/knowledge",
         cta: "Czytaj Artykuły",
         color: "text-yellow-500"
