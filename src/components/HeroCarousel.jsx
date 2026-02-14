@@ -26,7 +26,7 @@ const slides = [
     },
     {
         id: 2,
-        title: "B24 ONLINE",
+        title: "BOXING24 ONLINE",
         subtitle: "Aplikacja & Mentoring",
         description: "Twój kieszonkowy trener. Plany treningowe, analiza wideo, dieta i suplementacja. Trenuj gdziekolwiek jesteś.",
         image: "https://images.unsplash.com/photo-1552072092-7f9b8d63efcb?q=80&w=2070&auto=format&fit=crop", // Cinematic close-up of hands/wraps - high contrast
