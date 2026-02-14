@@ -46,6 +46,16 @@ const slides = [
         color: "text-white/90"
     },
     {
+        id: 5,
+        title: "BOXING24 NEWS",
+        subtitle: "Najnowsze Wydarzenia",
+        description: "Bądź na bieżąco ze światem boksu. Relacje z gal, wywiady i analizy najciekawszych walk. Twoje źródło bokserskiej prawdy.",
+        image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2070&auto=format&fit=crop", // Cinematic stadium/lights
+        link: "/news",
+        cta: "Zobacz Newsy",
+        color: "text-red-500"
+    },
+    {
         id: 4,
         title: "BOKSOPEDIA",
         subtitle: "Wiedza & Nauka",
@@ -95,8 +105,6 @@ const HeroCarousel = () => {
                                 <div className="absolute inset-0 bg-zinc-950 overflow-hidden">
                                     <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-3 gap-1">
                                         {[paddlesReal, teeReal, bomberReal, paddlesReal, teeReal, bomberReal].map((img, i) => {
-                                            // Determine brightness/grayscale based on column
-                                            const isRightSide = i % (window.innerWidth < 768 ? 2 : 3) >= (window.innerWidth < 768 ? 1 : 1);
                                             return (
                                                 <motion.div
                                                     key={i}
@@ -107,9 +115,9 @@ const HeroCarousel = () => {
                                                 >
                                                     <img
                                                         src={img}
-                                                        className={`w-full h-full object-cover transition-all duration-1000 ${i % 3 === 0 ? 'grayscale brightness-50' :
-                                                                i % 3 === 1 ? 'grayscale-[0.5] brightness-75' :
-                                                                    'grayscale-0 brightness-110'
+                                                        className={`w-full h-full object-cover transition-all duration-1000 ${i % 3 === 0 ? 'grayscale-[0.3] brightness-75 contrast-125' :
+                                                                i % 3 === 1 ? 'grayscale-0 brightness-110 contrast-125 saturate-125' :
+                                                                    'grayscale-0 brightness-125 contrast-150 saturate-150'
                                                             }`}
                                                         alt="PunchIn Gear Real"
                                                     />
@@ -117,8 +125,8 @@ const HeroCarousel = () => {
                                             );
                                         })}
                                     </div>
-                                    {/* Stronger horizontal gradient: dark left for text, transparent right for gear visibility */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+                                    {/* Refined horizontal gradient: subtle dark left for text, clear right for gear pop */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
                                 </div>
                             ) : (
                                 <motion.div
