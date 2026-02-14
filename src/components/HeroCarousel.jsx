@@ -50,7 +50,7 @@ const slides = [
         title: "BOXING24 NEWS",
         subtitle: "Najnowsze Wydarzenia",
         description: "Bądź na bieżąco ze światem boksu. Relacje z gal, wywiady i analizy najciekawszych walk. Twoje źródło bokserskiej prawdy.",
-        image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2070&auto=format&fit=crop", // Cinematic stadium/lights
+        image: "https://images.unsplash.com/photo-1590554522245-34924a4604d5?q=80&w=2000&auto=format&fit=crop", // Cinematic boxing ring spotlight
         link: "/news",
         cta: "Zobacz Newsy",
         color: "text-red-500"
@@ -116,8 +116,8 @@ const HeroCarousel = () => {
                                                     <img
                                                         src={img}
                                                         className={`w-full h-full object-cover transition-all duration-1000 ${i % 3 === 0 ? 'grayscale-[0.3] brightness-75 contrast-125' :
-                                                                i % 3 === 1 ? 'grayscale-0 brightness-110 contrast-125 saturate-125' :
-                                                                    'grayscale-0 brightness-125 contrast-150 saturate-150'
+                                                            i % 3 === 1 ? 'grayscale-0 brightness-110 contrast-125 saturate-125' :
+                                                                'grayscale-0 brightness-125 contrast-150 saturate-150'
                                                             }`}
                                                         alt="PunchIn Gear Real"
                                                     />
