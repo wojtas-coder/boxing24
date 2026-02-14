@@ -93,24 +93,32 @@ const HeroCarousel = () => {
                             {/* Background Image with Zoom Effect or Shop Showcase */}
                             {slide.isShop ? (
                                 <div className="absolute inset-0 bg-zinc-950 overflow-hidden">
-                                    <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-3 gap-1 opacity-40">
-                                        {[paddlesReal, teeReal, bomberReal, paddlesReal, teeReal, bomberReal].map((img, i) => (
-                                            <motion.div
-                                                key={i}
-                                                className="relative h-full overflow-hidden"
-                                                initial={{ scale: 1.2, opacity: 0 }}
-                                                animate={{ scale: 1, opacity: 1 }}
-                                                transition={{ duration: 1.2, delay: i * 0.1 }}
-                                            >
-                                                <img
-                                                    src={img}
-                                                    className="w-full h-full object-cover grayscale brightness-50"
-                                                    alt="PunchIn Gear Real"
-                                                />
-                                            </motion.div>
-                                        ))}
+                                    <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-3 gap-1">
+                                        {[paddlesReal, teeReal, bomberReal, paddlesReal, teeReal, bomberReal].map((img, i) => {
+                                            // Determine brightness/grayscale based on column
+                                            const isRightSide = i % (window.innerWidth < 768 ? 2 : 3) >= (window.innerWidth < 768 ? 1 : 1);
+                                            return (
+                                                <motion.div
+                                                    key={i}
+                                                    className="relative h-full overflow-hidden"
+                                                    initial={{ scale: 1.2, opacity: 0 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    transition={{ duration: 1.2, delay: i * 0.1 }}
+                                                >
+                                                    <img
+                                                        src={img}
+                                                        className={`w-full h-full object-cover transition-all duration-1000 ${i % 3 === 0 ? 'grayscale brightness-50' :
+                                                                i % 3 === 1 ? 'grayscale-[0.5] brightness-75' :
+                                                                    'grayscale-0 brightness-110'
+                                                            }`}
+                                                        alt="PunchIn Gear Real"
+                                                    />
+                                                </motion.div>
+                                            );
+                                        })}
                                     </div>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+                                    {/* Stronger horizontal gradient: dark left for text, transparent right for gear visibility */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
                                 </div>
                             ) : (
                                 <motion.div
