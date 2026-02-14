@@ -50,7 +50,7 @@ const slides = [
         title: "BOXING24 NEWS",
         subtitle: "Najnowsze Wydarzenia",
         description: "Bądź na bieżąco ze światem boksu. Relacje z gal, wywiady i analizy najciekawszych walk. Twoje źródło bokserskiej prawdy.",
-        image: "https://images.unsplash.com/photo-1509356847919-248233f0663c?q=80&w=2000&auto=format&fit=crop", // Very bright, reliable boxing action
+        image: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?q=80&w=2000&auto=format&fit=crop", // Very bright boxing action
         isNews: true,
         link: "/news",
         cta: "Zobacz Newsy",
@@ -132,7 +132,7 @@ const HeroCarousel = () => {
                             ) : (
                                 <motion.div
                                     className="absolute inset-0 bg-cover bg-center"
-                                    style={{ backgroundImage: `url(${slide.image})` }}
+                                    style={{ backgroundImage: `url("${slide.image}")` }}
                                     initial={{ scale: 1.1 }}
                                     animate={{ scale: 1 }}
                                     transition={{ duration: 6, ease: "linear" }}
@@ -141,7 +141,7 @@ const HeroCarousel = () => {
 
                             {/* Overlay Gradient */}
                             <div className={`absolute inset-0 ${slide.isPremium ? 'bg-gradient-to-t from-black via-black/40 to-transparent shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]' :
-                                slide.isNews ? 'bg-gradient-to-r from-black/80 via-black/20 to-transparent' :
+                                slide.isNews ? 'bg-gradient-to-r from-black/60 via-transparent to-transparent' :
                                     'bg-gradient-to-r from-black via-black/60 to-transparent'
                                 }`} />
 
