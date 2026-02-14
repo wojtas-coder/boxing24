@@ -185,10 +185,10 @@ const Layout = () => {
 
                         {user && (
                             <button
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                     e.preventDefault();
-                                    logout();
-                                    setTimeout(() => window.location.href = '/', 100);
+                                    await logout(); // Ensure logout completes before redirect
+                                    window.location.href = '/';
                                 }}
                                 className="text-zinc-500 hover:text-red-500 transition-colors"
                                 title="Wyloguj"
