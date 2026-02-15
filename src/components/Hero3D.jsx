@@ -29,7 +29,7 @@ const Hero3D = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-[#111] via-black to-[#050505]"></div>
 
                 {/* Glow Orbs */}
-                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[#22c55e]/10 blur-[100px] rounded-full"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-red-600/10 blur-[100px] rounded-full"></div>
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-indigo-900/20 blur-[100px] rounded-full"></div>
 
                 {/* Grid */}
@@ -46,13 +46,13 @@ const Hero3D = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <h2 className="text-sm md:text-xl font-bold text-boxing-neon uppercase tracking-[0.5em] mb-6">
+                        <h2 className="text-sm md:text-xl font-bold text-red-500 uppercase tracking-[0.5em] mb-6">
                             Pasja • Technika • Społeczność
                         </h2>
                     </motion.div>
 
                     <h1 className="text-6xl md:text-9xl font-black text-white leading-tight tracking-tighter mb-8">
-                        BOXING<span className="text-[#00ff00]">24</span>
+                        BOXING<span className="text-red-500">24</span>
                     </h1>
                 </motion.div>
 
@@ -95,11 +95,11 @@ const Hero3D = () => {
                     transition={{ delay: 1, duration: 1 }}
                     className="absolute top-1/3 left-10 hidden xl:block"
                 >
-                    <div className="glass-panel p-4 rounded-xl flex items-center gap-4 w-64 backdrop-blur-sm transform -rotate-6 border border-[#00ff00]/20">
-                        <Layers className="text-[#00ff00] w-8 h-8" />
+                    <div className="glass-panel p-4 rounded-xl flex items-center gap-4 w-64 backdrop-blur-sm transform -rotate-6 border border-red-500/20">
+                        <Layers className="text-red-500 w-8 h-8" />
                         <div>
                             <div className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">System Szkoleniowy</div>
-                            <div className="text-white font-bold text-lg leading-tight">Sport & Nauka <span className="text-xs text-[#00ff00] ml-1">PRO</span></div>
+                            <div className="text-white font-bold text-lg leading-tight">Sport & Nauka <span className="text-xs text-red-400 ml-1">PRO</span></div>
                         </div>
                     </div>
                 </motion.div>

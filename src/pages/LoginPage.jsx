@@ -72,7 +72,7 @@ const LoginPage = () => {
                 {/* Logo */}
                 <div className="text-center mb-10">
                     <h1 className="text-4xl font-black text-white italic tracking-tighter mb-2">
-                        BOXING<span className="text-boxing-green">24</span>
+                        BOXING<span className="text-red-500">24</span>
                     </h1>
                     <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em]">
                         {authMethod === 'signup' ? 'Rejestracja' : 'Logowanie'}
@@ -80,7 +80,7 @@ const LoginPage = () => {
                 </div>
 
                 <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-3xl backdrop-blur-xl relative overflow-hidden shadow-2xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-boxing-green/5 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent pointer-events-none" />
 
                     <div className="relative z-10 space-y-6">
 
@@ -147,7 +147,7 @@ const LoginPage = () => {
                                             type="text"
                                             value={fullName}
                                             onChange={(e) => setFullName(e.target.value)}
-                                            className="w-full bg-[#111] border border-zinc-800 text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:border-boxing-green/50 focus:ring-1 focus:ring-boxing-green/50 transition-all font-mono"
+                                            className="w-full bg-[#111] border border-zinc-800 text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all font-mono"
                                             placeholder="Twoje imię"
                                             required
                                         />
@@ -163,7 +163,7 @@ const LoginPage = () => {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-[#111] border border-zinc-800 text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:border-boxing-green/50 focus:ring-1 focus:ring-boxing-green/50 transition-all font-mono"
+                                        className="w-full bg-[#111] border border-zinc-800 text-white pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all font-mono"
                                         placeholder="user@boxing24.pl"
                                         required
                                     />
@@ -179,7 +179,7 @@ const LoginPage = () => {
                                             type={showPassword ? "text" : "password"}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full bg-[#111] border border-zinc-800 text-white pl-12 pr-12 py-4 rounded-xl focus:outline-none focus:border-boxing-green/50 focus:ring-1 focus:ring-boxing-green/50 transition-all font-mono"
+                                            className="w-full bg-[#111] border border-zinc-800 text-white pl-12 pr-12 py-4 rounded-xl focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all font-mono"
                                             placeholder="••••••••"
                                             required
                                             minLength={6}
@@ -194,7 +194,7 @@ const LoginPage = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-boxing-green text-black py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-green-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-red-500 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                                 {loading ? 'Przetwarzanie...' :
                                     authMethod === 'magic' ? 'Wyślij Magic Link' :
@@ -225,7 +225,7 @@ const LoginPage = () => {
                                 </button>
                             ) : (
                                 <button onClick={() => setAuthMethod('signup')} className="hover:text-white transition-colors">
-                                    Nowy zawodnik? <span className="text-boxing-green font-bold">Załóż konto</span>
+                                    Nowy zawodnik? <span className="text-red-500 font-bold">Załóż konto</span>
                                 </button>
                             )}
                         </div>

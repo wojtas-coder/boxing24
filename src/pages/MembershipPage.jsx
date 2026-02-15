@@ -7,17 +7,17 @@ const PricingCard = ({ title, price, features, tier, recommended, onClick, butto
     return (
         <div className={`relative p-8 rounded-3xl border flex flex-col h-full bg-[#0a0a0a] transition-all duration-300 hover:-translate-y-2
             ${recommended
-                ? 'border-boxing-green shadow-[0_0_50px_rgba(0,255,0,0.15)] z-10 scale-105'
+                ? 'border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.15)] z-10 scale-105'
                 : 'border-white/10 hover:border-white/30 text-gray-400'}
         `}>
             {recommended && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-boxing-green text-black px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                     Najczęściej Wybierany
                 </div>
             )}
 
             <div className="mb-8">
-                <h3 className={`text-sm font-bold uppercase tracking-[0.2em] mb-4 ${recommended ? 'text-boxing-green' : 'text-gray-500'}`}>{title}</h3>
+                <h3 className={`text-sm font-bold uppercase tracking-[0.2em] mb-4 ${recommended ? 'text-red-500' : 'text-gray-500'}`}>{title}</h3>
                 <div className="flex items-baseline gap-1">
                     <span className="text-4xl md:text-5xl font-black text-white">{price}</span>
                     <span className="text-sm font-bold text-gray-500">PLN</span>
@@ -29,7 +29,7 @@ const PricingCard = ({ title, price, features, tier, recommended, onClick, butto
             <div className="space-y-4 mb-12 flex-grow">
                 {features.map((feature, i) => (
                     <div key={i} className="flex items-start gap-3">
-                        <div className={`mt-0.5 rounded-full p-1 ${recommended ? 'bg-boxing-green text-black' : 'bg-zinc-800 text-gray-400'}`}>
+                        <div className={`mt-0.5 rounded-full p-1 ${recommended ? 'bg-red-600 text-white' : 'bg-zinc-800 text-gray-400'}`}>
                             <Check className="w-3 h-3" />
                         </div>
                         <span className={`text-sm font-medium ${recommended ? 'text-gray-200' : 'text-gray-500'}`}>{feature}</span>
@@ -41,7 +41,7 @@ const PricingCard = ({ title, price, features, tier, recommended, onClick, butto
                 onClick={onClick}
                 className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all
                     ${recommended
-                        ? 'bg-boxing-green text-black hover:bg-white hover:scale-105'
+                        ? 'bg-red-600 text-white hover:bg-red-500 hover:scale-105'
                         : 'bg-zinc-900 text-white hover:bg-zinc-800 border border-white/5'}
                 `}
             >
@@ -59,9 +59,9 @@ const MembershipPage = () => {
 
             {/* HEADLINE */}
             <div className="text-center max-w-3xl mx-auto mb-20">
-                <span className="text-boxing-green font-bold text-xs uppercase tracking-[0.3em] mb-4 block animate-pulse">Dołącz do Drużyny</span>
+                <span className="text-red-500 font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Dołącz do Drużyny</span>
                 <h1 className="text-4xl md:text-7xl font-black text-white tracking-tighter uppercase mb-6">
-                    Zainwestuj w <br /><span className="text-boxing-green">Swoją Formę</span>
+                    Zainwestuj w <br /><span className="text-red-500">Swoją Formę</span>
                 </h1>
                 <p className="text-gray-400 text-lg font-light leading-relaxed">
                     Niezależnie od tego, czy szukasz wiedzy, planu treningowego czy pełnej opieki mentorskiej – mamy rozwiązanie skrojone pod Twoje ambicje.

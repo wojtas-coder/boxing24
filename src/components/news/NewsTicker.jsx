@@ -19,26 +19,31 @@ const NewsTicker = () => {
     });
 
     const displayHeadlines = headlines?.length > 0 ? headlines : [
-        "PILNE: System Newsów Boxing24 wdrożony - zapraszamy do lektury!",
-        "Strefa Wiedzy: Sprawdź nowe artykuły o psychologii sportu.",
-        "Trening: Rezerwuj terminy online w kalendarzu."
+        "Boxing24.pl – Kompletny ekosystem treningowy dla ambitnych bokserów",
+        "Treningi Personalne: Zarezerwuj sesję z elitarnym trenerem",
+        "Strefa Wiedzy: Nowe artykuły o biomechanice ciosów",
     ];
 
+    // Double the headlines for seamless infinite scroll
+    const tickerContent = [...displayHeadlines, ...displayHeadlines];
+    const totalWidth = tickerContent.length * 400; // approximate width
+
     return (
-        <div className="bg-red-600 text-white overflow-hidden py-2 border-b border-red-800">
+        <div className="bg-zinc-950 text-white overflow-hidden py-2.5 border-b border-white/[0.06]">
             <div className="max-w-7xl mx-auto flex items-center px-4">
-                <span className="font-black uppercase text-xs tracking-widest mr-4 bg-red-800 px-2 py-1 rounded">
-                    Breaking
+                <span className="flex-shrink-0 font-black uppercase text-[10px] tracking-widest mr-4 bg-red-600 px-3 py-1 rounded-md">
+                    Live
                 </span>
                 <div className="flex-1 overflow-hidden relative h-5">
                     <motion.div
-                        className="whitespace-nowrap absolute"
-                        animate={{ x: [1000, -1000] }} // Adjust logic for smoother loop if needed, but keeping simple for now
-                        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                        className="whitespace-nowrap absolute flex"
+                        animate={{ x: [0, -totalWidth / 2] }}
+                        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
                     >
-                        {displayHeadlines.map((item, index) => (
-                            <span key={index} className="mr-12 text-sm font-medium">
-                                {item} •
+                        {tickerContent.map((item, index) => (
+                            <span key={index} className="mr-16 text-sm text-zinc-400 font-medium">
+                                {item}
+                                <span className="ml-16 text-red-600/60">●</span>
                             </span>
                         ))}
                     </motion.div>
