@@ -19,7 +19,7 @@ const NewsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Fetch News from Supabase with Pagination
-    const { data: newsData, isLoading } = useQuery({
+    const { data: newsData, isLoading, error: newsError, refetch } = useQuery({
         queryKey: ['news', currentPage],
         queryFn: async () => {
             const from = (currentPage - 1) * NEWS_PER_PAGE;
@@ -34,7 +34,7 @@ const NewsPage = () => {
             if (error) throw error;
 
             return {
-                items: data.map(item => ({
+                items: (data || []).map(item => ({
                     ...item,
                     excerpt: item.lead,
                     published_at: item.created_at,
@@ -42,7 +42,8 @@ const NewsPage = () => {
                 })),
                 totalCount: count || 0
             };
-        }
+        },
+        retry: 2,
     });
 
     const newsItems = newsData?.items || [];
@@ -175,6 +176,15 @@ const NewsPage = () => {
                 {isLoading ? (
                     <div className="flex justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+                    </div>
+                ) : newsError ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                        <div className="text-red-500 text-6xl font-black">!</div>
+                        <h2 className="text-white text-xl font-bold uppercase">Problem z ładowaniem newsów</h2>
+                        <p className="text-zinc-500 text-sm max-w-md text-center">Nie udało się pobrać artykułów. Sprawdź połączenie internetowe lub spróbuj ponownie.</p>
+                        <button onClick={() => refetch()} className="px-6 py-3 bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-500 transition-colors">
+                            Spróbuj Ponownie
+                        </button>
                     </div>
                 ) : (
                     <>

@@ -49,7 +49,7 @@ const Layout = () => {
     }, [location.pathname]);
 
     return (
-        <div className="min-h-screen bg-black font-sans text-gray-100 flex flex-col selection:bg-boxing-green selection:text-white">
+        <div className="min-h-screen bg-black font-sans text-gray-100 flex flex-col selection:bg-red-600 selection:text-white">
 
             {/* Navigation */}
             <nav className={`fixed top-0 w-full z-50 px-6 py-4 transition-all duration-300 ${scrolled ? 'bg-black/90 backdrop-blur-xl border-b border-white/10' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
@@ -76,12 +76,12 @@ const Layout = () => {
 
                         {/* DROPDOWN: KALENDARZ */}
                         <div className="relative group/dropdown py-2">
-                            <button className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-zinc-400 group-hover/dropdown:text-white">
+                            <Link to="/calendar" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-zinc-400 group-hover/dropdown:text-white">
                                 Kalendarz
                                 <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
-                            </button>
+                            </Link>
 
                             {/* Dropdown Menu */}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
@@ -104,19 +104,19 @@ const Layout = () => {
 
                         {/* DROPDOWN: OFERTA */}
                         <div className="relative group/dropdown py-2">
-                            <button className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-boxing-green group-hover/dropdown:text-white">
+                            <Link to="/membership" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-red-500 group-hover/dropdown:text-white">
                                 Oferta
                                 <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
-                            </button>
+                            </Link>
 
                             {/* Dropdown Menu */}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
                                 <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/10 p-2 rounded shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-w-[200px]">
                                     <Link
                                         to="/membership"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-boxing-green hover:bg-white/5 rounded transition-all"
+                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-red-500 hover:bg-white/5 rounded transition-all"
                                     >
                                         Online Premium
                                     </Link>
@@ -132,12 +132,12 @@ const Layout = () => {
 
                         {/* DROPDOWN: WIEDZA */}
                         <div className="relative group/dropdown py-2">
-                            <button className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-zinc-400 group-hover/dropdown:text-white">
+                            <Link to="/knowledge" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-zinc-400 group-hover/dropdown:text-white">
                                 Wiedza
                                 <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
-                            </button>
+                            </Link>
 
                             {/* Dropdown Menu */}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
@@ -179,7 +179,7 @@ const Layout = () => {
                         <AdminButton />
 
                         <Link to="/members">
-                            <button className="px-6 py-2 border border-white/20 text-[10px] font-bold tracking-widest uppercase hover:bg-boxing-green hover:border-boxing-green hover:text-black transition-all rounded-sm">
+                            <button className="px-6 py-2 border border-white/20 text-[10px] font-bold tracking-widest uppercase hover:bg-red-600 hover:border-red-600 hover:text-white transition-all rounded-sm">
                                 {user ? 'Twój Panel' : 'Strefa Premium'}
                             </button>
                         </Link>
@@ -247,26 +247,26 @@ const Layout = () => {
                             <Link to="/news" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Aktualności</Link>
 
                             <div className="flex flex-col space-y-4">
-                                <div className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500">Kalendarz</div>
-                                <Link to="/calendar?view=PRO" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white hover:text-yellow-500 transition-colors">Boks Zawodowy</Link>
-                                <Link to="/calendar?view=AMATEUR" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white hover:text-blue-500 transition-colors">Boks Olimpijski / Amatorski</Link>
+                                <Link to="/calendar" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Kalendarz</Link>
+                                <Link to="/calendar?view=PRO" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-yellow-500 transition-colors">→ Boks Zawodowy</Link>
+                                <Link to="/calendar?view=AMATEUR" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-blue-500 transition-colors">→ Boks Olimpijski</Link>
                             </div>
 
                             <div className="flex flex-col space-y-4">
-                                <div className="text-xs font-black uppercase tracking-[0.3em] text-boxing-green">Oferta</div>
-                                <Link to="/membership" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Online Premium</Link>
-                                <Link to="/booking" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Treningi Personalne</Link>
+                                <Link to="/membership" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Oferta</Link>
+                                <Link to="/membership" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Online Premium</Link>
+                                <Link to="/booking" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Treningi Personalne</Link>
                             </div>
 
                             <div className="flex flex-col space-y-4">
-                                <div className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500">Wiedza</div>
-                                <Link to="/knowledge?view=articles" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Artykuły</Link>
-                                <Link to="/knowledge?view=compendium" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Kompendium</Link>
-                                <Link to="/knowledge?view=reviews" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest text-white">Recenzje</Link>
+                                <Link to="/knowledge" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Wiedza</Link>
+                                <Link to="/knowledge?view=articles" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Artykuły</Link>
+                                <Link to="/knowledge?view=compendium" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Kompendium</Link>
+                                <Link to="/knowledge?view=reviews" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Recenzje</Link>
                             </div>
 
                             <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep PunchIn</Link>
-                            <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-boxing-green">Strefa Premium</Link>
+                            <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Strefa Premium</Link>
                             {user && (
                                 <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="text-lg font-bold uppercase tracking-widest text-red-500 mt-4">
                                     Wyloguj się
