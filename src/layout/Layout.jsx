@@ -191,16 +191,22 @@ const Layout = () => {
                                     if (loggingOut) return;
 
                                     setLoggingOut(true);
+
+                                    // Force logout after 3 seconds regardless
+                                    const forceLogoutTimer = setTimeout(() => {
+                                        console.warn('Logout timeout - forcing redirect');
+                                        window.location.href = '/';
+                                    }, 3000);
+
                                     try {
                                         await logout();
-                                        // Small delay to let state propagate
-                                        setTimeout(() => {
-                                            window.location.href = '/';
-                                        }, 100);
+                                        clearTimeout(forceLogoutTimer);
+                                        window.location.href = '/';
                                     } catch (error) {
                                         console.error('Logout failed:', error);
-                                        setLoggingOut(false);
-                                        alert('Błąd wylogowania. Spróbuj ponownie.');
+                                        clearTimeout(forceLogoutTimer);
+                                        // Force logout anyway
+                                        window.location.href = '/';
                                     }
                                 }}
                                 className="text-zinc-500 hover:text-red-500 transition-colors disabled:opacity-50"

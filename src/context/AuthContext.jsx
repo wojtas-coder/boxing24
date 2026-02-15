@@ -167,10 +167,21 @@ export const AuthProvider = ({ children }) => {
             return data;
         },
         logout: async () => {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                console.error("Logout error:", error);
-                throw error;
+            try {
+                // Race between signOut and timeout
+                const signOutPromise = supabase.auth.signOut();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Logout timeout')), 2000)
+                );
+
+                const { error } = await Promise.race([signOutPromise, timeoutPromise]);
+                if (error) {
+                    console.error("Logout error:", error);
+                    throw error;
+                }
+            } catch (err) {
+                console.error("Logout failed:", err);
+                // Don't throw - let UI handle forced logout
             }
             // State clearing is handled by onAuthStateChange listener
         }
