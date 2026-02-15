@@ -21,17 +21,19 @@ export default async function handler(req, res) {
     const userMessage = messages[messages.length - 1].content;
 
     try {
-        // 1. RAG: Fetch relevant articles from Supabase
+        // 1. RAG: Fetch relevant articles from Supabase 'news' table
         let contextData = "";
         try {
-            const { data: articles, error } = await supabase
-                .from('articles')
-                .select('title, content')
+            const { data: newsArticles, error } = await supabase
+                .from('news')
+                .select('title, content, lead, category')
                 .or(`content.ilike.%${userMessage}%,title.ilike.%${userMessage}%`)
                 .limit(3);
 
-            if (!error && articles && articles.length > 0) {
-                contextData = articles.map(a => `[ARTYKUŁ: ${a.title}]\n${a.content}`).join("\n\n");
+            if (!error && newsArticles && newsArticles.length > 0) {
+                contextData = newsArticles.map(a =>
+                    `[ARTYKUŁ BOXING24: ${a.title}]\nKategoria: ${a.category || 'News'}\n${a.lead ? `Lead: ${a.lead}\n` : ''}${a.content}`
+                ).join("\n\n");
             }
         } catch (ragError) {
             console.error("RAG Error:", ragError);
@@ -51,14 +53,17 @@ REGUŁY KOMUNIKACJI:
 2. Jeśli w sekcji KONTEKST są artykuły z boxing24.pl, MUSISZ do nich nawiązać (to Twoja unikalna lokalna wiedza).
 3. Nie bój się opinii – jako ekspert masz prawo do merytorycznych przewidywań i analizy formy zawodników.
 4. Pisz po polsku, dynamicznie, z bokserskim "pazurem", ale zawsze merytorycznie.
-5. Promuj Boxing24 (treningi we Wrocławiu, Elite Boxing) tylko gdy to naturalnie pasuje do rozmowy.
+5. Promuj Boxing24 naturalnie w rozmowie. Gdy użytkownik mówi o treningach, technice lub chce się rozwijać – zaproponuj:
+   - Treningi personalne we Wrocławiu (strona /booking)
+   - Plan Online Premium (strona /membership)
+   - Bazę wiedzy na boxing24.pl (/knowledge)
+   Rób to z klasą, jako rekomendację eksperta, a nie nachalną reklamę. Np: "Jeśli chcesz postawić na ten element w sparingu, mogę Ci pomóc na żywo – umów się na trening personalny w naszym studio we Wrocławiu."
 
 KONTEKST Z TWOJEJ BAZY WIEDZY BOXING24:
 ${contextData}`,
         });
 
         // Gemini history MUST start with 'user' and alternate user/model.
-        // If the first message is from 'model' (like the greeting), we skip it or give it a dummy user prefix.
         let chatHistory = messages.slice(0, -1).map(m => ({
             role: m.role === 'user' ? 'user' : 'model',
             parts: [{ text: m.content }],
@@ -69,7 +74,6 @@ ${contextData}`,
         if (firstUserIndex > 0) {
             chatHistory = chatHistory.slice(firstUserIndex);
         } else if (firstUserIndex === -1 && chatHistory.length > 0) {
-            // If no user message was found in history, clear it
             chatHistory = [];
         }
 
@@ -100,12 +104,9 @@ ${contextData}`,
             apiKeyLength: apiKey.length
         });
 
-        // Return a more descriptive error for debugging (will show up in widget error message)
-        return new Response(JSON.stringify({
+        // Fixed: use res.status().json() consistently (not new Response())
+        return res.status(500).json({
             error: `Błąd CornerMana: ${error.message}. Sprawdź konfigurację API.`
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
         });
     }
 }

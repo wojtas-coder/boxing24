@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, User, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Calendar, User, AlertTriangle, Zap, Award } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { articles } from '../data/articles';
 
@@ -9,12 +9,9 @@ const NewsArticlePage = () => {
     const { slug } = useParams();
     const [imageError, setImageError] = useState(false);
 
-    // console.log('DEBUG: NewsArticlePage Loaded. View Tracking DISABLED to prevent crash.', slug);
-
     const { data: article, isLoading, error } = useQuery({
         queryKey: ['article', slug],
         queryFn: async () => {
-            console.log("DEBUG: Fetching article from Supabase...");
             try {
                 // 1. Try fetching from Supabase
                 const { data, error } = await supabase
@@ -24,20 +21,17 @@ const NewsArticlePage = () => {
                     .single();
 
                 if (error && error.code !== 'PGRST116') {
-                    console.error("DEBUG: Supabase error:", error);
+                    console.error("Supabase error:", error);
                     throw error;
                 }
 
                 if (data) {
-                    console.log("DEBUG: Found in Supabase:", data.title);
                     return data;
                 }
 
                 // 2. Fallback: Expert Articles (Static Data)
-                console.log("DEBUG: Not found in DB, checking static articles...");
                 const foundArticle = articles.find(a => a.id === slug);
                 if (foundArticle) {
-                    console.log("DEBUG: Found in static articles:", foundArticle.title);
                     return {
                         ...foundArticle,
                         slug: foundArticle.id,
@@ -49,15 +43,49 @@ const NewsArticlePage = () => {
                     };
                 }
 
-                console.warn("DEBUG: Article not found anywhere.");
                 return null;
             } catch (err) {
-                console.error("DEBUG: Fetch Error exception:", err);
+                console.error("Fetch Error:", err);
                 throw err;
             }
         },
         retry: false
     });
+
+    // Dynamic SEO Meta Tags (must be after useQuery so `article` is defined)
+    useEffect(() => {
+        if (!article) return;
+        const originalTitle = document.title;
+        document.title = `${article.title} | Boxing24`;
+
+        // Set/update OG meta tags for social sharing
+        const setMeta = (property, content) => {
+            let el = document.querySelector(`meta[property="${property}"]`);
+            if (!el) {
+                el = document.createElement('meta');
+                el.setAttribute('property', property);
+                document.head.appendChild(el);
+            }
+            el.setAttribute('content', content || '');
+        };
+
+        setMeta('og:title', article.title);
+        setMeta('og:description', article.excerpt || article.lead || '');
+        setMeta('og:image', article.image_url || '');
+        setMeta('og:url', `https://boxing24.pl/news/${slug}`);
+        setMeta('og:type', 'article');
+
+        // Twitter Card
+        let twitterCard = document.querySelector('meta[name="twitter:card"]');
+        if (!twitterCard) {
+            twitterCard = document.createElement('meta');
+            twitterCard.setAttribute('name', 'twitter:card');
+            document.head.appendChild(twitterCard);
+        }
+        twitterCard.setAttribute('content', 'summary_large_image');
+
+        return () => { document.title = originalTitle; };
+    }, [article, slug]);
 
     // View Tracking REMOVED to prevent crash (rpc(...).catch is not a function)
     // useEffect(() => {
@@ -189,7 +217,7 @@ const NewsArticlePage = () => {
                             Dołącz do elity i trenuj świadomie.
                         </p>
                         <Link
-                            to="/pricing"
+                            to="/membership"
                             className="relative z-10 inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-10 rounded-full uppercase tracking-widest transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(37,99,235,0.4)]"
                         >
                             Odblokuj Pełną Wiedzę
@@ -197,7 +225,33 @@ const NewsArticlePage = () => {
                     </div>
                 )}
 
-                <div className="mt-16 pt-8 border-t border-zinc-800 flex justify-between items-center">
+                {/* Universal CTA – Lead Generation */}
+                <div className="mt-16 bg-gradient-to-br from-zinc-900 via-zinc-900 to-red-950/30 border border-red-900/30 p-8 md:p-12 rounded-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 blur-[100px] pointer-events-none" />
+                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                        <div className="flex-shrink-0 p-4 bg-red-600/10 rounded-2xl border border-red-500/20">
+                            <Zap className="w-10 h-10 text-red-500" />
+                        </div>
+                        <div className="flex-1 text-center md:text-left">
+                            <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-2">
+                                Chcesz Trenować z Najlepszymi?
+                            </h3>
+                            <p className="text-zinc-400 text-sm md:text-base max-w-xl">
+                                Treningi personalne we Wrocławiu pod okiem certyfikowanych trenerów Boxing24.
+                                Biomechanika, taktyka, pełna analiza Twojego stylu.
+                            </p>
+                        </div>
+                        <Link
+                            to="/booking"
+                            className="flex-shrink-0 bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-8 rounded-xl uppercase tracking-widest text-sm transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] flex items-center gap-2"
+                        >
+                            <Award className="w-5 h-5" />
+                            Umów Trening
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="mt-12 pt-8 border-t border-zinc-800 flex justify-between items-center">
                     <Link to="/news" className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group">
                         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                         Wróć do listy newsów

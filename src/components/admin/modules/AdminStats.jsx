@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
-import { Users, Eye, MousePointer } from 'lucide-react';
+import { Users, UserPlus, TrendingUp, Info } from 'lucide-react';
 
 const AdminStats = () => {
     const [data, setData] = useState([]);
-    const [summary, setSummary] = useState({ totalViews: 0, totalClicks: 0, activeUsers: 0 });
+    const [summary, setSummary] = useState({ totalSignups: 0, activeUsers: 0, recentSignups: 0 });
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState(null);
 
@@ -15,35 +15,29 @@ const AdminStats = () => {
 
     const fetchStats = async () => {
         try {
-            console.log("Fetching stats...");
-
             // 1. Fetch Users (last 30 days for graph)
             const { data: usersData, error: usersError } = await supabase
                 .from('profiles')
                 .select('created_at')
                 .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
+            if (usersError) throw usersError;
+
             // 2. Fetch Total Count
             const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
 
-            // 3. Mock Views (since we don't have a specific analytics table for page views yet)
-            // In a real app, we'd query a 'page_views' table.
-            // For now, let's generate "realistic" traffic data based on date to show the graph working.
+            // 3. Build real daily signup data (no mocks)
             const generateDailyData = () => {
                 const days = [];
                 for (let i = 29; i >= 0; i--) {
                     const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
                     const dateStr = date.toISOString().split('T')[0];
 
-                    // Count signups for this day
-                    const signups = usersData?.filter(u => u.created_at.startsWith(dateStr)).length || 0;
-
-                    // Mock views: base 50 + random + signups * 10
-                    const views = 50 + Math.floor(Math.random() * 100) + (signups * 15);
+                    // Count real signups for this day
+                    const signups = usersData?.filter(u => u.created_at?.startsWith(dateStr)).length || 0;
 
                     days.push({
                         name: date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }),
-                        views: views,
                         signups: signups
                     });
                 }
@@ -53,10 +47,12 @@ const AdminStats = () => {
             const formattedData = generateDailyData();
             setData(formattedData);
 
+            const recentSignups = formattedData.reduce((acc, curr) => acc + curr.signups, 0);
+
             setSummary({
-                totalViews: formattedData.reduce((acc, curr) => acc + curr.views, 0),
-                totalSignups: totalUsers || 0, // Use Total DB count here
-                activeUsers: totalUsers || 0
+                totalSignups: totalUsers || 0,
+                activeUsers: totalUsers || 0,
+                recentSignups: recentSignups
             });
 
         } catch (err) {
@@ -79,81 +75,63 @@ const AdminStats = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">
-                Analityka <span className="text-red-600">Ruchu</span>
+                Analityka <span className="text-red-600">Użytkowników</span>
             </h1>
+
+            {/* Info banner */}
+            <div className="flex items-center gap-3 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl text-blue-400 text-sm">
+                <Info className="w-5 h-5 flex-shrink-0" />
+                <span>Dane oparte na rejestracji użytkowników z Supabase. Integracja z Google Analytics planowana w następnym etapie.</span>
+            </div>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-blue-500/10 rounded-lg text-blue-500"><Eye className="w-6 h-6" /></div>
-                        <span className="text-xs font-bold text-zinc-500 uppercase">Ostatnie 30 dni</span>
-                    </div>
-                    <div className="text-4xl font-black text-white">{summary.totalViews}</div>
-                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Wyświetlenia Strony</div>
-                </div>
-
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-green-500/10 rounded-lg text-green-500"><Users className="w-6 h-6" /></div>
+                        <div className="p-3 bg-blue-500/10 rounded-lg text-blue-500"><Users className="w-6 h-6" /></div>
                         <span className="text-xs font-bold text-zinc-500 uppercase">Ogółem</span>
                     </div>
-                    <div className="text-4xl font-black text-white">{summary.activeUsers}</div>
+                    <div className="text-4xl font-black text-white">{summary.totalSignups}</div>
                     <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Zarejestrowani Użytkownicy</div>
                 </div>
 
                 <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-purple-500/10 rounded-lg text-purple-500"><MousePointer className="w-6 h-6" /></div>
-                        <span className="text-xs font-bold text-zinc-500 uppercase">Konwersja</span>
+                        <div className="p-3 bg-green-500/10 rounded-lg text-green-500"><UserPlus className="w-6 h-6" /></div>
+                        <span className="text-xs font-bold text-zinc-500 uppercase">Ostatnie 30 dni</span>
+                    </div>
+                    <div className="text-4xl font-black text-white">{summary.recentSignups}</div>
+                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Nowe Rejestracje</div>
+                </div>
+
+                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-purple-500/10 rounded-lg text-purple-500"><TrendingUp className="w-6 h-6" /></div>
+                        <span className="text-xs font-bold text-zinc-500 uppercase">Trend</span>
                     </div>
                     <div className="text-4xl font-black text-white">
-                        {summary.totalViews > 0 ? ((summary.totalSignups / summary.totalViews) * 100).toFixed(1) : 0}%
+                        {summary.recentSignups > 0 ? '+' : ''}{summary.recentSignups}
                     </div>
-                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Współczynnik Rejestracji</div>
+                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Wzrost (30 dni)</div>
                 </div>
             </div>
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm min-h-[400px]">
-                    <h3 className="text-lg font-bold text-white mb-6 uppercase tracking-wider">Ruch na stronie</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={data}>
-                            <defs>
-                                <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                            <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '8px' }}
-                                itemStyle={{ color: '#fff' }}
-                            />
-                            <Area type="monotone" dataKey="views" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorViews)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm min-h-[400px]">
-                    <h3 className="text-lg font-bold text-white mb-6 uppercase tracking-wider">Nowe Rejestracje</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                            <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                            <Tooltip
-                                cursor={{ fill: '#ffffff10' }}
-                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '8px' }}
-                                itemStyle={{ color: '#fff' }}
-                            />
-                            <Bar dataKey="signups" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
+            {/* Chart */}
+            <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm min-h-[400px]">
+                <h3 className="text-lg font-bold text-white mb-6 uppercase tracking-wider">Rejestracje Dziennie (30 dni)</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                        <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                        <Tooltip
+                            cursor={{ fill: '#ffffff10' }}
+                            contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '8px' }}
+                            itemStyle={{ color: '#fff' }}
+                        />
+                        <Bar dataKey="signups" fill="#ef4444" radius={[4, 4, 0, 0]} name="Rejestracje" />
+                    </BarChart>
+                </ResponsiveContainer>
             </div>
         </div>
     );
