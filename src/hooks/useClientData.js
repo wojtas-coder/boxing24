@@ -65,5 +65,5 @@ export const useClientData = () => {
 
     const allPlans = [...plansLibrary, ...dbPlans];
 
-    return { ...clientData, allPlans, refresh: () => { } }; // Simplified for now
+    return { ...clientData, allPlans, refresh: () => { } };
 };
