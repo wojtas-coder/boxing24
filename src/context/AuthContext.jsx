@@ -167,17 +167,12 @@ export const AuthProvider = ({ children }) => {
             return data;
         },
         logout: async () => {
-            try {
-                const { error } = await supabase.auth.signOut();
-                if (error) console.error("Supabase signOut error:", error);
-
-                // Manual clear to be safe after signOut
-                setSession(null);
-                setUser(null);
-                setProfile(null);
-            } catch (err) {
-                console.error("Logout unexpected error:", err);
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error("Logout error:", error);
+                throw error;
             }
+            // State clearing is handled by onAuthStateChange listener
         }
     };
 

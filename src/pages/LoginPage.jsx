@@ -18,16 +18,22 @@ const LoginPage = () => {
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
+    const [socialLoading, setSocialLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
     const handleSocialLogin = async (provider) => {
         setError('');
+        setSocialLoading(true);
         try {
-            await loginSocial(provider);
-            // Redirect logic is handled by OAuth callback, but fallback:
+            const result = await loginSocial(provider);
+            // OAuth will redirect, but if there's an immediate error:
+            if (result?.error) {
+                throw result.error;
+            }
         } catch (err) {
             console.error("Social Auth Error:", err);
-            setError(`Błąd logowania przez ${provider}. Spróbuj ponownie.`);
+            setError(`Nie udało się zalogować przez ${provider === 'google' ? 'Google' : 'Facebook'}. Spróbuj ponownie.`);
+            setSocialLoading(false);
         }
     };
 
@@ -83,15 +89,27 @@ const LoginPage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => handleSocialLogin('google')}
-                                    className="flex items-center justify-center gap-2 bg-white text-black py-3 rounded-xl font-bold text-sm hover:bg-zinc-200 transition-colors"
+                                    disabled={socialLoading || loading}
+                                    className="flex items-center justify-center gap-2 bg-white text-black py-3 rounded-xl font-bold text-sm hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Chrome className="w-4 h-4" /> Google
+                                    {socialLoading ? (
+                                        <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <Chrome className="w-4 h-4" />
+                                    )}
+                                    Google
                                 </button>
                                 <button
                                     onClick={() => handleSocialLogin('facebook')}
-                                    className="flex items-center justify-center gap-2 bg-[#1877F2] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#166fe5] transition-colors"
+                                    disabled={socialLoading || loading}
+                                    className="flex items-center justify-center gap-2 bg-[#1877F2] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#166fe5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Facebook className="w-4 h-4" /> Facebook
+                                    {socialLoading ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <Facebook className="w-4 h-4" />
+                                    )}
+                                    Facebook
                                 </button>
                             </div>
                         )}

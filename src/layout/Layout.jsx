@@ -27,6 +27,7 @@ const AdminButton = () => {
 
 const Layout = () => {
     const { user, logout } = useAuth();
+    const [loggingOut, setLoggingOut] = useState(false);
     const location = useLocation();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -187,13 +188,30 @@ const Layout = () => {
                             <button
                                 onClick={async (e) => {
                                     e.preventDefault();
-                                    await logout(); // Ensure logout completes before redirect
-                                    window.location.href = '/';
+                                    if (loggingOut) return;
+
+                                    setLoggingOut(true);
+                                    try {
+                                        await logout();
+                                        // Small delay to let state propagate
+                                        setTimeout(() => {
+                                            window.location.href = '/';
+                                        }, 100);
+                                    } catch (error) {
+                                        console.error('Logout failed:', error);
+                                        setLoggingOut(false);
+                                        alert('Błąd wylogowania. Spróbuj ponownie.');
+                                    }
                                 }}
-                                className="text-zinc-500 hover:text-red-500 transition-colors"
+                                className="text-zinc-500 hover:text-red-500 transition-colors disabled:opacity-50"
                                 title="Wyloguj"
+                                disabled={loggingOut}
                             >
-                                <LogOut className="w-4 h-4" />
+                                {loggingOut ? (
+                                    <div className="w-4 h-4 border-2 border-zinc-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <LogOut className="w-4 h-4" />
+                                )}
                             </button>
                         )}
                     </div>
