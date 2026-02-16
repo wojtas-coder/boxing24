@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Dumbbell, Clock, Target, Shield, Shirt, Droplet, Zap, Heart, Users, Award } from 'lucide-react';
+import { Check, Dumbbell, Clock, Target, Shield, Shirt, Droplet, Zap, Heart, Users, Award, Bath } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const PricingCard = ({ title, price, features, tier, recommended, onClick, buttonText }) => {
@@ -220,12 +220,12 @@ const MembershipPage = () => {
                         </p>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                             {[
-                                { icon: <Shirt className="w-6 h-6" />, label: "Ręcznik", desc: "Podstawa higieny" },
+                                { icon: <Bath className="w-6 h-6" />, label: "Ręcznik", desc: "Podstawa higieny" },
                                 { icon: <Shirt className="w-6 h-6" />, label: "Strój sportowy", desc: "Wygodne ubranie" },
-                                { icon: <Zap className="w-6 h-6" />, label: "Obuwie", desc: "Czyste buty halowe" },
+                                { icon: <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 18l1.5-3L8 14l1.5 1.5L14 8l5 5-1.5 3L13 17.5l-5-5z" /><path d="M10 13.5L8 11l2.5-2.5L14 11l-2 2.5" /></svg>, label: "Obuwie", desc: "Czyste buty halowe" },
                                 { icon: <Droplet className="w-6 h-6" />, label: "Woda", desc: "Nawodnienie to podstawa" },
                                 { icon: <Target className="w-6 h-6" />, label: "Cel", desc: "Twoja motywacja" },
-                                { icon: <Heart className="w-6 h-6" />, label: "Energia", desc: "Pozytywne nastawienie" }
+                                { icon: <Zap className="w-6 h-6" />, label: "Energia", desc: "Pozytywne nastawienie" }
                             ].map((item, i) => (
                                 <div key={i} className="bg-black border border-white/5 p-6 rounded-xl text-center hover:bg-zinc-900/50 transition-all">
                                     <div className="text-boxing-green mb-3 flex justify-center">
