@@ -10,15 +10,7 @@ const AdminAds = () => {
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        let mounted = true;
-        const timeout = setTimeout(() => {
-            if (mounted && loading) {
-                setLoading(false);
-                setError('Timeout: Nie udało się pobrać reklam.');
-            }
-        }, 5000);
         fetchAds();
-        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchAds = async () => {

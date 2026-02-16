@@ -9,15 +9,7 @@ const AdminSEO = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        let mounted = true;
-        const timeout = setTimeout(() => {
-            if (mounted && loading) {
-                setLoading(false);
-                setError('Timeout: Nie udało się pobrać ustawień SEO.');
-            }
-        }, 5000);
         fetchSettings();
-        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchSettings = async () => {

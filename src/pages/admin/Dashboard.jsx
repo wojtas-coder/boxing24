@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Users, Newspaper, Activity, ShieldAlert, RefreshCw, Clock, UserPlus, AlertTriangle, Crown, BookOpen } from 'lucide-react';
+import { Users, Newspaper, Activity, RefreshCw, Clock, UserPlus, AlertTriangle, Crown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminDashboard = () => {
@@ -9,97 +9,119 @@ const AdminDashboard = () => {
     const [recentActivity, setRecentActivity] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const loadingRef = useRef(true);
 
     useEffect(() => {
         let mounted = true;
 
-        // Safety timeout - NEVER load forever
+        // Safety timeout - uses ref to check current loading state
         const timeout = setTimeout(() => {
-            if (mounted && loading) {
+            if (mounted && loadingRef.current) {
                 setLoading(false);
-                setError('Timeout: Nie udało się pobrać danych. Sprawdź uprawnienia w Supabase (RLS).');
-                setStats(prev => ({ ...prev, serverStatus: 'RLS Error' }));
+                loadingRef.current = false;
+                setError('Timeout: Nie udało się pobrać danych w ciągu 8 sekund.');
+                setStats(prev => ({ ...prev, serverStatus: 'Timeout' }));
             }
-        }, 5000);
+        }, 8000);
 
-        fetchStats(mounted);
+        fetchStats(mounted).finally(() => clearTimeout(timeout));
 
         return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchStats = async (mounted = true) => {
         setLoading(true);
+        loadingRef.current = true;
         setError(null);
+
+        let usersCount = 0;
+        let newsCount = 0;
+        let premiumCount = 0;
+        let recentUsers = [];
+        let recentNews = [];
+        let errors = [];
+
         try {
             // Count users
-            const { count: usersCount, error: usersErr } = await supabase
+            const profilesRes = await supabase
                 .from('profiles')
                 .select('*', { count: 'exact', head: true });
 
-            if (usersErr) throw new Error(`Profiles: ${usersErr.message}`);
+            if (profilesRes.error) {
+                errors.push(`Profiles: ${profilesRes.error.message}`);
+            } else {
+                usersCount = profilesRes.count ?? 0;
+            }
+        } catch (e) { errors.push('Profiles: ' + e.message); }
 
+        try {
             // Count news
-            const { count: newsCount, error: newsErr } = await supabase
+            const newsRes = await supabase
                 .from('news')
                 .select('*', { count: 'exact', head: true });
 
-            if (newsErr) throw new Error(`News: ${newsErr.message}`);
+            if (newsRes.error) {
+                errors.push(`News: ${newsRes.error.message}`);
+            } else {
+                newsCount = newsRes.count ?? 0;
+            }
+        } catch (e) { errors.push('News: ' + e.message); }
 
+        try {
             // Count premium users
-            let premiumCount = 0;
-            try {
-                const { count } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true })
-                    .in('membership_status', ['member', 'premium', 'vip']);
-                premiumCount = count || 0;
-            } catch (e) { /* column may not exist yet */ }
+            const premRes = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .in('membership_status', ['member', 'premium', 'vip']);
 
-            // Fetch recent activity (last 5 users + last 5 news)
-            const { data: recentUsers } = await supabase
+            if (!premRes.error) premiumCount = premRes.count || 0;
+        } catch (e) { /* ignore */ }
+
+        try {
+            // Recent users
+            const { data } = await supabase
                 .from('profiles')
                 .select('full_name, created_at')
                 .order('created_at', { ascending: false })
                 .limit(5);
+            recentUsers = data || [];
+        } catch (e) { /* ignore */ }
 
-            const { data: recentNews } = await supabase
+        try {
+            // Recent news
+            const { data } = await supabase
                 .from('news')
                 .select('title, created_at')
                 .order('created_at', { ascending: false })
                 .limit(5);
+            recentNews = data || [];
+        } catch (e) { /* ignore */ }
 
-            // Merge and sort activity feed
-            const activity = [
-                ...(recentUsers || []).map(u => ({
-                    type: 'user',
-                    label: u.full_name || 'Nowy użytkownik',
-                    time: u.created_at
-                })),
-                ...(recentNews || []).map(n => ({
-                    type: 'news',
-                    label: n.title,
-                    time: n.created_at
-                }))
-            ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
+        // Merge activity feed
+        const activity = [
+            ...recentUsers.map(u => ({
+                type: 'user',
+                label: u.full_name || 'Nowy użytkownik',
+                time: u.created_at
+            })),
+            ...recentNews.map(n => ({
+                type: 'news',
+                label: n.title,
+                time: n.created_at
+            }))
+        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
 
-            if (mounted) {
-                setStats({
-                    users: usersCount ?? 0,
-                    news: newsCount ?? 0,
-                    premium: premiumCount,
-                    serverStatus: 'Online'
-                });
-                setRecentActivity(activity);
-                setError(null);
-            }
-        } catch (err) {
-            console.error("Dashboard Error:", err);
-            if (mounted) {
-                setError(err.message);
-                setStats(prev => ({ ...prev, serverStatus: 'Błąd Danych' }));
-            }
-        } finally {
-            if (mounted) setLoading(false);
+        if (mounted) {
+            setStats({
+                users: usersCount,
+                news: newsCount,
+                premium: premiumCount,
+                serverStatus: errors.length > 0 ? 'Częściowy Błąd' : 'Online'
+            });
+            setRecentActivity(activity);
+            setError(errors.length > 0 ? errors.join('; ') : null);
+            setLoading(false);
+            loadingRef.current = false;
         }
     };
 
@@ -136,12 +158,13 @@ const AdminDashboard = () => {
             {/* System Status Banner */}
             <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className={`w-3 h-3 rounded-full ${stats.serverStatus === 'Online' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 animate-pulse'}`} />
+                    <div className={`w-3 h-3 rounded-full ${stats.serverStatus === 'Online' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : stats.serverStatus === 'Sprawdzanie...' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500 animate-pulse'}`} />
                     <div>
                         <div className="text-white font-bold text-sm">Status Systemu: {stats.serverStatus}</div>
                         <div className="text-zinc-500 text-xs font-mono">
-                            DB: {stats.serverStatus === 'Online' ? 'Połączono' : 'Problem z Połączeniem'} |
-                            Auth: {session ? 'Zalogowano' : 'Nie zalogowano'}
+                            DB: {stats.serverStatus === 'Online' ? 'Połączono' : 'Sprawdzanie...'} |
+                            Auth: {session ? 'Zalogowano' : 'Nie zalogowano'} |
+                            Users: {stats.users} | News: {stats.news}
                         </div>
                     </div>
                 </div>
@@ -157,15 +180,6 @@ const AdminDashboard = () => {
                     <div>
                         <h3 className="text-red-400 font-bold mb-1">Problem z dostępem do danych</h3>
                         <p className="text-red-300/70 text-sm mb-3">{error}</p>
-                        <div className="text-red-300/50 text-xs space-y-1">
-                            <p>Możliwe przyczyny:</p>
-                            <ul className="list-disc list-inside ml-2">
-                                <li>Nie jesteś zalogowany jako admin</li>
-                                <li>Twój profil nie ma roli 'admin' w tabeli profiles</li>
-                                <li>RLS (Row Level Security) blokuje zapytania</li>
-                            </ul>
-                            <p className="mt-2">Rozwiązanie: Uruchom skrypt <code className="bg-red-900/30 px-1 rounded">scripts/emergency_admin_fix.sql</code> w Supabase SQL Editor</p>
-                        </div>
                     </div>
                 </div>
             )}
@@ -212,7 +226,7 @@ const AdminDashboard = () => {
                 ) : (
                     <div className="text-center py-8 opacity-50">
                         <p className="text-zinc-500 font-mono text-sm">
-                            {error ? 'Nie można pobrać aktywności.' : 'Brak ostatniej aktywności.'}
+                            {loading ? 'Ładowanie...' : 'Brak ostatniej aktywności.'}
                         </p>
                     </div>
                 )}

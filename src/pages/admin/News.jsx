@@ -13,17 +13,7 @@ const AdminNews = () => {
     const [currentArticle, setCurrentArticle] = useState(null);
 
     useEffect(() => {
-        let mounted = true;
-        // Safety timeout
-        const timeout = setTimeout(() => {
-            if (mounted && loading) {
-                setLoading(false);
-                setError('Timeout: Nie udało się pobrać newsów. Sprawdź RLS w Supabase.');
-            }
-        }, 5000);
-
         fetchNews();
-        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchNews = async () => {
