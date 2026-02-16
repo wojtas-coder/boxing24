@@ -222,7 +222,7 @@ const MembershipPage = () => {
                             {[
                                 { icon: <Bath className="w-6 h-6" />, label: "Ręcznik", desc: "Podstawa higieny" },
                                 { icon: <Shirt className="w-6 h-6" />, label: "Strój sportowy", desc: "Wygodne ubranie" },
-                                { icon: <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 18l1.5-3L8 14l1.5 1.5L14 8l5 5-1.5 3L13 17.5l-5-5z" /><path d="M10 13.5L8 11l2.5-2.5L14 11l-2 2.5" /></svg>, label: "Obuwie", desc: "Czyste buty halowe" },
+                                { icon: <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 17h16M4 17l2-6h12l2 6M6 11V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" /><path d="M8 17v2M12 17v2M16 17v2" /></svg>, label: "Obuwie", desc: "Czyste buty halowe" },
                                 { icon: <Droplet className="w-6 h-6" />, label: "Woda", desc: "Nawodnienie to podstawa" },
                                 { icon: <Target className="w-6 h-6" />, label: "Cel", desc: "Twoja motywacja" },
                                 { icon: <Zap className="w-6 h-6" />, label: "Energia", desc: "Pozytywne nastawienie" }
