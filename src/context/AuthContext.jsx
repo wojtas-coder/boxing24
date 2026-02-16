@@ -13,6 +13,9 @@ export const AuthProvider = ({ children }) => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Hardcoded admin emails (fallback if profile is missing/broken)
+    const ADMIN_EMAILS = ['wojtekrewczuk@gmail.com', 'treningiboxing24@gmail.com'];
+
     const fetchProfile = async (userId, email = null, userMeta = null) => {
         try {
             const { data, error } = await supabase
@@ -22,32 +25,48 @@ export const AuthProvider = ({ children }) => {
                 .single();
 
             if (data) {
-                console.log("Profile loaded:", data); // DEBUG
+                // If user is in admin emails list but profile doesn't have admin role, fix it
+                if (email && ADMIN_EMAILS.includes(email.toLowerCase()) && data.role !== 'admin') {
+                    const { error: updateErr } = await supabase
+                        .from('profiles')
+                        .update({ role: 'admin', membership_status: 'member' })
+                        .eq('id', userId);
+                    if (!updateErr) {
+                        data.role = 'admin';
+                        data.membership_status = 'member';
+                    }
+                }
+                console.log("Profile loaded:", data);
                 setProfile(data);
             } else {
                 console.warn("Profile missing. Attempting to create one...");
-                if (email) {
-                    const newProfile = {
-                        id: userId,
-                        email: email,
-                        full_name: userMeta?.full_name || email?.split('@')[0],
-                        role: 'client',
-                        membership_status: 'Free'
-                    };
+                const isAdmin = email && ADMIN_EMAILS.includes(email.toLowerCase());
+                const newProfile = {
+                    id: userId,
+                    full_name: userMeta?.full_name || email?.split('@')[0] || 'User',
+                    role: isAdmin ? 'admin' : 'client',
+                    membership_status: isAdmin ? 'member' : 'Free'
+                };
 
-                    const { error: insertError } = await supabase
-                        .from('profiles')
-                        .insert([newProfile]);
+                // Try to insert - may fail if columns are out of sync, that's ok
+                const { error: insertError } = await supabase
+                    .from('profiles')
+                    .insert([newProfile]);
 
-                    if (!insertError) {
-                        setProfile(newProfile);
-                    } else {
-                        console.error("Failed to create profile manualy:", insertError);
-                    }
+                if (insertError) {
+                    console.error("Failed to create profile:", insertError);
                 }
+                // Always set profile in local state so app works
+                setProfile(newProfile);
             }
         } catch (err) {
             console.error("Unexpected error fetching profile:", err);
+            // Fallback: set minimal profile so app doesn't break
+            if (email && ADMIN_EMAILS.includes(email.toLowerCase())) {
+                setProfile({ id: userId, role: 'admin', membership_status: 'member', full_name: email.split('@')[0] });
+            } else {
+                setProfile({ id: userId, role: 'client', membership_status: 'Free', full_name: email?.split('@')[0] || 'User' });
+            }
         }
     };
 
