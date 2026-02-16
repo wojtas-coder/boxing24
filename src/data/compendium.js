@@ -12,6 +12,7 @@ export const compendium = [
                     {
                         id: 'l1_base',
                         title: 'Dystrybucja Masy i Środek Ciężkości (CoG)',
+                        duration: 15,
                         content: `
                             <h3>Fizyka Stabilności</h3>
                             <p>Postawa bokserska to kompromis między stabilnością a mobilnością. W ujęciu fizyki, dążymy do obniżenia środka ciężkości (Center of Gravity - CoG) przy jednoczesnym zachowaniu wektorów siły skierowanych ku przeciwnikowi.</p>

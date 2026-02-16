@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUpRight, BookOpen, X, Lock, Crown, Filter, CheckCircle, ChevronRight, PlayCircle, GraduationCap, Star, ShoppingBag, Microscope, Database, Menu, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, BookOpen, X, Lock, Crown, Filter, CheckCircle, ChevronRight, PlayCircle, GraduationCap, Star, ShoppingBag, Microscope, Database, Menu, ChevronDown, Search, Clock, Bookmark, TrendingUp, BookmarkCheck } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { articles } from '../data/articles';
 import { compendium } from '../data/compendium';
 import { reviews } from '../data/reviews';
+import { getProgress, isBookmarked, toggleBookmark, getContinueReading, getStats } from '../utils/libraryProgress';
 
 const KnowledgePage = () => {
     const [searchParams] = useSearchParams();
@@ -30,6 +31,12 @@ const KnowledgePage = () => {
     // Reviews State
     const [reviewFilter, setReviewFilter] = useState('ALL');
 
+    // Power Search
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Bookmark trigger for re-renders
+    const [bookmarkUpdates, setBookmarkUpdates] = useState(0);
+
     useEffect(() => {
         const vipStatus = localStorage.getItem('boxing24_vip');
         if (vipStatus === 'true') {
@@ -39,11 +46,26 @@ const KnowledgePage = () => {
 
     // --- HELPER WRAPPERS ---
 
+    // Global search across all content
+    const searchContent = (content, query) => {
+        if (!query) return content;
+        const lowerQuery = query.toLowerCase();
+        return content.filter(item =>
+            item.title?.toLowerCase().includes(lowerQuery) ||
+            item.excerpt?.toLowerCase().includes(lowerQuery) ||
+            item.category?.toLowerCase().includes(lowerQuery) ||
+            item.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))
+        );
+    };
+
     // 1. ARTICLES VIEW
     const ArticlesView = () => {
         const categories = useMemo(() => ['ALL', ...new Set(articles.map(a => a.category.toUpperCase()))], []);
-        const filteredFree = articles.filter(a => !a.isPremium && (activeFilter === 'ALL' || a.category.toUpperCase() === activeFilter));
-        const filteredPremium = articles.filter(a => a.isPremium && (activeFilter === 'ALL' || a.category.toUpperCase() === activeFilter));
+
+        // Apply search first, then category filter
+        const searchedArticles = searchContent(articles, searchQuery);
+        const filteredFree = searchedArticles.filter(a => !a.isPremium && (activeFilter === 'ALL' || a.category.toUpperCase() === activeFilter));
+        const filteredPremium = searchedArticles.filter(a => a.isPremium && (activeFilter === 'ALL' || a.category.toUpperCase() === activeFilter));
 
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -63,18 +85,79 @@ const KnowledgePage = () => {
                 {/* Free Articles Grid */}
                 {filteredFree.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                        {filteredFree.map((article, i) => (
-                            <div key={article.id} onClick={() => setSelectedArticle(article)} className="group cursor-pointer">
-                                <div className="aspect-video rounded-xl overflow-hidden mb-4 relative">
-                                    <img src={article.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white tracking-widest border border-white/10">
-                                        {article.category}
+                        {filteredFree.map((article, i) => {
+                            const progress = getProgress(article.id, 'article');
+                            const bookmarked = isBookmarked(article.id, 'article');
+                            const isNew = article.updatedAt && new Date(article.updatedAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Updated in last 7 days
+
+                            return (
+                                <div key={article.id} className="group cursor-pointer relative">
+                                    {/* Image */}
+                                    <div className="aspect-video rounded-xl overflow-hidden mb-4 relative" onClick={() => setSelectedArticle(article)}>
+                                        <img src={article.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+
+                                        {/* Category Badge */}
+                                        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-white tracking-widest border border-white/10">
+                                            {article.category}
+                                        </div>
+
+                                        {/* NEW Badge */}
+                                        {isNew && (
+                                            <div className="absolute top-2 right-2 bg-boxing-green/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase text-black tracking-widest">
+                                                NEW
+                                            </div>
+                                        )}
+
+                                        {/* Completion Badge */}
+                                        {progress.completed && (
+                                            <div className="absolute bottom-2 left-2 bg-green-500/90 backdrop-blur px-2 py-1 rounded flex items-center gap-1 text-[10px] font-bold">
+                                                <CheckCircle className="w-3 h-3" />
+                                                UKOŃCZONO
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div onClick={() => setSelectedArticle(article)}>
+                                        <h3 className="text-xl font-bold text-white mb-2 leading-tight group-hover:text-boxing-green transition-colors">{article.title}</h3>
+                                        <p className="text-gray-400 text-sm line-clamp-2 mb-3">{article.excerpt}</p>
+                                    </div>
+
+                                    {/* Metadata Row */}
+                                    <div className="flex items-center justify-between text-xs text-gray-500">
+                                        <div className="flex items-center gap-3">
+                                            {article.readingTime && (
+                                                <div className="flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    <span>{article.readingTime} min</span>
+                                                </div>
+                                            )}
+                                            {article.difficulty && (
+                                                <div className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">
+                                                    {article.difficulty}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Bookmark Button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleBookmark(article.id, 'article');
+                                                setBookmarkUpdates(prev => prev + 1);
+                                            }}
+                                            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                                        >
+                                            {bookmarked ? (
+                                                <BookmarkCheck className="w-4 h-4 text-boxing-green fill-boxing-green" />
+                                            ) : (
+                                                <Bookmark className="w-4 h-4 text-gray-400" />
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
-                                <h3 className="text-xl font-bold text-white mb-2 leading-tight group-hover:text-boxing-green transition-colors">{article.title}</h3>
-                                <p className="text-gray-400 text-sm line-clamp-2">{article.excerpt}</p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
@@ -248,7 +331,64 @@ const KnowledgePage = () => {
                     <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase mb-4">
                         Boksopedia<span className="text-boxing-green">.</span>
                     </h1>
-                    <p className="text-gray-500">Centralna Baza Wiedzy Boxing24</p>
+                    <p className="text-gray-500 mb-8">Centralna Baza Wiedzy Boxing24</p>
+
+                    {/* Power Search */}
+                    <div className="max-w-2xl mx-auto mb-8">
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Szukaj artykułów, lekcji, recenzji..." className="w-full bg-zinc-900/50 border border-white/10 rounded-full pl-12 pr-24 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-boxing-green/50 transition-all"
+                            />
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-600 px-2 py-1 bg-white/5 rounded border border-white/10">
+                                ⌘K
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Continue Reading */}
+                    {(() => {
+                        const continueItems = getContinueReading(3);
+                        if (continueItems.length > 0) {
+                            return (
+                                <div className="max-w-4xl mx-auto mb-8">
+                                    <div className="flex items-center justify-center gap-2 mb-4">
+                                        <BookOpen className="w-4 h-4 text-boxing-green" />
+                                        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Kontynuuj Czytanie</h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        {continueItems.map((item) => {
+                                            const content = item.type === 'article' ? articles.find(a => a.id === item.id) : null;
+                                            if (!content) return null;
+
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    onClick={() => setSelectedArticle(content)}
+                                                    className="bg-zinc-900/50 border border-white/10 rounded-lg p-3 cursor-pointer hover:border-boxing-green/30 transition-all group"
+                                                >
+                                                    <h4 className="text-white text-xs font-bold line-clamp-2 group-hover:text-boxing-green transition-colors mb-2">
+                                                        {content.title}
+                                                    </h4>
+                                                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                        <span>{item.progress}% ukończone</span>
+                                                        {content.readingTime && <span>{content.readingTime} min</span>}
+                                                    </div>
+                                                    <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                                                        <div className="h-full bg-boxing-green transition-all" style={{ width: `${item.progress}%` }} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })()}
                 </div>
 
                 {/* VIP Banner */}

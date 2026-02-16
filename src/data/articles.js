@@ -34,6 +34,10 @@ export const articles = [
         image: '/images/articles/psychology.png',
         isPremium: false,
         hasDualVersion: true,
+        readingTime: 12,
+        tags: ['neuroscience', 'mental game', 'flow state', 'amygdala'],
+        difficulty: 'Advanced',
+        updatedAt: '2026-02-15',
         freeContent: `
             <h3>Wstęp: Architektura Chaosu</h3>
             <p>Gong nie brzmi głośniej niż zwykle. Publiczność też nie krzyczy bardziej. A jednak, w ułamku sekundy, Twoja rzeczywistość ulega kompresji. Oddech się spłyca, pole widzenia zawęża do rozmiaru dziurki od klucza, a czas przestaje być liniowy.</p>
@@ -367,6 +371,10 @@ export const articles = [
         image: '/images/articles/biomechanics.png',
         isPremium: false,
         hasDualVersion: true,
+        readingTime: 15,
+        tags: ['biomechanics', 'power', 'GRF', 'knockout'],
+        difficulty: 'Advanced',
+        updatedAt: '2026-02-10',
         freeContent: `
             <h3>Wstęp: Mit "Ciężkiej Ręki"</h3>
             <p>W boksie od dekad krąży to samo zdanie: "On ma ciężką rękę". Wypowiada się je z podziwem, jakby to był magiczny dar. Fizyka ma na to inną odpowiedź: <strong>"Ciężka ręka" nie istnieje.</strong></p>
@@ -701,6 +709,10 @@ export const articles = [
         image: '/images/articles/recovery.png',
         isPremium: false,
         hasDualVersion: true,
+        readingTime: 10,
+        tags: ['recovery', 'sleep', 'HGH', 'performance'],
+        difficulty: 'Intermediate',
+        updatedAt: '2026-02-12',
         freeContent: `
             <h3>Wstęp: Sen to Twój Najważniejszy Trening</h3>
             <p>Możesz trenować jak bestia, mieć dietę co do grama i najlepszy narożnik na świecie. Ale jeśli śpisz jak dziecko, walczysz na 60% swoich możliwości. W środowisku bokserskim panuje kult "grindowania" – wstawaj wcześniej, trenuj dłużej. To biologiczne samobójstwo.</p>
