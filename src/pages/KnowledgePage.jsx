@@ -6,11 +6,13 @@ import { articles } from '../data/articles';
 import { compendium } from '../data/compendium';
 import { reviews } from '../data/reviews';
 import { getProgress, isBookmarked, toggleBookmark, getContinueReading, getStats } from '../utils/libraryProgress';
+import { useAuth } from '../context/AuthContext';
 
 const KnowledgePage = () => {
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('articles'); // articles, compendium, reviews
-    const [isVip, setIsVip] = useState(false);
+    const { user, profile, isPremium } = useAuth();
+    const isVip = isPremium;
 
     useEffect(() => {
         const view = searchParams.get('view');
@@ -37,12 +39,7 @@ const KnowledgePage = () => {
     // Bookmark trigger for re-renders
     const [bookmarkUpdates, setBookmarkUpdates] = useState(0);
 
-    useEffect(() => {
-        const vipStatus = localStorage.getItem('boxing24_vip');
-        if (vipStatus === 'true') {
-            setIsVip(true);
-        }
-    }, []);
+
 
     // --- HELPER WRAPPERS ---
 

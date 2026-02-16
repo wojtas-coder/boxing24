@@ -112,6 +112,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAdmin: profile?.role === 'admin' || false,
         isTrainer: profile?.role === 'trainer' || false,
+        isPremium: ['member', 'premium', 'vip', 'admin'].includes(profile?.membership_status?.toLowerCase()) || profile?.role === 'admin' || false,
         userRole: profile?.role || 'client',
         membershipStatus: profile?.membership_status || 'Free',
         login: async (email, password) => {
