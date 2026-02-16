@@ -146,12 +146,13 @@ const KnowledgePage = () => {
                                                 toggleBookmark(article.id, 'article');
                                                 setBookmarkUpdates(prev => prev + 1);
                                             }}
-                                            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                                            className="p-2 rounded-lg hover:bg-boxing-green/10 transition-all border border-transparent hover:border-boxing-green/30"
+                                            title="Dodaj do zakładek"
                                         >
                                             {bookmarked ? (
-                                                <BookmarkCheck className="w-4 h-4 text-boxing-green fill-boxing-green" />
+                                                <BookmarkCheck className="w-5 h-5 text-boxing-green fill-boxing-green" />
                                             ) : (
-                                                <Bookmark className="w-4 h-4 text-gray-400" />
+                                                <Bookmark className="w-5 h-5 text-gray-400 hover:text-boxing-green transition-colors" />
                                             )}
                                         </button>
                                     </div>
