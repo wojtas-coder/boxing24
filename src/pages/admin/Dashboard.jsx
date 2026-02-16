@@ -1,27 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Users, Newspaper, Activity, ShieldAlert, RefreshCw, Clock, UserPlus } from 'lucide-react';
+import { Users, Newspaper, Activity, ShieldAlert, RefreshCw, Clock, UserPlus, AlertTriangle, Crown, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminDashboard = () => {
     const { session } = useAuth();
-    const [stats, setStats] = useState({ users: '-', news: '-', incidents: '-', serverStatus: 'Online' });
+    const [stats, setStats] = useState({ users: 0, news: 0, premium: 0, serverStatus: 'Sprawdzanie...' });
     const [recentActivity, setRecentActivity] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         let mounted = true;
+
+        // Safety timeout - NEVER load forever
+        const timeout = setTimeout(() => {
+            if (mounted && loading) {
+                setLoading(false);
+                setError('Timeout: Nie udało się pobrać danych. Sprawdź uprawnienia w Supabase (RLS).');
+                setStats(prev => ({ ...prev, serverStatus: 'RLS Error' }));
+            }
+        }, 5000);
+
         fetchStats(mounted);
-        return () => { mounted = false; };
+
+        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchStats = async (mounted = true) => {
         setLoading(true);
+        setError(null);
         try {
             // Count users
-            const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+            const { count: usersCount, error: usersErr } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true });
+
+            if (usersErr) throw new Error(`Profiles: ${usersErr.message}`);
+
             // Count news
-            const { count: newsCount } = await supabase.from('news').select('*', { count: 'exact', head: true });
+            const { count: newsCount, error: newsErr } = await supabase
+                .from('news')
+                .select('*', { count: 'exact', head: true });
+
+            if (newsErr) throw new Error(`News: ${newsErr.message}`);
+
+            // Count premium users
+            let premiumCount = 0;
+            try {
+                const { count } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true })
+                    .in('membership_status', ['member', 'premium', 'vip']);
+                premiumCount = count || 0;
+            } catch (e) { /* column may not exist yet */ }
 
             // Fetch recent activity (last 5 users + last 5 news)
             const { data: recentUsers } = await supabase
@@ -52,16 +84,20 @@ const AdminDashboard = () => {
 
             if (mounted) {
                 setStats({
-                    users: usersCount !== null ? usersCount : 0,
-                    news: newsCount !== null ? newsCount : 0,
-                    incidents: 0,
+                    users: usersCount ?? 0,
+                    news: newsCount ?? 0,
+                    premium: premiumCount,
                     serverStatus: 'Online'
                 });
                 setRecentActivity(activity);
+                setError(null);
             }
         } catch (err) {
-            console.error("Dash Error:", err);
-            if (mounted) setStats(prev => ({ ...prev, serverStatus: 'Data Error' }));
+            console.error("Dashboard Error:", err);
+            if (mounted) {
+                setError(err.message);
+                setStats(prev => ({ ...prev, serverStatus: 'Błąd Danych' }));
+            }
         } finally {
             if (mounted) setLoading(false);
         }
@@ -88,7 +124,7 @@ const AdminDashboard = () => {
                     <Icon className="w-6 h-6" />
                 </div>
                 <h3 className="text-3xl font-black text-white mb-1">
-                    {value}
+                    {loading ? '...' : value}
                 </h3>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{label}</p>
             </div>
@@ -104,32 +140,52 @@ const AdminDashboard = () => {
                     <div>
                         <div className="text-white font-bold text-sm">Status Systemu: {stats.serverStatus}</div>
                         <div className="text-zinc-500 text-xs font-mono">
-                            DB: {stats.serverStatus === 'Online' ? 'Połączono' : 'Błąd Połączenia'} |
-                            Auth: {session ? 'Zalogowano' : 'Brak Sesji'}
+                            DB: {stats.serverStatus === 'Online' ? 'Połączono' : 'Problem z Połączeniem'} |
+                            Auth: {session ? 'Zalogowano' : 'Nie zalogowano'}
                         </div>
                     </div>
                 </div>
-                <button onClick={() => fetchStats()} className={`p-2 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white transition-colors ${loading ? 'animate-spin' : ''}`}>
+                <button onClick={() => fetchStats(true)} className={`p-2 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white transition-colors ${loading ? 'animate-spin' : ''}`}>
                     <RefreshCw className="w-4 h-4" />
                 </button>
             </div>
 
+            {/* Error Banner */}
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-xl flex items-start gap-4">
+                    <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <h3 className="text-red-400 font-bold mb-1">Problem z dostępem do danych</h3>
+                        <p className="text-red-300/70 text-sm mb-3">{error}</p>
+                        <div className="text-red-300/50 text-xs space-y-1">
+                            <p>Możliwe przyczyny:</p>
+                            <ul className="list-disc list-inside ml-2">
+                                <li>Nie jesteś zalogowany jako admin</li>
+                                <li>Twój profil nie ma roli 'admin' w tabeli profiles</li>
+                                <li>RLS (Row Level Security) blokuje zapytania</li>
+                            </ul>
+                            <p className="mt-2">Rozwiązanie: Uruchom skrypt <code className="bg-red-900/30 px-1 rounded">scripts/emergency_admin_fix.sql</code> w Supabase SQL Editor</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div>
                 <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-2">
-                    Dashboard <span className="text-red-600">Admina</span> <span className="text-xs bg-red-600 px-2 py-1 rounded text-white ml-2 not-italic align-middle tracking-normal font-sans">V2.1 LIVE</span>
+                    Dashboard <span className="text-red-600">Admina</span> <span className="text-xs bg-red-600 px-2 py-1 rounded text-white ml-2 not-italic align-middle tracking-normal font-sans">V3.0 LIVE</span>
                 </h1>
-                <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Centrum Operacyjne Boxing24 (Online) </p>
+                <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Centrum Operacyjne Boxing24</p>
             </div>
 
             {/* STATS GRID */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard icon={Users} label="Zarejestrowani" value={stats.users} color="text-blue-500" />
                 <StatCard icon={Newspaper} label="Opublikowane Newsy" value={stats.news} color="text-green-500" />
-                <StatCard icon={Activity} label="Status Systemu" value={stats.serverStatus} color="text-purple-500" />
-                <StatCard icon={ShieldAlert} label="Incydenty" value={stats.incidents} color="text-red-500" />
+                <StatCard icon={Crown} label="Premium" value={stats.premium} color="text-amber-500" />
+                <StatCard icon={Activity} label="Status" value={stats.serverStatus} color="text-purple-500" />
             </div>
 
-            {/* RECENT ACTIVITY – Real Data */}
+            {/* RECENT ACTIVITY */}
             <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8">
                 <div className="flex items-center gap-3 mb-6">
                     <Clock className="w-5 h-5 text-zinc-500" />
@@ -155,7 +211,9 @@ const AdminDashboard = () => {
                     </div>
                 ) : (
                     <div className="text-center py-8 opacity-50">
-                        <p className="text-zinc-500 font-mono text-sm">Brak ostatniej aktywności.</p>
+                        <p className="text-zinc-500 font-mono text-sm">
+                            {error ? 'Nie można pobrać aktywności.' : 'Brak ostatniej aktywności.'}
+                        </p>
                     </div>
                 )}
             </div>

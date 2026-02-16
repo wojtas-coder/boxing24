@@ -6,19 +6,37 @@ const AdminSEO = () => {
     const [settings, setSettings] = useState({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        let mounted = true;
+        const timeout = setTimeout(() => {
+            if (mounted && loading) {
+                setLoading(false);
+                setError('Timeout: Nie udało się pobrać ustawień SEO.');
+            }
+        }, 5000);
         fetchSettings();
+        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchSettings = async () => {
-        const { data } = await supabase.from('app_settings').select('*');
-        if (data) {
-            const settingsMap = {};
-            data.forEach(item => settingsMap[item.key] = item.value);
-            setSettings(settingsMap);
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error: fetchErr } = await supabase.from('app_settings').select('*');
+            if (fetchErr) throw fetchErr;
+            if (data) {
+                const settingsMap = {};
+                data.forEach(item => settingsMap[item.key] = item.value);
+                setSettings(settingsMap);
+            }
+        } catch (err) {
+            console.error("SEO Error:", err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleUpdate = async (key, value) => {
@@ -37,7 +55,14 @@ const AdminSEO = () => {
         setSaving(false);
     };
 
-    if (loading) return <div>Ładowanie konfiguracji...</div>;
+    if (loading) return <div className="p-10 text-center text-zinc-500 animate-pulse">Ładowanie konfiguracji...</div>;
+    if (error) return (
+        <div className="p-10 text-center text-red-500 bg-red-500/10 rounded-xl border border-red-500/20">
+            <h3 className="font-bold mb-2">Błąd pobierania konfiguracji</h3>
+            <p className="text-sm font-mono">{error}</p>
+            <button onClick={() => { setError(null); fetchSettings(); }} className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Spróbuj ponownie</button>
+        </div>
+    );
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">

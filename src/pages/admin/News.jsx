@@ -7,24 +7,42 @@ import NewsReformatter from '../../components/news/NewsReformatter';
 const AdminNews = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [isReformatterOpen, setIsReformatterOpen] = useState(false);
     const [currentArticle, setCurrentArticle] = useState(null);
 
     useEffect(() => {
+        let mounted = true;
+        // Safety timeout
+        const timeout = setTimeout(() => {
+            if (mounted && loading) {
+                setLoading(false);
+                setError('Timeout: Nie udało się pobrać newsów. Sprawdź RLS w Supabase.');
+            }
+        }, 5000);
+
         fetchNews();
+        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchNews = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('news')
-            .select('*')
-            .order('created_at', { ascending: false });
+        setError(null);
+        try {
+            const { data, error: fetchErr } = await supabase
+                .from('news')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        if (data) setNews(data);
-        if (error) console.error("Error fetching news:", error);
-        setLoading(false);
+            if (fetchErr) throw fetchErr;
+            setNews(data || []);
+        } catch (err) {
+            console.error("Error fetching news:", err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleFormattedNews = (articleData) => {
@@ -85,7 +103,14 @@ const AdminNews = () => {
             )}
 
             <div className="grid gap-4">
-                {loading && news.length === 0 ? (
+                {error && (
+                    <div className="p-6 text-center text-red-500 bg-red-500/10 rounded-xl border border-red-500/20">
+                        <h3 className="font-bold mb-2">Błąd pobierania newsów</h3>
+                        <p className="text-sm font-mono">{error}</p>
+                        <button onClick={() => { setError(null); fetchNews(); }} className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Spróbuj ponownie</button>
+                    </div>
+                )}
+                {loading && news.length === 0 && !error ? (
                     <div className="text-center py-20 text-zinc-500 animate-pulse">Ładowanie bazy newsów...</div>
                 ) : (
                     <>

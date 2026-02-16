@@ -42,7 +42,15 @@ const AdminUsers = () => {
     const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
+        let mounted = true;
+        const timeout = setTimeout(() => {
+            if (mounted && loading) {
+                setLoading(false);
+                setErrorMsg('Timeout: Nie udało się pobrać użytkowników. Sprawdź RLS w Supabase.');
+            }
+        }, 5000);
         fetchUsers();
+        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchUsers = async () => {

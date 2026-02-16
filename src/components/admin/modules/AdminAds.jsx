@@ -5,17 +5,35 @@ import { Megaphone, ExternalLink, Trash2, Plus, Eye, MousePointer } from 'lucide
 const AdminAds = () => {
     const [ads, setAds] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [newAd, setNewAd] = useState({ title: '', image_url: '', link_url: '', position: 'sidebar' });
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
+        let mounted = true;
+        const timeout = setTimeout(() => {
+            if (mounted && loading) {
+                setLoading(false);
+                setError('Timeout: Nie udało się pobrać reklam.');
+            }
+        }, 5000);
         fetchAds();
+        return () => { mounted = false; clearTimeout(timeout); };
     }, []);
 
     const fetchAds = async () => {
-        const { data, error } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
-        if (data) setAds(data);
-        setLoading(false);
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error: fetchErr } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+            if (fetchErr) throw fetchErr;
+            setAds(data || []);
+        } catch (err) {
+            console.error("Ads Error:", err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCreate = async () => {
@@ -46,7 +64,14 @@ const AdminAds = () => {
         fetchAds();
     };
 
-    if (loading) return <div>Ładowanie reklam...</div>;
+    if (loading) return <div className="p-10 text-center text-zinc-500 animate-pulse">Ładowanie reklam...</div>;
+    if (error) return (
+        <div className="p-10 text-center text-red-500 bg-red-500/10 rounded-xl border border-red-500/20">
+            <h3 className="font-bold mb-2">Błąd pobierania reklam</h3>
+            <p className="text-sm font-mono">{error}</p>
+            <button onClick={() => { setError(null); fetchAds(); }} className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Spróbuj ponownie</button>
+        </div>
+    );
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
