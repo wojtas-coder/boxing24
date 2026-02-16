@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Check, Dumbbell, Clock, Target, Shield, Shirt, Droplet, Zap, Heart, Users, Award, Bath } from 'lucide-react';
+import { Check, Dumbbell, Clock, Target, Shield, Shirt, Droplet, Zap, Heart, Users, Award, Bath, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { coaches } from '../data/coaches';
 
 const PricingCard = ({ title, price, features, tier, recommended, onClick, buttonText }) => {
     return (
@@ -282,21 +283,91 @@ const MembershipPage = () => {
                         </div>
                     </div>
 
-                    {/* CTA SECTION */}
+                    {/* COACH SELECTION SECTION */}
+                    <div>
+                        <h2 className="text-3xl md:text-4xl font-black text-white uppercase text-center mb-4">
+                            Wybierz <span className="text-boxing-green">Trenera</span>
+                        </h2>
+                        <p className="text-zinc-500 text-center mb-12 max-w-2xl mx-auto">
+                            Nasi certyfikowani trenerzy pomogą Ci osiągnąć cele treningowe.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                            {coaches.map((coach, index) => (
+                                <div
+                                    key={coach.id}
+                                    onClick={() => navigate('/booking')}
+                                    className="group relative bg-zinc-900/50 border border-white/10 rounded-2xl overflow-hidden cursor-pointer hover:border-boxing-green/50 transition-all duration-300"
+                                >
+                                    {/* Coach Image */}
+                                    <div className="h-64 bg-zinc-800 relative overflow-hidden">
+                                        <img
+                                            src={coach.image}
+                                            alt={coach.name}
+                                            className="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent"></div>
+                                        <div className="absolute bottom-4 left-4">
+                                            <h3 className="text-2xl font-bold uppercase italic text-white leading-none mb-1">{coach.name}</h3>
+                                            <p className="text-white/90 text-[10px] font-bold uppercase tracking-widest mb-2">{coach.title}</p>
+                                            <p className="text-boxing-green text-xs font-bold uppercase tracking-widest">{coach.location}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Coach Info */}
+                                    <div className="p-6">
+                                        <p className="text-zinc-400 text-sm mb-4">{coach.description}</p>
+
+                                        <div className="flex flex-wrap gap-2 mb-6">
+                                            {coach.specialties.map(spec => (
+                                                <span key={spec} className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] text-zinc-300 font-bold uppercase tracking-wide">
+                                                    {spec}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex justify-between items-center border-t border-white/5 pt-4">
+                                            <div>
+                                                <span className="text-zinc-500 text-xs font-bold uppercase block mb-1">Cena</span>
+                                                <div className="text-xl font-black text-white">{coach.price}</div>
+                                            </div>
+                                            <button className="w-10 h-10 rounded-full bg-boxing-green text-black flex items-center justify-center group-hover:bg-white transition-colors">
+                                                <ArrowRight className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* PRICING CTA SECTION */}
                     <div className="bg-gradient-to-br from-boxing-green/10 via-zinc-900/50 to-black border border-boxing-green/20 rounded-3xl p-12 text-center">
                         <h2 className="text-3xl md:text-5xl font-black text-white uppercase mb-4">
                             Gotowy na <span className="text-boxing-green">pierwszy trening</span>?
                         </h2>
-                        <p className="text-zinc-400 text-lg mb-2">Underground Boxing Club • Wrocław</p>
-                        <p className="text-boxing-green text-2xl font-bold mb-8">Od 150 PLN / sesja</p>
+                        <p className="text-zinc-400 text-lg mb-4">Underground Boxing Club • Wrocław</p>
+
+                        {/* Pricing with Promo */}
+                        <div className="mb-8">
+                            <div className="flex items-center justify-center gap-4 mb-2">
+                                <span className="text-zinc-600 text-xl line-through">170 PLN</span>
+                                <div className="inline-block bg-boxing-green text-black px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest">
+                                    Promocja
+                                </div>
+                            </div>
+                            <p className="text-boxing-green text-4xl font-black">99 PLN</p>
+                            <p className="text-zinc-500 text-sm mt-1">Trening Próbny</p>
+                        </div>
+
                         <button
                             onClick={() => navigate('/booking')}
-                            className="px-12 py-5 bg-boxing-green text-white text-sm font-black uppercase tracking-widest rounded-full hover:bg-boxing-green hover:scale-105 transition-all shadow-[0_0_30px_rgba(34,197,94,0.3)]"
+                            className="px-12 py-5 bg-boxing-green text-black text-sm font-black uppercase tracking-widest rounded-full hover:bg-white hover:scale-105 transition-all shadow-[0_0_30px_rgba(34,197,94,0.3)]"
                         >
-                            Umów Pierwszy Trening
+                            Umów Trening Już Teraz
                         </button>
                         <p className="text-zinc-600 text-xs mt-6">
-                            Lub napisz do nas: <a href="mailto:kontakt@boxing24.pl" className="text-boxing-green hover:text-boxing-green">kontakt@boxing24.pl</a>
+                            Lub napisz do nas: <a href="mailto:kontakt@boxing24.pl" className="text-boxing-green hover:text-white">kontakt@boxing24.pl</a>
                         </p>
                     </div>
 

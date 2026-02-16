@@ -104,7 +104,7 @@ const Layout = () => {
 
                         {/* DROPDOWN: OFERTA */}
                         <div className="relative group/dropdown py-2">
-                            <Link to="/membership" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-red-500 group-hover/dropdown:text-white">
+                            <Link to="/membership" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-boxing-green group-hover/dropdown:text-white">
                                 Oferta
                                 <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                     <polyline points="6 9 12 15 18 9"></polyline>

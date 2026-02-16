@@ -68,15 +68,6 @@ const Footer = () => {
                                 </a>
                             </li>
                         </ul>
-
-                        {/* CTA */}
-                        <Link to="/booking" className="mt-8 block">
-                            <div className="bg-red-600/10 border border-red-500/20 p-4 rounded-xl hover:bg-red-600/20 transition-all group">
-                                <p className="text-red-400 text-xs font-bold uppercase tracking-widest group-hover:text-red-300">
-                                    Umów Darmowy Trening Próbny →
-                                </p>
-                            </div>
-                        </Link>
                     </div>
                 </div>
             </div>
