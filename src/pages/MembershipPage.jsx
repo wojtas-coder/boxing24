@@ -6,17 +6,17 @@ const PricingCard = ({ title, price, features, tier, recommended, onClick, butto
     return (
         <div className={`relative p-8 rounded-3xl border flex flex-col h-full bg-[#0a0a0a] transition-all duration-300 hover:-translate-y-2
             ${recommended
-                ? 'border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.15)] z-10 scale-105'
+                ? 'border-boxing-green shadow-[0_0_50px_rgba(34,197,94,0.15)] z-10 scale-105'
                 : 'border-white/10 hover:border-white/30 text-gray-400'}
         `}>
             {recommended && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-boxing-green text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                     Najczęściej Wybierany
                 </div>
             )}
 
             <div className="mb-8">
-                <h3 className={`text-sm font-bold uppercase tracking-[0.2em] mb-4 ${recommended ? 'text-red-500' : 'text-gray-500'}`}>{title}</h3>
+                <h3 className={`text-sm font-bold uppercase tracking-[0.2em] mb-4 ${recommended ? 'text-boxing-green' : 'text-gray-500'}`}>{title}</h3>
                 <div className="flex items-baseline gap-1">
                     <span className="text-4xl md:text-5xl font-black text-white">{price}</span>
                     <span className="text-sm font-bold text-gray-500">PLN</span>
@@ -28,7 +28,7 @@ const PricingCard = ({ title, price, features, tier, recommended, onClick, butto
             <div className="space-y-4 mb-12 flex-grow">
                 {features.map((feature, i) => (
                     <div key={i} className="flex items-start gap-3">
-                        <div className={`mt-0.5 rounded-full p-1 ${recommended ? 'bg-red-600 text-white' : 'bg-zinc-800 text-gray-400'}`}>
+                        <div className={`mt-0.5 rounded-full p-1 ${recommended ? 'bg-boxing-green text-white' : 'bg-zinc-800 text-gray-400'}`}>
                             <Check className="w-3 h-3" />
                         </div>
                         <span className={`text-sm font-medium ${recommended ? 'text-gray-200' : 'text-gray-500'}`}>{feature}</span>
@@ -40,7 +40,7 @@ const PricingCard = ({ title, price, features, tier, recommended, onClick, butto
                 onClick={onClick}
                 className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all
                     ${recommended
-                        ? 'bg-red-600 text-white hover:bg-red-500 hover:scale-105'
+                        ? 'bg-boxing-green text-white hover:bg-boxing-green hover:scale-105'
                         : 'bg-zinc-900 text-white hover:bg-zinc-800 border border-white/5'}
                 `}
             >
@@ -59,9 +59,9 @@ const MembershipPage = () => {
 
             {/* HEADLINE */}
             <div className="text-center max-w-3xl mx-auto mb-12">
-                <span className="text-red-500 font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Dołącz do Drużyny</span>
+                <span className="text-boxing-green font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Dołącz do Drużyny</span>
                 <h1 className="text-4xl md:text-7xl font-black text-white tracking-tighter uppercase mb-6">
-                    Zainwestuj w <br /><span className="text-red-500">Swoją Formę</span>
+                    Zainwestuj w <br /><span className="text-boxing-green">Swoją Formę</span>
                 </h1>
                 <p className="text-gray-400 text-lg font-light leading-relaxed">
                     Niezależnie od tego, czy szukasz wiedzy, planu treningowego czy pełnej opieki mentorskiej – mamy rozwiązanie skrojone pod Twoje ambicje.
@@ -74,7 +74,7 @@ const MembershipPage = () => {
                     <button
                         onClick={() => setActiveView('online')}
                         className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeView === 'online'
-                            ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]'
+                            ? 'bg-boxing-green text-white shadow-[0_0_20px_rgba(34,197,94,0.3)]'
                             : 'text-zinc-500 hover:text-white'
                             }`}
                     >
@@ -83,7 +83,7 @@ const MembershipPage = () => {
                     <button
                         onClick={() => setActiveView('personalne')}
                         className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeView === 'personalne'
-                            ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]'
+                            ? 'bg-boxing-green text-white shadow-[0_0_20px_rgba(34,197,94,0.3)]'
                             : 'text-zinc-500 hover:text-white'
                             }`}
                     >
@@ -174,7 +174,7 @@ const MembershipPage = () => {
                     {/* BENEFITS SECTION */}
                     <div>
                         <h2 className="text-3xl md:text-4xl font-black text-white uppercase text-center mb-12">
-                            Zalety Treningów <span className="text-red-500">Personalnych</span>
+                            Zalety Treningów <span className="text-boxing-green">Personalnych</span>
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
@@ -199,8 +199,8 @@ const MembershipPage = () => {
                                     desc: "Pełna kontrola trenera, zapobieganie kontuzjom, progresja pod okiem specjalisty."
                                 }
                             ].map((item, i) => (
-                                <div key={i} className="bg-zinc-900/50 border border-white/10 p-8 rounded-2xl hover:border-red-500/30 transition-all group">
-                                    <div className="text-red-500 mb-4 group-hover:scale-110 transition-transform">
+                                <div key={i} className="bg-zinc-900/50 border border-white/10 p-8 rounded-2xl hover:border-boxing-green/30 transition-all group">
+                                    <div className="text-boxing-green mb-4 group-hover:scale-110 transition-transform">
                                         {item.icon}
                                     </div>
                                     <h3 className="text-white font-bold text-lg uppercase mb-2">{item.title}</h3>
@@ -213,7 +213,7 @@ const MembershipPage = () => {
                     {/* WHAT TO BRING SECTION */}
                     <div>
                         <h2 className="text-3xl md:text-4xl font-black text-white uppercase text-center mb-4">
-                            Co zabrać na <span className="text-red-500">pierwszy trening?</span>
+                            Co zabrać na <span className="text-boxing-green">pierwszy trening?</span>
                         </h2>
                         <p className="text-zinc-500 text-center mb-12 max-w-2xl mx-auto">
                             Nie musisz mieć żadnego doświadczenia ani sprzętu — ale te rzeczy ułatwią Ci start.
@@ -228,7 +228,7 @@ const MembershipPage = () => {
                                 { icon: <Heart className="w-6 h-6" />, label: "Energia", desc: "Pozytywne nastawienie" }
                             ].map((item, i) => (
                                 <div key={i} className="bg-black border border-white/5 p-6 rounded-xl text-center hover:bg-zinc-900/50 transition-all">
-                                    <div className="text-red-500 mb-3 flex justify-center">
+                                    <div className="text-boxing-green mb-3 flex justify-center">
                                         {item.icon}
                                     </div>
                                     <h4 className="text-white font-bold text-sm uppercase mb-1">{item.label}</h4>
@@ -241,12 +241,12 @@ const MembershipPage = () => {
                     {/* WHY BOXING SECTION */}
                     <div className="max-w-4xl mx-auto">
                         <h2 className="text-3xl md:text-4xl font-black text-white uppercase text-center mb-12">
-                            To jest sport <span className="text-red-500">dla mnie!</span>
+                            To jest sport <span className="text-boxing-green">dla mnie!</span>
                         </h2>
                         <div className="space-y-8">
-                            <div className="bg-zinc-900/30 border-l-4 border-red-500 p-6 rounded-r-2xl">
+                            <div className="bg-zinc-900/30 border-l-4 border-boxing-green p-6 rounded-r-2xl">
                                 <div className="flex items-start gap-4">
-                                    <Users className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
+                                    <Users className="w-6 h-6 text-boxing-green flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="text-white font-bold text-lg mb-2">Odreagowanie stresu</h3>
                                         <p className="text-zinc-400 text-sm leading-relaxed">
@@ -256,9 +256,9 @@ const MembershipPage = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-zinc-900/30 border-l-4 border-red-500 p-6 rounded-r-2xl">
+                            <div className="bg-zinc-900/30 border-l-4 border-boxing-green p-6 rounded-r-2xl">
                                 <div className="flex items-start gap-4">
-                                    <Dumbbell className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
+                                    <Dumbbell className="w-6 h-6 text-boxing-green flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="text-white font-bold text-lg mb-2">Kompleksowy trening całego ciała</h3>
                                         <p className="text-zinc-400 text-sm leading-relaxed">
@@ -268,9 +268,9 @@ const MembershipPage = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-zinc-900/30 border-l-4 border-red-500 p-6 rounded-r-2xl">
+                            <div className="bg-zinc-900/30 border-l-4 border-boxing-green p-6 rounded-r-2xl">
                                 <div className="flex items-start gap-4">
-                                    <Award className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
+                                    <Award className="w-6 h-6 text-boxing-green flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="text-white font-bold text-lg mb-2">Pewność siebie i umiejętności samoobrony</h3>
                                         <p className="text-zinc-400 text-sm leading-relaxed">
@@ -283,20 +283,20 @@ const MembershipPage = () => {
                     </div>
 
                     {/* CTA SECTION */}
-                    <div className="bg-gradient-to-br from-red-600/10 via-zinc-900/50 to-black border border-red-500/20 rounded-3xl p-12 text-center">
+                    <div className="bg-gradient-to-br from-boxing-green/10 via-zinc-900/50 to-black border border-boxing-green/20 rounded-3xl p-12 text-center">
                         <h2 className="text-3xl md:text-5xl font-black text-white uppercase mb-4">
-                            Gotowy na <span className="text-red-500">pierwszy trening</span>?
+                            Gotowy na <span className="text-boxing-green">pierwszy trening</span>?
                         </h2>
                         <p className="text-zinc-400 text-lg mb-2">Underground Boxing Club • Wrocław</p>
-                        <p className="text-red-500 text-2xl font-bold mb-8">Od 150 PLN / sesja</p>
+                        <p className="text-boxing-green text-2xl font-bold mb-8">Od 150 PLN / sesja</p>
                         <button
                             onClick={() => navigate('/booking')}
-                            className="px-12 py-5 bg-red-600 text-white text-sm font-black uppercase tracking-widest rounded-full hover:bg-red-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)]"
+                            className="px-12 py-5 bg-boxing-green text-white text-sm font-black uppercase tracking-widest rounded-full hover:bg-boxing-green hover:scale-105 transition-all shadow-[0_0_30px_rgba(34,197,94,0.3)]"
                         >
                             Umów Pierwszy Trening
                         </button>
                         <p className="text-zinc-600 text-xs mt-6">
-                            Lub napisz do nas: <a href="mailto:kontakt@boxing24.pl" className="text-red-500 hover:text-red-400">kontakt@boxing24.pl</a>
+                            Lub napisz do nas: <a href="mailto:kontakt@boxing24.pl" className="text-boxing-green hover:text-boxing-green">kontakt@boxing24.pl</a>
                         </p>
                     </div>
 
@@ -308,3 +308,4 @@ const MembershipPage = () => {
 };
 
 export default MembershipPage;
+
