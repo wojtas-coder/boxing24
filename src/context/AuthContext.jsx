@@ -88,6 +88,14 @@ export const AuthProvider = ({ children }) => {
 
         initAuth();
 
+        // Safety Fuse: Force loading to false after 3 seconds if it's still true
+        const safetyTimeout = setTimeout(() => {
+            if (loading) {
+                console.warn("Auth check timed out - forcing app to load");
+                setLoading(false);
+            }
+        }, 3000);
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mounted) return;
             console.log("Auth Event:", event);
@@ -104,6 +112,7 @@ export const AuthProvider = ({ children }) => {
 
         return () => {
             mounted = false;
+            clearTimeout(safetyTimeout);
             subscription.unsubscribe();
         };
     }, []);
