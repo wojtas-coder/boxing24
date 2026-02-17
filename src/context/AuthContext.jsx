@@ -57,28 +57,29 @@ export const AuthProvider = ({ children }) => {
 
         const initAuth = async () => {
             try {
-                // Failsafe timeout
-                const timeoutId = setTimeout(() => {
-                    if (mounted && loading) {
-                        console.warn("Auth stuck, forcing load");
-                        setLoading(false);
-                    }
-                }, 5000);
-
                 const { data: { session }, error } = await supabase.auth.getSession();
 
-                if (error) throw error;
-
-                if (mounted) {
-                    setSession(session);
-                    setUser(session?.user ?? null);
-                    if (session?.user) {
-                        await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
+                if (!mounted) return;
+                if (error) {
+                    // AbortError is expected during fast unmount/remount — ignore
+                    if (error.message?.includes('abort')) {
+                        console.warn("Auth session check aborted, retrying...");
+                        return;
                     }
+                    throw error;
                 }
-                clearTimeout(timeoutId);
+
+                setSession(session);
+                setUser(session?.user ?? null);
+                if (session?.user) {
+                    await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
+                }
             } catch (err) {
-                console.error("Auth Init Error:", err);
+                if (err?.name === 'AbortError' || err?.message?.includes('abort')) {
+                    console.warn("Auth init aborted (normal during remount)");
+                } else {
+                    console.error("Auth Init Error:", err);
+                }
             } finally {
                 if (mounted) setLoading(false);
             }
