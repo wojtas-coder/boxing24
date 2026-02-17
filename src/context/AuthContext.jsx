@@ -12,6 +12,14 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showFailsafe, setShowFailsafe] = useState(false);
+
+    useEffect(() => {
+        if (loading) {
+            const timer = setTimeout(() => setShowFailsafe(true), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
 
     const fetchProfile = async (userId, email = null, userMeta = null) => {
         try {
@@ -197,14 +205,15 @@ export const AuthProvider = ({ children }) => {
                     <Loader2 className="w-12 h-12 animate-spin mb-4" />
                     <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-8">Ładowanie systemu...</p>
 
-                    {/* Failsafe button after 3 seconds */}
-                    <button
-                        onClick={() => setLoading(false)}
-                        className="bg-zinc-900 border border-zinc-800 text-zinc-500 px-4 py-2 rounded text-xs uppercase tracking-widest hover:text-white hover:border-white/20 transition-all animate-in fade-in duration-1000 delay-3000 fill-mode-forwards opacity-0"
-                        style={{ animationDelay: '3s' }}
-                    >
-                        Wymuś wejście
-                    </button>
+                    {/* Failsafe button - shows after 1 second if loading sticks */}
+                    {showFailsafe && (
+                        <button
+                            onClick={() => setLoading(false)}
+                            className="bg-red-600/10 border border-red-600/50 text-red-500 px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all animate-in fade-in zoom-in duration-300"
+                        >
+                            ⚠️ Wymuś wejście
+                        </button>
+                    )}
                 </div>
             ) : children}
         </AuthContext.Provider>
