@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, Unlock } from 'lucide-react';
 
 const SiteLock = ({ children }) => {
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [password, setPassword] = useState('');
     const [error, setError] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Build-time bypass for production if needed
+        if (import.meta.env.VITE_SITE_UNLOCK === 'true') {
+            setIsUnlocked(true);
+            setLoading(false);
+            return;
+        }
+
         const sessionUnlocked = sessionStorage.getItem('b24_unlocked');
         if (sessionUnlocked === 'true') {
             setIsUnlocked(true);
         }
+        setLoading(false);
     }, []);
 
     const handleUnlock = (e) => {
         e.preventDefault();
-        // Simple client-side protection for demo/staging
+        // Client-side protection
         if (password.toLowerCase() === 'boxing2420' || password === 'admin') {
             sessionStorage.setItem('b24_unlocked', 'true');
             setIsUnlocked(true);
@@ -24,13 +33,17 @@ const SiteLock = ({ children }) => {
         }
     };
 
+    if (loading) {
+        return <div className="fixed inset-0 bg-black z-[200]" />; // Prevent flash
+    }
+
     if (isUnlocked) {
-        return children;
+        return <>{children}</>;
     }
 
     return (
         <div className="fixed inset-0 bg-black z-[100] flex items-center justify-center px-4">
-            <div className="max-w-md w-full bg-zinc-900 border border-white/5 rounded-2xl p-8 text-center">
+            <div className="max-w-md w-full bg-zinc-900 border border-white/5 rounded-2xl p-8 text-center animate-in fade-in zoom-in duration-300">
                 <div className="mx-auto w-16 h-16 bg-boxing-green/10 rounded-full flex items-center justify-center mb-6 border border-boxing-green">
                     <Lock className="w-8 h-8 text-boxing-green" />
                 </div>
@@ -55,8 +68,9 @@ const SiteLock = ({ children }) => {
 
                     <button
                         type="submit"
-                        className="w-full bg-boxing-green text-black font-black uppercase tracking-widest py-3 rounded-lg hover:brightness-110 transition-all"
+                        className="w-full bg-boxing-green text-black font-black uppercase tracking-widest py-3 rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-2"
                     >
+                        <Unlock className="w-4 h-4" />
                         Odblokuj
                     </button>
 

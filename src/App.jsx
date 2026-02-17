@@ -41,12 +41,9 @@ function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
+                {/* DEBUG COMPONENT - Always visible */}
+                <AuthDebug />
                 <SiteLock>
-                    <div className="relative">
-                        {/* DEBUG COMPONENT - Remove in production */}
-                        <AuthDebug />
-                    </div>
-
                     <Routes>
                         {/* Standalone Application Funnel - NO LAYOUT */}
                         <Route path="/login" element={<LoginPage />} />
