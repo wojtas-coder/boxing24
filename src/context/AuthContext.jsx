@@ -12,14 +12,6 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [showFailsafe, setShowFailsafe] = useState(false);
-
-    useEffect(() => {
-        if (loading) {
-            const timer = setTimeout(() => setShowFailsafe(true), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [loading]);
 
     const fetchProfile = async (userId, email = null, userMeta = null) => {
         try {
@@ -200,22 +192,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {loading ? (
-                <div className="min-h-screen bg-black flex flex-col items-center justify-center text-boxing-green">
-                    <Loader2 className="w-12 h-12 animate-spin mb-4" />
-                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-8">Ładowanie systemu...</p>
-
-                    {/* Failsafe button - shows after 1 second if loading sticks */}
-                    {showFailsafe && (
-                        <button
-                            onClick={() => setLoading(false)}
-                            className="bg-red-600/10 border border-red-600/50 text-red-500 px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all animate-in fade-in zoom-in duration-300"
-                        >
-                            ⚠️ Wymuś wejście
-                        </button>
-                    )}
-                </div>
-            ) : children}
+            {children}
         </AuthContext.Provider>
     );
 };
