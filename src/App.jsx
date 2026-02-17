@@ -40,8 +40,13 @@ import SiteLock from './components/SiteLock';
 function App() {
     return (
         <AuthProvider>
-            <SiteLock>
-                <BrowserRouter>
+            <BrowserRouter>
+                <SiteLock>
+                    <div className="relative">
+                        {/* DEBUG COMPONENT - Remove in production */}
+                        <AuthDebug />
+                    </div>
+
                     <Routes>
                         {/* Standalone Application Funnel - NO LAYOUT */}
                         <Route path="/login" element={<LoginPage />} />
@@ -88,8 +93,8 @@ function App() {
                             <Route path="plans" element={<CoachPlans />} />
                         </Route>
                     </Routes>
-                </BrowserRouter>
-            </SiteLock>
+                </SiteLock>
+            </BrowserRouter>
         </AuthProvider>
     );
 }
