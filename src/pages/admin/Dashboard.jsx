@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabaseData as supabase } from '../../lib/supabaseClient';
 import { Users, Newspaper, Activity, RefreshCw, Clock, UserPlus, AlertTriangle, Crown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 

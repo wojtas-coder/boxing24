@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseData } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminDebug = () => {
@@ -185,6 +185,29 @@ const AdminDebug = () => {
             }
         } catch (e) {
             tests.push({ name: 'Raw Fetch (user JWT)', result: e.message, status: 'error' });
+        }
+
+        // Test 9: Supabase Data Client (Auth Bypassed)
+        try {
+            const start = Date.now();
+            const { data, error, count } = await supabaseData
+                .from('profiles')
+                .select('id, full_name, role', { count: 'exact' })
+                .limit(3);
+            const duration = Date.now() - start;
+            tests.push({
+                name: 'Data Client (Auth Bypassed)',
+                result: {
+                    count: count,
+                    rowsReturned: data?.length || 0,
+                    data: data?.map(u => `${u.full_name} (${u.role})`).join(', ') || 'none',
+                    error: error?.message || 'none',
+                    durationMs: duration
+                },
+                status: error ? 'error' : data?.length > 0 ? 'ok' : 'warn'
+            });
+        } catch (e) {
+            tests.push({ name: 'Data Client (Auth Bypassed)', result: e.message, status: 'error' });
         }
 
         setResults(tests);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { supabaseData as supabase } from '../../../lib/supabaseClient';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { Users, UserPlus, TrendingUp, Info } from 'lucide-react';
 

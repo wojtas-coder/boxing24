@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { supabaseData as supabase } from '../../../lib/supabaseClient';
 import { Megaphone, ExternalLink, Trash2, Plus, Eye, MousePointer } from 'lucide-react';
 
 const AdminAds = () => {

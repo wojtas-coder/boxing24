@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabaseData as supabase } from '../../lib/supabaseClient';
 import {
     Shield, User, Search, Crown, UserX, RefreshCw,
     ChevronDown, Check, X, Mail, Calendar, Star,

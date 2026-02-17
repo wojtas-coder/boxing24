@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { supabaseData as supabase } from '../../../lib/supabaseClient';
 import { Settings, Globe, AlertTriangle, Save, Megaphone } from 'lucide-react';
 
 const AdminSEO = () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabaseData as supabase } from '../../lib/supabaseClient';
 import { RefreshCw, Plus, Trash2, Edit, Wand2 } from 'lucide-react';
 import NewsEditor from '../../components/news/NewsEditor';
 import NewsReformatter from '../../components/news/NewsReformatter';
