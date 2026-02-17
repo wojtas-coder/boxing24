@@ -36,6 +36,7 @@ import CalendarPage from './pages/CalendarPage';
 import MemberPageWrapper from './pages/MemberPageWrapper';
 
 import SiteLock from './components/SiteLock';
+import AuthDebug from './components/AuthDebug';
 
 function App() {
     return (
