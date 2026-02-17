@@ -195,7 +195,16 @@ export const AuthProvider = ({ children }) => {
             {loading ? (
                 <div className="min-h-screen bg-black flex flex-col items-center justify-center text-boxing-green">
                     <Loader2 className="w-12 h-12 animate-spin mb-4" />
-                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Ładowanie systemu...</p>
+                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-8">Ładowanie systemu...</p>
+
+                    {/* Failsafe button after 3 seconds */}
+                    <button
+                        onClick={() => setLoading(false)}
+                        className="bg-zinc-900 border border-zinc-800 text-zinc-500 px-4 py-2 rounded text-xs uppercase tracking-widest hover:text-white hover:border-white/20 transition-all animate-in fade-in duration-1000 delay-3000 fill-mode-forwards opacity-0"
+                        style={{ animationDelay: '3s' }}
+                    >
+                        Wymuś wejście
+                    </button>
                 </div>
             ) : children}
         </AuthContext.Provider>
