@@ -33,10 +33,6 @@ const SiteLock = ({ children }) => {
         }
     };
 
-    if (loading) {
-        return <div className="fixed inset-0 bg-black z-[200]" />; // Prevent flash
-    }
-
     if (isUnlocked) {
         return <>{children}</>;
     }
