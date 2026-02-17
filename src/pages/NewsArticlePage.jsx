@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, User, AlertTriangle, Zap, Award } from 'lucide-react';
+import { ArrowLeft, Calendar, User, AlertTriangle, Zap, Award, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { articles } from '../data/articles';
+import { useAuth } from '../context/AuthContext';
 
 const NewsArticlePage = () => {
     const { slug } = useParams();
     const [imageError, setImageError] = useState(false);
+    const { isPremium } = useAuth();
 
     const { data: article, isLoading, error } = useQuery({
         queryKey: ['article', slug],
@@ -37,7 +39,10 @@ const NewsArticlePage = () => {
                         slug: foundArticle.id,
                         image_url: foundArticle.image,
                         published_at: new Date().toISOString(),
-                        content: foundArticle.freeContent || foundArticle.content,
+                        // Return all content variants
+                        content: foundArticle.content,
+                        freeContent: foundArticle.freeContent,
+                        premiumContent: foundArticle.premiumContent,
                         category: foundArticle.category || 'Wiedza Ekspercka',
                         author: foundArticle.author || 'Ekspert B24'
                     };
@@ -52,13 +57,12 @@ const NewsArticlePage = () => {
         retry: false
     });
 
-    // Dynamic SEO Meta Tags (must be after useQuery so `article` is defined)
+    // Dynamic SEO Meta Tags
     useEffect(() => {
         if (!article) return;
         const originalTitle = document.title;
         document.title = `${article.title} | Boxing24`;
 
-        // Set/update OG meta tags for social sharing
         const setMeta = (property, content) => {
             let el = document.querySelector(`meta[property="${property}"]`);
             if (!el) {
@@ -75,7 +79,6 @@ const NewsArticlePage = () => {
         setMeta('og:url', `https://boxing24.pl/news/${slug}`);
         setMeta('og:type', 'article');
 
-        // Twitter Card
         let twitterCard = document.querySelector('meta[name="twitter:card"]');
         if (!twitterCard) {
             twitterCard = document.createElement('meta');
@@ -86,16 +89,6 @@ const NewsArticlePage = () => {
 
         return () => { document.title = originalTitle; };
     }, [article, slug]);
-
-    // View Tracking REMOVED to prevent crash (rpc(...).catch is not a function)
-    // useEffect(() => {
-    //     if (article && article.id && !article.is_article) {
-    //         supabase.rpc('increment_view', {
-    //             p_slug: slug,
-    //             p_title: article.title
-    //         }).catch(e => console.error("View tracking error:", e));
-    //     }
-    // }, [article, slug]);
 
     if (isLoading) {
         return (
@@ -133,7 +126,6 @@ const NewsArticlePage = () => {
         );
     }
 
-    // Safe Date Parsing
     const getArticleDate = () => {
         try {
             const dateStr = article.published_at || article.created_at;
@@ -146,10 +138,34 @@ const NewsArticlePage = () => {
 
     const isExpertArticle = article.category && [
         'Wiedza Ekspercka', 'HISTORIA', 'DIETETYKA', 'BEZPIECZEŃSTWO',
-        'TAKTYKA', 'PSYCHOLOGIA', 'NAUKA', 'RECOVERY'
+        'TAKTYKA', 'PSYCHOLOGIA', 'NAUKA', 'RECOVERY', 'SCIENCE'
     ].includes(article.category);
 
     const hasValidImage = article.image_url && !imageError;
+
+    // Content Selection Logic
+    // If user is premium, prioritize premiumContent. 
+    // If not premium, prioritize freeContent. 
+    // Fallback to standard content.
+    let contentToDisplay = article.content;
+    let isLocked = false;
+
+    if (article.hasDualVersion || (article.premiumContent && article.freeContent)) {
+        if (isPremium) {
+            contentToDisplay = article.premiumContent || article.premium_content || article.content;
+        } else {
+            contentToDisplay = article.freeContent || article.free_content || article.content;
+            isLocked = true;
+        }
+    } else if (article.premiumContent) {
+        // Just premium content exists
+        if (isPremium) {
+            contentToDisplay = article.premiumContent;
+        } else {
+            contentToDisplay = article.freeContent || article.content; // fallback
+            isLocked = true;
+        }
+    }
 
     return (
         <div className="min-h-screen bg-black text-white pt-24 pb-20">
@@ -177,6 +193,11 @@ const NewsArticlePage = () => {
                         <span className={`text-white text-[10px] md:text-xs font-bold uppercase tracking-widest px-2 py-1 ${isExpertArticle ? 'bg-blue-600' : 'bg-red-600'}`}>
                             {article.category || 'News'}
                         </span>
+                        {isPremium && isExpertArticle && (
+                            <span className="text-xs font-bold bg-amber-500 text-black px-2 py-1 uppercase tracking-widest flex items-center gap-1">
+                                <Award className="w-3 h-3" /> Premium Access
+                            </span>
+                        )}
                     </div>
                     <h1 className="text-xl md:text-3xl lg:text-4xl font-black uppercase tracking-tighter mb-4 max-w-5xl leading-tight drop-shadow-xl text-balance">
                         {article.title}
@@ -203,10 +224,10 @@ const NewsArticlePage = () => {
 
                 <div
                     className="prose prose-invert prose-lg max-w-none text-zinc-300 prose-headings:text-red-500 prose-a:text-red-400 prose-strong:text-white"
-                    dangerouslySetInnerHTML={{ __html: article.content || '<p>Brak treści.</p>' }}
+                    dangerouslySetInnerHTML={{ __html: contentToDisplay || '<p>Brak treści.</p>' }}
                 />
 
-                {isExpertArticle && (
+                {isExpertArticle && !isPremium && (
                     <div className="mt-16 bg-gradient-to-br from-zinc-900 to-black border border-blue-900/50 p-8 md:p-12 text-center rounded-2xl relative overflow-hidden group">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-blue-600/5 blur-[100px] pointer-events-none" />
                         <h3 className="text-2xl md:text-3xl font-black text-white mb-4 uppercase italic relative z-10">
