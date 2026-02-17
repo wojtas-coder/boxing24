@@ -55,16 +55,18 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true;
 
-        const initAuth = async () => {
+        const initAuth = async (retries = 3) => {
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
 
                 if (!mounted) return;
+
                 if (error) {
-                    // AbortError is expected during fast unmount/remount — ignore
-                    if (error.message?.includes('abort')) {
-                        console.warn("Auth session check aborted, retrying...");
-                        return;
+                    // Handle AbortError by retrying
+                    if ((error.name === 'AbortError' || error.message?.includes('abort')) && retries > 0) {
+                        console.warn(`Auth session check aborted. Retrying in 500ms... (${retries} attempts left)`);
+                        setTimeout(() => initAuth(retries - 1), 500);
+                        return; // Skip setting loading false, keep spinner
                     }
                     throw error;
                 }
@@ -74,13 +76,12 @@ export const AuthProvider = ({ children }) => {
                 if (session?.user) {
                     await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
                 }
+                // Success - stop loading
+                if (mounted) setLoading(false);
+
             } catch (err) {
-                if (err?.name === 'AbortError' || err?.message?.includes('abort')) {
-                    console.warn("Auth init aborted (normal during remount)");
-                } else {
-                    console.error("Auth Init Error:", err);
-                }
-            } finally {
+                console.error("Auth Init Error:", err);
+                // Failure - stop loading
                 if (mounted) setLoading(false);
             }
         };

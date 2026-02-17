@@ -9,7 +9,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Main client - used for auth operations
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder');
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder', {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+    }
+});
 
 // Data-only client - NO auth, NO AbortController issues
 // Use this for admin panel queries and any data fetching
