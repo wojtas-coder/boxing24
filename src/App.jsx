@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import AdminLayout from './layout/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminNews from './pages/admin/News';
+import AdminDebug from './pages/admin/Debug';
 
 import AdminUsers from './pages/admin/Users';
 import AdminStats from './components/admin/modules/AdminStats';
@@ -76,6 +77,7 @@ function App() {
                             <Route path="users" element={<AdminUsers />} />
                             <Route path="ads" element={<AdminAds />} />
                             <Route path="seo" element={<AdminSEO />} />
+                            <Route path="debug" element={<AdminDebug />} />
                         </Route>
 
                         {/* Coach Panel Layout */}
