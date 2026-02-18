@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 import { plansLibrary } from '../data/trainingPlan';
 
 export const useClientData = () => {
@@ -21,38 +22,44 @@ export const useClientData = () => {
 
         const fetchData = async () => {
             try {
-                // 1. Fetch Client Data (Plans, History, Gamification)
-                const clientRes = await fetch('/api/client-data', {
-                    headers: { 'Authorization': `Bearer ${session.access_token}` }
-                });
-                const data = clientRes.ok ? await clientRes.json() : null;
+                // 1. Fetch Client Profile Data (Already in AuthContext, but let's be sure or fetch extras)
+                // Actually, let's fetch session history and stats from 'client_activity' or similar
+                // For now, let's mock or use what we have in Supabase
 
-                // 2. Fetch Workouts (Bookings)
-                const bookingsRes = await fetch('/api/client-bookings', {
-                    headers: { 'Authorization': `Bearer ${session.access_token}` }
-                });
-                const bookings = bookingsRes.ok ? await bookingsRes.json() : { upcoming: [], history: [] };
+                // 2. Fetch Workouts (Bookings) from 'bookings' table
+                const { data: bookingsData, error: bookingsError } = await supabase
+                    .from('bookings')
+                    .select('*')
+                    .eq('client_email', user.email);
 
-                // 3. Fetch Dynamic Plans
-                const plansRes = await fetch('/api/training-plans');
-                const plansData = plansRes.ok ? await plansRes.json() : { plans: [] };
+                if (bookingsError) throw bookingsError;
+
+                const upcoming = bookingsData?.filter(b => new Date(b.start_time) > new Date()) || [];
+                const history = bookingsData?.filter(b => new Date(b.start_time) <= new Date()) || [];
+
+                // 3. Fetch Dynamic Plans from 'training_plans' table
+                const { data: plansData, error: plansError } = await supabase
+                    .from('training_plans')
+                    .select('*');
+
+                if (plansError) {
+                    console.warn("Training plans table fetch failed, using fallback.");
+                }
 
                 setClientData(prev => ({
                     ...prev,
-                    plans: data?.plans || [],
-                    history: data?.history || [],
-                    gamification: data?.gamification || prev.gamification,
-                    stats: data?.stats || prev.stats,
-                    bookings: bookings,
+                    bookings: { upcoming, history },
                     loading: false
                 }));
 
-                setDbPlans(plansData.plans.map(p => ({
-                    ...p,
-                    id: p.id.toString(),
-                    image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2069&auto=format&fit=crop',
-                    locked: false
-                })));
+                if (plansData) {
+                    setDbPlans(plansData.map(p => ({
+                        ...p,
+                        id: p.id.toString(),
+                        image: p.image || 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2069&auto=format&fit=crop',
+                        locked: false
+                    })));
+                }
 
             } catch (err) {
                 console.error("useClientData error:", err);

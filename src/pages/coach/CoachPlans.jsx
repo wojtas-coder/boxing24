@@ -25,10 +25,13 @@ const CoachPlans = () => {
 
     const fetchCustomPlans = async () => {
         try {
-            const res = await fetch('/api/training-plans');
-            if (res.ok) {
-                const data = await res.json();
-                setCustomPlans(data.plans || []);
+            const { data, error } = await supabase
+                .from('training_plans')
+                .select('*')
+                .eq('creator_id', user.id);
+
+            if (data) {
+                setCustomPlans(data);
             }
         } catch (e) {
             console.error("Failed to fetch custom plans", e);
@@ -41,30 +44,27 @@ const CoachPlans = () => {
         if (!newPlan.title) return alert("Podaj tytuł planu");
 
         try {
-            const res = await fetch('/api/training-plans', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            const { data, error } = await supabase
+                .from('training_plans')
+                .insert([{
                     ...newPlan,
                     creator_id: user.id
-                })
-            });
-            if (res.ok) {
-                alert("Plan utworzony!");
-                setIsCreating(false);
-                setNewPlan({ title: '', subtitle: '', description: '', level: 'Basic', duration: '4 Tygodnie' });
-                fetchCustomPlans();
-            } else {
-                throw new Error("Błąd tworzenia");
-            }
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            alert("Plan utworzony!");
+            setIsCreating(false);
+            setNewPlan({ title: '', subtitle: '', description: '', level: 'Basic', duration: '4 Tygodnie', schedule: [] });
+            fetchCustomPlans();
         } catch (e) {
             alert(e.message);
         }
     };
 
     // Combine Static + Custom
-    // Custom plans coming from DB might have different structure, ensure compatibility
-    // DB: { id, title, subtitle, description, level, duration }
     const allPlans = [...customPlans, ...plansLibrary];
 
     const handleAssignClick = (plan) => {
@@ -74,15 +74,20 @@ const CoachPlans = () => {
 
     const fetchClients = async () => {
         setLoadingClients(true);
-        // Standardized Coach ID
-        const coachId = 'wojciech-rewczuk';
         try {
-            const res = await fetch(`/api/coach-fighters?coachId=${coachId}`, {
-                headers: { 'Authorization': `Bearer ${session?.access_token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setClients(data.fighters || []);
+            // Get users with 'client' role
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, email')
+                .eq('role', 'client');
+
+            if (data) {
+                // Map to match the expected 'client' structure in the UI
+                setClients(data.map(d => ({
+                    name: d.full_name,
+                    email: d.email,
+                    profile: { id: d.id }
+                })));
             }
         } catch (e) {
             console.error(e);
@@ -96,32 +101,29 @@ const CoachPlans = () => {
 
         setAssigning(true);
         try {
-            const res = await fetch('/api/client-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // 'Authorization': ... (API doesn't strictly check coach token for this 'client-data' endpoint yet, but usually we should)
-                    // The client-data endpoint as written handles 'join_plan' with userId in body.
-                },
-                body: JSON.stringify({
-                    action: 'join_plan',
-                    userId: client.profile?.id, // MUST be UUID
-                    payload: {
-                        planId: selectedPlan.id
-                    }
-                })
-            });
+            // Get current active plans
+            const { data: prof, error: getErr } = await supabase
+                .from('profiles')
+                .select('active_plans')
+                .eq('id', client.profile.id)
+                .single();
 
-            if (res.ok) {
-                alert("Plan przypisany pomyślnie!");
-                setSelectedPlan(null);
-            } else {
-                const err = await res.json();
-                alert("Błąd: " + (err.error || "Nieznany błąd"));
-            }
+            if (getErr) throw getErr;
+
+            const newPlans = Array.from(new Set([...(prof.active_plans || []), selectedPlan.id]));
+
+            const { error: updErr } = await supabase
+                .from('profiles')
+                .update({ active_plans: newPlans })
+                .eq('id', client.profile.id);
+
+            if (updErr) throw updErr;
+
+            alert("Plan przypisany pomyślnie!");
+            setSelectedPlan(null);
         } catch (e) {
             console.error(e);
-            alert("Błąd połączenia");
+            alert("Błąd przypisywania: " + e.message);
         } finally {
             setAssigning(false);
         }

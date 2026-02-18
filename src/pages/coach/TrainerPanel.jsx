@@ -53,18 +53,19 @@ const TrainerPanel = () => {
         if (!confirm('Czy na pewno chcesz odwołać ten trening? Klient otrzyma powiadomienie.')) return;
 
         try {
-            const res = await fetch('/api/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bookingId, coachId, reason: 'Odwołane przez trenera' })
-            });
-            if (!res.ok) throw new Error('Failed');
+            const { error } = await supabase
+                .from('bookings')
+                .update({ status: 'cancelled' })
+                .eq('id', bookingId);
+
+            if (error) throw error;
 
             // Remove locally
             setBookings(prev => prev.filter(b => b.id !== bookingId));
             alert('Trening odwołany.');
         } catch (err) {
-            alert('Błąd odwoływania.');
+            console.error(err);
+            alert('Błąd odwoływania: ' + err.message);
         }
     };
 

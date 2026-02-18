@@ -20,9 +20,9 @@ const CoachDashboard = () => {
     // Status Logic
     const isCalendarConnected = calendarId && calendarId.includes('@');
 
-    // Initialize Coach ID
+    // Initialize Coach ID - Use user.id (UUID) as primary source
     useEffect(() => {
-        setCoachId('wojciech-rewczuk');
+        if (user) setCoachId(user.id);
     }, [user]);
 
     useEffect(() => {
@@ -31,12 +31,15 @@ const CoachDashboard = () => {
     }, [coachId]);
 
     const fetchData = async () => {
+        if (!coachId) return;
         setLoading(true);
         try {
-            // 1. Get Settings (via Server API)
-            const settingsRes = await fetch(`/api/coach-settings?coachId=${coachId}`);
-            if (!settingsRes.ok) throw new Error('Failed to fetch settings');
-            const { settings } = await settingsRes.json();
+            // 1. Get Settings from 'coach_settings' table
+            const { data: settings, error: settingsError } = await supabase
+                .from('coach_settings')
+                .select('*')
+                .eq('coach_id', coachId)
+                .single();
 
             if (settings) {
                 setWorkHours({
@@ -46,15 +49,19 @@ const CoachDashboard = () => {
                 setCalendarId(settings.google_calendar_id || '');
             }
 
-            // 2. Get Bookings (via Server API)
-            const bookingsRes = await fetch(`/api/coach-bookings?coachId=${coachId}`);
-            if (!bookingsRes.ok) throw new Error('Failed to fetch bookings');
-            const { bookings: bks } = await bookingsRes.json();
+            // 2. Get Bookings from 'bookings' table
+            // Fetch by both UUID (new style) and name/slug (old style) for maximum compatibility during transition
+            const { data: bks, error: bookingsError } = await supabase
+                .from('bookings')
+                .select('*')
+                .or(`coach_id.eq.${coachId},coach_id.eq.wojciech-rewczuk`)
+                .neq('status', 'cancelled');
 
+            if (bookingsError) throw bookingsError;
             setBookings(bks || []);
+
         } catch (err) {
             console.error("Dashboard Fetch Error:", err);
-            // Non-blocking error log, UI remains functional
         } finally {
             setLoading(false);
         }
@@ -64,13 +71,12 @@ const CoachDashboard = () => {
         if (!confirm('Czy na pewno chcesz odwołać ten trening? Klient otrzyma powiadomienie.')) return;
 
         try {
-            const res = await fetch('/api/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bookingId, coachId, reason: 'Odwołane przez trenera' })
-            });
+            const { error } = await supabase
+                .from('bookings')
+                .update({ status: 'cancelled' })
+                .eq('id', bookingId);
 
-            if (!res.ok) throw new Error('Failed to cancel');
+            if (error) throw error;
 
             setBookings(prev => prev.filter(b => b.id !== bookingId));
             alert('Trening odwołany.');
@@ -80,23 +86,20 @@ const CoachDashboard = () => {
     };
 
     const handleSaveSettings = async () => {
+        if (!coachId) return;
         try {
-            const res = await fetch('/api/coach-settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    coachId: coachId,
-                    workStart: workHours.start,
-                    workEnd: workHours.end,
-                    googleCalendarId: calendarId
-                })
-            });
+            const { error } = await supabase
+                .from('coach_settings')
+                .upsert({
+                    coach_id: coachId,
+                    work_start_time: workHours.start,
+                    work_end_time: workHours.end,
+                    google_calendar_id: calendarId
+                }, { onConflict: 'coach_id' });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Server error');
+            if (error) throw error;
 
-            alert('Ustawienia zapisane! Dane zsynchronizowane.');
-            // Refresh to confirm saved state
+            alert('Ustawienia zapisane!');
             fetchData();
         } catch (err) {
             console.error(err);
@@ -280,21 +283,21 @@ const CoachDashboard = () => {
                                                         // Ask to cancel client booking
                                                         alert(`To miejsce jest zarezerwowane przez: ${slotBooking.client_name}. Aby je zwolnić, wejdź w zakładkę Rezerwacje.`);
                                                     } else {
-                                                        // Block
-                                                        const res = await fetch('/api/booking', {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({
-                                                                coachId,
-                                                                date: dateStr,
-                                                                time: timeStr,
-                                                                clientName: 'BLOKADA',
-                                                                clientEmail: 'coach-block@boxing24.pl',
-                                                                clientPhone: '-',
+                                                        // Block via direct Supabase insert
+                                                        const { error: blockErr } = await supabase
+                                                            .from('bookings')
+                                                            .insert([{
+                                                                coach_id: coachId,
+                                                                start_time: `${dateStr}T${timeStr}:00`,
+                                                                end_time: `${dateStr}T${format(addMinutes(current, duration), 'HH:mm')}:00`,
+                                                                client_name: 'BLOKADA',
+                                                                client_email: 'coach-block@boxing24.pl',
+                                                                client_phone: '-',
+                                                                status: 'confirmed',
                                                                 notes: 'Zablokowane z grafiku'
-                                                            })
-                                                        });
-                                                        if (!res.ok) throw new Error('Błąd blokowania');
+                                                            }]);
+
+                                                        if (blockErr) throw blockErr;
                                                         fetchData();
                                                     }
                                                 } catch (e) {
@@ -392,20 +395,20 @@ const CoachDashboard = () => {
                                             if (!confirm(`Zablokować termin ${date} ${time}?`)) return;
 
                                             try {
-                                                const res = await fetch('/api/booking', {
-                                                    method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({
-                                                        coachId,
-                                                        date,
-                                                        time,
-                                                        clientName: 'BLOKADA',
-                                                        clientEmail: 'coach-block@boxing24.pl', // Fake email
-                                                        clientPhone: '-',
+                                                const { error: blockErr } = await supabase
+                                                    .from('bookings')
+                                                    .insert([{
+                                                        coach_id: coachId,
+                                                        start_time: `${date}T${time}:00`,
+                                                        end_time: `${date}T${format(addMinutes(new Date(`${date}T${time}:00`), 60), 'HH:mm')}:00`,
+                                                        client_name: 'BLOKADA',
+                                                        client_email: 'coach-block@boxing24.pl',
+                                                        client_phone: '-',
+                                                        status: 'confirmed',
                                                         notes: 'Zablokowane przez trenera'
-                                                    })
-                                                });
-                                                if (!res.ok) throw new Error('Błąd blokowania');
+                                                    }]);
+
+                                                if (blockErr) throw blockErr;
                                                 alert('Termin zablokowany.');
                                                 fetchData(); // Refresh calendar
                                             } catch (e) {

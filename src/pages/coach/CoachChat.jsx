@@ -28,17 +28,19 @@ const CoachChat = () => {
     const fetchConversations = async () => {
         setLoading(true);
         try {
-            // This endpoint should ideally return a list of unique users the coach has spoken to
-            // For now, let's reuse coach-fighters to get the list of clients, 
-            // and maybe eventually filter by "has_messages" if we optimize.
-            // TEMPORARY PROD FIX: Hardcode Coach ID
-            const coachId = 'wojciech-rewczuk';
-            const res = await fetch(`/api/coach-fighters?coachId=${coachId}`, {
-                headers: { 'Authorization': `Bearer ${session?.access_token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setConversations(data.fighters || []);
+            // Get all unique users who have profiles (clients)
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, email')
+                .eq('role', 'client');
+
+            if (data) {
+                setConversations(data.map(d => ({
+                    id: d.id,
+                    name: d.full_name,
+                    email: d.email,
+                    profile: d
+                })));
             }
         } catch (e) {
             console.error(e);
@@ -48,38 +50,40 @@ const CoachChat = () => {
     };
 
     const fetchMessages = async (clientId) => {
+        if (!user || !clientId) return;
         try {
-            const res = await fetch(`/api/messages?user1=${user.id}&user2=${clientId}`);
-            if (res.ok) {
-                const data = await res.json();
-                setMessages(data);
-            }
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .or(`and(sender_id.eq.${user.id},receiver_id.eq.${clientId}),and(sender_id.eq.${clientId},receiver_id.eq.${user.id})`)
+                .order('created_at', { ascending: true });
+
+            if (data) setMessages(data);
         } catch (e) {
             console.error(e);
         }
     };
 
     const sendMessage = async () => {
-        if (!input.trim() || !selectedChat) return;
+        if (!input.trim() || !selectedChat || !user) return;
 
-        const payload = {
-            sender_id: user.id,
-            receiver_id: selectedChat.profile?.id || selectedChat.id, // Ensure UUID
-            content: input
-        };
-
-        const tempId = Date.now();
-        const optimisticMsg = { ...payload, id: tempId, created_at: new Date().toISOString() };
-        setMessages([...messages, optimisticMsg]);
-        setInput('');
+        const fighterId = selectedChat.profile?.id || selectedChat.id;
 
         try {
-            await fetch('/api/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            fetchMessages(selectedChat.id); // Refresh to get real ID
+            const { data, error } = await supabase
+                .from('messages')
+                .insert([{
+                    sender_id: user.id,
+                    receiver_id: fighterId,
+                    content: input
+                }])
+                .select()
+                .single();
+
+            if (data) {
+                setMessages([...messages, data]);
+                setInput('');
+            }
         } catch (e) {
             console.error(e);
             alert('Send failed');

@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         let mounted = true;
+        let initPromise = null;
 
         const initialize = async () => {
             try {
@@ -57,7 +58,6 @@ export const AuthProvider = ({ children }) => {
                 const lastLogout = localStorage.getItem('b24_last_logout');
                 if (lastLogout && Date.now() - parseInt(lastLogout) < 2000) {
                     console.log("Blocking ghost session recovery...");
-                    if (mounted) setLoading(false);
                     return;
                 }
 
@@ -67,10 +67,13 @@ export const AuthProvider = ({ children }) => {
                 if (!mounted) return;
 
                 if (recovered) {
+                    console.log("Session recovered:", recovered.user.email);
                     setSession(recovered);
                     setUser(recovered.user);
                     // 3. WAIT for profile before unlocking UI
                     await syncProfile(recovered.user.id, recovered.user.email, recovered.user.user_metadata);
+                } else {
+                    console.log("No session found during recovery.");
                 }
             } catch (err) {
                 console.error("Auth Boot Error:", err);
@@ -79,11 +82,15 @@ export const AuthProvider = ({ children }) => {
             }
         };
 
-        initialize();
+        // Start initialization
+        initPromise = initialize();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
             if (!mounted) return;
-            console.log("Auth State Changed:", event);
+            console.log("Auth Event:", event);
+
+            // Wait for initial boot to finish before processing events that might clear loading
+            if (loading) await initPromise;
 
             if (event === 'SIGNED_OUT') {
                 setSession(null);
@@ -94,15 +101,21 @@ export const AuthProvider = ({ children }) => {
             }
 
             if (currentSession) {
+                const isNewUser = !user || user.id !== currentSession.user.id;
                 setSession(currentSession);
                 setUser(currentSession.user);
-                await syncProfile(currentSession.user.id, currentSession.user.email, currentSession.user.user_metadata);
+
+                // Only sync profile if user changed or profile missing
+                if (isNewUser || !profile) {
+                    await syncProfile(currentSession.user.id, currentSession.user.email, currentSession.user.user_metadata);
+                }
             } else if (event !== 'INITIAL_SESSION') {
                 setSession(null);
                 setUser(null);
                 setProfile(null);
             }
-            setLoading(false);
+
+            if (mounted) setLoading(false);
         });
 
         return () => {

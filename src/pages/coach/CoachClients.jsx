@@ -39,15 +39,25 @@ const CoachClients = () => {
     const fetchFighters = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/coach-fighters?coachId=${coachId}`, {
-                headers: {
-                    'Authorization': `Bearer ${session?.access_token}`
-                }
-            });
-            if (!res.ok) throw new Error('Failed to fetch fighters');
-            const data = await res.json();
-            setFighters(data.fighters || []);
-            setDebugInfo(data.debug);
+            // Fetch all profiles with 'client' role
+            const { data: clients, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('role', 'client');
+
+            if (error) throw error;
+
+            // Normalize for UI
+            const normalized = clients.map(c => ({
+                id: c.id,
+                name: c.full_name,
+                email: c.email,
+                lastTraining: null, // Would fetch from activity if needed
+                totalSessions: 0,
+                profile: c
+            }));
+
+            setFighters(normalized);
         } catch (err) {
             console.error("Fighters fetch error:", err);
         } finally {
@@ -82,58 +92,41 @@ const CoachClients = () => {
     };
 
     const fetchMessages = async () => {
-        if (!selectedFighter) return;
+        if (!selectedFighter || !user) return;
         setChatLoading(true);
         try {
-            // Coach ID is sender or receiver. Fighter ID is the other.
-            // My API expects user1 and user2.
-            // user1 = coachId (which is 'wojciech-rewczuk' hardcoded, but strictly it should be UUID from auth... 
-            // Wait, coachId 'wojciech-rewczuk' is NOT a UUID. The API uses UUIDs.
-            // For now, I must assume the Coach LOGIN gives me a UUID. 
-            // `user.id` from useAuth is the Coach UUID.
-            // The API expects UUIDs.
+            const fighterId = selectedFighter.profile?.id || selectedFighter.id;
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .or(`and(sender_id.eq.${user.id},receiver_id.eq.${fighterId}),and(sender_id.eq.${fighterId},receiver_id.eq.${user.id})`)
+                .order('created_at', { ascending: true });
 
-            const res = await fetch(`/api/messages?user1=${user.id}&user2=${selectedFighter.profile?.id || selectedFighter.id}`, {
-                headers: {
-                    'Authorization': `Bearer ${session?.access_token}`
-                }
-            });
-            // Note: selectedFighter might be just from clients list, profile.id is the UUID. 
-            // IF selectedFighter is a guest (no profile), we can't chat!
-
-            if (res.ok) {
-                const data = await res.json();
-                setChatMessages(data);
-            }
+            if (data) setChatMessages(data);
         } catch (error) {
-            console.error(error);
+            console.error("Messages fetch error:", error);
         } finally {
             setChatLoading(false);
         }
     };
 
     const sendMessage = async () => {
-        if (!chatInput.trim() || !selectedFighter?.profile?.id) return;
+        const fighterId = selectedFighter?.profile?.id || selectedFighter?.id;
+        if (!chatInput.trim() || !user || !fighterId) return;
 
         try {
-            const payload = {
-                sender_id: user.id,
-                receiver_id: selectedFighter.profile.id,
-                content: chatInput
-            };
+            const { data, error } = await supabase
+                .from('messages')
+                .insert([{
+                    sender_id: user.id,
+                    receiver_id: fighterId,
+                    content: chatInput
+                }])
+                .select()
+                .single();
 
-            const res = await fetch('/api/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                const newMsg = await res.json();
-                setChatMessages([...chatMessages, newMsg]);
+            if (data) {
+                setChatMessages([...chatMessages, data]);
                 setChatInput('');
             }
         } catch (error) {
@@ -143,47 +136,25 @@ const CoachClients = () => {
     };
 
     const submitAssessment = async () => {
-        if (!selectedFighter) return;
+        if (!selectedFighter || !user) return;
 
         try {
-            // Calculate Result
             const structure = assessmentLevel === 'BASIC' ? BASIC_TEST : ADVANCED_TEST;
             const calculatedResult = calculateAssessment(assessmentInputs, structure);
 
-            const payload = {
-                fighterId: selectedFighter.profile?.id,
-                fighterEmail: selectedFighter.email,
-                coachId: coachId,
-                date: new Date().toISOString(),
-                type: assessmentLevel,
-                results: calculatedResult, // Validation: logic expects { categoryScores, globalScore }
-                score: calculatedResult.globalScore
-            };
+            const fighterId = selectedFighter.profile?.id || selectedFighter.id;
 
-            const res = await fetch('/api/coach-fighter-update', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
-                },
-                body: JSON.stringify(payload)
-            });
+            const { error: updErr } = await supabase
+                .from('profiles')
+                .update({
+                    boxing_index_results: calculatedResult
+                })
+                .eq('id', fighterId);
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                // Throw specific error from API or fallback
-                throw new Error(data.error || 'Błąd zapisu wyników');
-            }
+            if (updErr) throw updErr;
 
             alert('Wynik zapisany!');
-
-            // Refresh Data
             await fetchFighters();
-
-            // Return to details
-            // Ideally we'd re-select the updated fighter from the new list
-            // For simplicity, just going back to list or keeping current logic but refreshing data
             setViewMode('details');
 
         } catch (err) {

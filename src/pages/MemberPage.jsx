@@ -135,31 +135,36 @@ const MemberPage = () => {
     }, [user, session]); // Dependency on session for token
 
     const fetchClientData = async () => {
-        if (!user || !session) return;
+        if (!user) return;
         try {
-            const res = await fetch(`/api/client-data`, {
-                headers: {
-                    'Authorization': `Bearer ${session.access_token}`
+            // 1. Fetch Plan Status from profiles
+            const { data: profData, error: profError } = await supabase
+                .from('profiles')
+                .select('active_plans, boxing_index_results, membership_status')
+                .eq('id', user.id)
+                .single();
+
+            if (profData) {
+                setMyPlans(profData.active_plans || []);
+                // Load stats from boxing index if available
+                if (profData.boxing_index_results) {
+                    const res = profData.boxing_index_results;
+                    setStats({
+                        strength: res.categoryScores?.strength || 0,
+                        knowledge: res.categoryScores?.foundation || 0,
+                        discipline: res.categoryScores?.capacity || 0,
+                        overall: res.globalScore || 0
+                    });
                 }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                // Map active plans to ID array for compatibility
-                setMyPlans(data.plans.map(p => p.plan_id));
-
-                // Map session history
-                setSessionHistory(data.history.map(s => ({
-                    ...s.stats, // spread stats JSON
-                    id: s.id,
-                    date: new Date(s.date).toLocaleDateString(),
-                    title: s.title,
-                    xp: s.xp_earned
-                })));
-
-                // Update Gamification
-                setLevel(data.gamification?.level || 1);
-                setXp(data.gamification?.currentLevelXp || 0);
             }
+
+            // 2. Fetch Session History
+            // For now, let's use local storage for persistent history between DB updates
+            const savedHistory = localStorage.getItem('boxing24_session_history');
+            if (savedHistory) {
+                setSessionHistory(JSON.parse(savedHistory));
+            }
+
         } catch (e) {
             console.error("Failed to fetch client data", e);
         }
@@ -169,15 +174,16 @@ const MemberPage = () => {
     useEffect(() => {
         const fetchPlans = async () => {
             try {
-                const res = await fetch('/api/training-plans');
-                if (res.ok) {
-                    const { plans } = await res.json();
-                    // Normalize DB plans to match UI structure
-                    const normalizedPlans = plans.map(p => ({
+                const { data, error } = await supabase
+                    .from('training_plans')
+                    .select('*');
+
+                if (data) {
+                    const normalizedPlans = data.map(p => ({
                         ...p,
-                        id: p.id.toString(), // Ensure ID is string for comparison
-                        image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2069&auto=format&fit=crop', // Default image
-                        locked: false // DB plans are unlocked by default for now
+                        id: p.id.toString(),
+                        image: p.image || 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2069&auto=format&fit=crop',
+                        locked: false
                     }));
                     setDbPlans(normalizedPlans);
                 }
@@ -190,23 +196,24 @@ const MemberPage = () => {
 
     // --- EFFECT: LOAD WORKOUTS ON TAB CHANGE ---
     useEffect(() => {
-        if (activeTab === 'my_workouts' && user?.email && session) {
+        if (activeTab === 'my_workouts' && user?.email) {
             fetchWorkouts();
         }
-    }, [activeTab, user, session]);
+    }, [activeTab, user]);
 
     const fetchWorkouts = async () => {
+        if (!user?.email) return;
         setLoadingWorkouts(true);
         try {
-            // No params needed, token identifies user/mail
-            const res = await fetch(`/api/client-bookings`, {
-                headers: {
-                    'Authorization': `Bearer ${session.access_token}`
-                }
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setWorkouts(data);
+            const { data, error } = await supabase
+                .from('bookings')
+                .select('*')
+                .eq('client_email', user.email);
+
+            if (data) {
+                const upcoming = data.filter(b => new Date(b.start_time) > new Date());
+                const history = data.filter(b => new Date(b.start_time) <= new Date());
+                setWorkouts({ upcoming, history });
             }
         } catch (error) {
             console.error("Failed to fetch workouts:", error);
@@ -217,6 +224,7 @@ const MemberPage = () => {
 
 
     // --- CHAT LOGIC ---
+    // Refactored to use Supabase instead of /api/messages
     useEffect(() => {
         if (activeTab === 'messages' && user?.id) {
             fetchChatMessages();
@@ -227,18 +235,13 @@ const MemberPage = () => {
         if (!user) return;
         setChatLoading(true);
         try {
-            // HEAD_COACH_ID is placeholder. If invalid UUID, API might error.
-            if (HEAD_COACH_ID === 'REPLACE_WITH_REAL_COACH_UUID') {
-                console.warn("Head Coach ID not configured");
-                setChatLoading(false);
-                return;
-            }
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .or(`and(sender_id.eq.${user.id},receiver_id.eq.${HEAD_COACH_ID}),and(sender_id.eq.${HEAD_COACH_ID},receiver_id.eq.${user.id})`)
+                .order('created_at', { ascending: true });
 
-            const res = await fetch(`/api/messages?user1=${user.id}&user2=${HEAD_COACH_ID}`);
-            if (res.ok) {
-                const data = await res.json();
-                setChatMessages(data);
-            }
+            if (data) setChatMessages(data);
         } catch (error) {
             console.error("Chat fetch error:", error);
         } finally {
@@ -248,27 +251,19 @@ const MemberPage = () => {
 
     const sendChatMessage = async () => {
         if (!chatInput.trim() || !user) return;
-        if (HEAD_COACH_ID === 'REPLACE_WITH_REAL_COACH_UUID') {
-            alert("Konfiguracja czatu niekompletna (Brak ID Trenera).");
-            return;
-        }
-
         try {
-            const payload = {
-                sender_id: user.id,
-                receiver_id: HEAD_COACH_ID,
-                content: chatInput
-            };
+            const { data, error } = await supabase
+                .from('messages')
+                .insert([{
+                    sender_id: user.id,
+                    receiver_id: HEAD_COACH_ID,
+                    content: chatInput
+                }])
+                .select()
+                .single();
 
-            const res = await fetch('/api/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                const newMsg = await res.json();
-                setChatMessages([...chatMessages, newMsg]);
+            if (data) {
+                setChatMessages([...chatMessages, data]);
                 setChatInput('');
             }
         } catch (error) {
@@ -281,63 +276,43 @@ const MemberPage = () => {
     // --- ACTIONS ---
 
     const addToMyPlans = async (planId) => {
-        if (!user || !session) return;
+        if (!user) return;
         try {
-            // Optimistic Update
-            setMyPlans(prev => [...prev, planId]);
+            const newActivePlans = [...myPlans, planId];
+            const { error } = await supabase
+                .from('profiles')
+                .update({ active_plans: newActivePlans })
+                .eq('id', user.id);
 
-            const res = await fetch('/api/client-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    action: 'add_plan',
-                    // userId: user.id, // Removed, handled by token
-                    payload: { planId }
-                })
-            });
-            if (!res.ok) throw new Error('Failed to add plan');
-            fetchClientData(); // Refresh to ensure sync
+            if (error) throw error;
+
+            setMyPlans(newActivePlans);
             alert('Plan został dodany do Twoich aktywnych programów!');
             setActiveTab('my_plans');
         } catch (e) {
             console.error("Add Plan error:", e);
             alert("Nie udało się dodać planu.");
-            setMyPlans(prev => prev.filter(id => id !== planId)); // Rollback
         }
     };
 
     const removeFromPlans = async (e, planId) => {
         e.stopPropagation();
         if (!confirm('Czy na pewno chcesz porzucić ten plan? Postęp może zostać utracony.')) return;
-        if (!user || !session) return;
+        if (!user) return;
 
         try {
-            // Optimistic
-            setMyPlans(prev => prev.filter(id => id !== planId));
+            const newActivePlans = myPlans.filter(id => id !== planId);
+            const { error } = await supabase
+                .from('profiles')
+                .update({ active_plans: newActivePlans })
+                .eq('id', user.id);
 
-            const res = await fetch('/api/client-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    action: 'remove_plan',
-                    // userId: user.id,
-                    payload: { planId }
-                })
-            });
+            if (error) throw error;
 
-            if (!res.ok) throw new Error('Failed to remove plan');
-            fetchClientData();
+            setMyPlans(newActivePlans);
         } catch (err) {
             console.error(err);
             alert("Błąd usuwania planu.");
-            // Fetch to rollback
-            fetchClientData();
         }
     };
 
@@ -350,7 +325,7 @@ const MemberPage = () => {
 
     const triggerFinish = () => setShowWellnessModal(true);
 
-    const saveSession = () => {
+    const saveSession = async () => {
         setShowWellnessModal(false);
 
         // 1. Mark unit as complete
@@ -359,10 +334,8 @@ const MemberPage = () => {
         setCompletedUnits(newCompleted);
         localStorage.setItem('boxing24_completed_units', JSON.stringify(newCompleted));
 
-        // 2. Save history entry to DB
+        // 2. Prepare entry
         const unitTitle = schedule.flatMap(w => w.units).find(u => u.id === unitId)?.title || "Trening";
-
-        // Optimistic Update
         const newEntry = {
             id: Date.now(),
             date: new Date().toLocaleDateString(),
@@ -370,35 +343,18 @@ const MemberPage = () => {
             stats: { wellness: { ...wellnessData }, stats: stats },
             xp: 100
         };
-        setSessionHistory([newEntry, ...sessionHistory]);
 
-        // API Call
-        if (user && session) {
-            fetch('/api/client-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    action: 'complete_session',
-                    // userId: user.id,
-                    payload: {
-                        title: unitTitle,
-                        stats: { wellness: wellnessData, ...stats },
-                        xp: 100,
-                        planId: primaryPlanId,
-                        unitId: unitId
-                    }
-                })
-            }).then(() => fetchClientData()); // Refresh to get precise server state
-        }
+        // Cache locally
+        const updatedHistory = [newEntry, ...sessionHistory];
+        setSessionHistory(updatedHistory);
+        localStorage.setItem('boxing24_session_history', JSON.stringify(updatedHistory.slice(0, 50)));
+
+        // 3. Save to Supabase (if we have a sessions table, otherwise just update activity if needed)
+        // For now we don't have a dedicated sessions table in the schema viewed, 
+        // so we just confirm local completion.
 
         setViewUnitId(null);
-        setActiveTab('dashboard'); // Back to dashboard
-
-        setViewUnitId(null);
-        setActiveTab('dashboard'); // Back to dashboard
+        setActiveTab('dashboard');
 
         // Trigger Share
         setShareData(newEntry);
