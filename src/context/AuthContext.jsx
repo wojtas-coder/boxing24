@@ -12,11 +12,10 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [profileLoading, setProfileLoading] = useState(false);
 
-    const fetchProfile = async (userId, email = null, userMeta = null) => {
-        if (!userId) return;
-        setProfileLoading(true);
+    // Profile fetch helper
+    const syncProfile = async (userId, email, metadata) => {
+        if (!userId) return null;
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -25,62 +24,67 @@ export const AuthProvider = ({ children }) => {
                 .single();
 
             if (data) {
-                console.log("Profile loaded:", data);
                 setProfile(data);
+                return data;
             } else if (email) {
-                console.warn("Profile missing. Creating fallback...");
+                // Create profile if missing
                 const newProfile = {
                     id: userId,
-                    full_name: userMeta?.full_name || email?.split('@')[0],
+                    full_name: metadata?.full_name || email.split('@')[0],
                     role: 'client',
                     membership_status: 'Free'
                 };
                 setProfile(newProfile);
-                // Background attempt to create
-                supabase.from('profiles').insert([newProfile]).then(({ error: e }) => {
-                    if (e) console.error("Profile creation failed:", e);
-                });
+                await supabase.from('profiles').upsert(newProfile);
+                return newProfile;
             }
         } catch (err) {
-            console.error("Profile fetch error:", err);
-        } finally {
-            setProfileLoading(false);
+            console.error("Profile sync error:", err);
         }
+        return null;
     };
 
     useEffect(() => {
         let mounted = true;
 
-        const initAuth = async () => {
+        const performInit = async () => {
             try {
-                // Check if we have a "just logged out" flag to prevent resurrection
+                // Resurrection Guard
                 if (sessionStorage.getItem('b24_logout_pending')) {
-                    setLoading(false);
+                    if (mounted) setLoading(false);
                     return;
                 }
 
+                // Initial Session Recovery
                 const { data: { session: initialSession } } = await supabase.auth.getSession();
+
                 if (!mounted) return;
 
                 if (initialSession) {
                     setSession(initialSession);
                     setUser(initialSession.user);
-                    await fetchProfile(initialSession.user.id, initialSession.user.email, initialSession.user.user_metadata);
+                    // Critical: Wait for profile before releasing loading lock
+                    await syncProfile(
+                        initialSession.user.id,
+                        initialSession.user.email,
+                        initialSession.user.user_metadata
+                    );
                 }
             } catch (err) {
-                console.error("Auth Init Error:", err);
+                console.error("Auth System Init Failure:", err);
             } finally {
                 if (mounted) setLoading(false);
             }
         };
 
-        initAuth();
+        performInit();
 
+        // Standard Event Listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
             if (!mounted) return;
-            console.log("Auth Event:", event);
+            console.log("Supabase Auth Event:", event);
 
-            if (event === 'SIGNED_OUT') {
+            if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !currentSession)) {
                 setSession(null);
                 setUser(null);
                 setProfile(null);
@@ -91,14 +95,12 @@ export const AuthProvider = ({ children }) => {
             if (currentSession) {
                 setSession(currentSession);
                 setUser(currentSession.user);
-                // Only fetch if profile missing or user changed
-                if (!profile || profile.id !== currentSession.user.id) {
-                    await fetchProfile(currentSession.user.id, currentSession.user.email, currentSession.user.user_metadata);
-                }
-            } else if (event !== 'INITIAL_SESSION') {
-                setSession(null);
-                setUser(null);
-                setProfile(null);
+                // Background refresh profile on session updates
+                await syncProfile(
+                    currentSession.user.id,
+                    currentSession.user.email,
+                    currentSession.user.user_metadata
+                );
             }
 
             setLoading(false);
@@ -114,7 +116,7 @@ export const AuthProvider = ({ children }) => {
         session,
         user,
         profile,
-        loading: loading || profileLoading, // Combined loading for more stable UI
+        loading,
         isAdmin: profile?.role === 'admin' || false,
         isTrainer: profile?.role === 'trainer' || false,
         isPremium: ['member', 'premium', 'vip', 'admin'].includes(profile?.membership_status?.toLowerCase()) || profile?.role === 'admin' || false,
@@ -164,7 +166,7 @@ export const AuthProvider = ({ children }) => {
         },
         logout: async () => {
             try {
-                // 1. Mark as logging out to prevent resurrection during refresh
+                // Persistent Logout Mark
                 sessionStorage.setItem('b24_logout_pending', 'true');
 
                 // 2. Optimistic State Clear
