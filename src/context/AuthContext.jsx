@@ -90,23 +90,31 @@ export const AuthProvider = ({ children }) => {
 
         // Safety Fuse: Force loading to false after 3 seconds if it's still true
         const safetyTimeout = setTimeout(() => {
-            if (loading) {
+            if (mounted && loading) {
                 console.warn("Auth check timed out - forcing app to load");
                 setLoading(false);
             }
         }, 3000);
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
             if (!mounted) return;
-            console.log("Auth Event:", event);
-            setSession(session);
-            setUser(session?.user ?? null);
+            console.log("Auth Event Handled:", event);
 
-            if (session?.user) {
-                await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
-            } else {
+            // Critical events that should trigger state refresh
+            if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+                setSession(currentSession);
+                setUser(currentSession?.user ?? null);
+                if (currentSession?.user) {
+                    await fetchProfile(currentSession.user.id, currentSession.user.email, currentSession.user.user_metadata);
+                }
+            }
+
+            if (event === 'SIGNED_OUT') {
+                setSession(null);
+                setUser(null);
                 setProfile(null);
             }
+
             setLoading(false);
         });
 
@@ -128,19 +136,17 @@ export const AuthProvider = ({ children }) => {
         userRole: profile?.role || 'client',
         membershipStatus: profile?.membership_status || 'Free',
         login: async (email, password) => {
-            // Timeout promise
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Request timout')), 10000));
-
-            const request = supabase.auth.signInWithPassword({ email, password });
-
-            const { error } = await Promise.race([request, timeout]);
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
         },
         loginSocial: async (provider) => {
+            // Force clean origin to avoid redirect loops
+            const redirectUrl = `${window.location.origin}/members`;
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
-                    redirectTo: `${window.location.origin}/members`, // Auto-redirect to members area
+                    redirectTo: redirectUrl,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -155,9 +161,9 @@ export const AuthProvider = ({ children }) => {
                 email,
                 options: {
                     emailRedirectTo: `${window.location.origin}/members`,
-                    shouldCreateUser: true, // Allow registration via magic link
+                    shouldCreateUser: true,
                     data: {
-                        full_name: email.split('@')[0], // Fallback name
+                        full_name: email.split('@')[0],
                     }
                 },
             });
@@ -165,38 +171,40 @@ export const AuthProvider = ({ children }) => {
             return data;
         },
         signUp: async (email, password, fullName) => {
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Request timout')), 10000));
-
-            const request = supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: { full_name: fullName }
                 }
             });
-
-            const { data, error } = await Promise.race([request, timeout]);
             if (error) throw error;
             return data;
         },
         logout: async () => {
             try {
-                // Race between signOut and timeout
+                // Clear state IMMEDIATELY (Optimistic Logout)
+                setSession(null);
+                setUser(null);
+                setProfile(null);
+
+                // Attempt server-side sign out with timeout
                 const signOutPromise = supabase.auth.signOut();
                 const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Logout timeout')), 2000)
+                    setTimeout(() => reject(new Error('Logout timeout')), 2500)
                 );
 
-                const { error } = await Promise.race([signOutPromise, timeoutPromise]);
-                if (error) {
-                    console.error("Logout error:", error);
-                    throw error;
-                }
+                await Promise.race([signOutPromise, timeoutPromise]);
             } catch (err) {
-                console.error("Logout failed:", err);
-                // Don't let errors bubble up since user wants to leave
+                console.error("Logout process cleanup:", err);
+            } finally {
+                // Final safety: ensure everything is gone and redirect
+                setLoading(false);
+                // Clear potential leftover crumbs in localStorage
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('supabase.auth.token')) localStorage.removeItem(key);
+                });
             }
-            // State clearing is handled by onAuthStateChange listener
         }
     };
 

@@ -186,28 +186,28 @@ const Layout = () => {
 
                         {user && (
                             <button
-                                onClick={async (e) => {
+                                onClick={(e) => {
                                     e.preventDefault();
-                                    if (loggingOut) return;
+                                    const handleLogout = async () => {
+                                        if (loggingOut) return;
+                                        setLoggingOut(true);
 
-                                    setLoggingOut(true);
+                                        // Force redirect after 2s safety window
+                                        const safetyRedirect = setTimeout(() => {
+                                            window.location.href = '/login';
+                                        }, 2000);
 
-                                    // Force logout after 3 seconds regardless
-                                    const forceLogoutTimer = setTimeout(() => {
-                                        console.warn('Logout timeout - forcing redirect');
-                                        window.location.href = '/';
-                                    }, 3000);
+                                        try {
+                                            await logout();
+                                            clearTimeout(safetyRedirect);
+                                            window.location.href = '/login';
+                                        } catch (err) {
+                                            console.error("Logout failed:", err);
+                                            window.location.href = '/login';
+                                        }
+                                    };
 
-                                    try {
-                                        await logout();
-                                        clearTimeout(forceLogoutTimer);
-                                        window.location.href = '/';
-                                    } catch (error) {
-                                        console.error('Logout failed:', error);
-                                        clearTimeout(forceLogoutTimer);
-                                        // Force logout anyway
-                                        window.location.href = '/';
-                                    }
+                                    handleLogout();
                                 }}
                                 className="text-zinc-500 hover:text-red-500 transition-colors disabled:opacity-50"
                                 title="Wyloguj"
@@ -232,10 +232,10 @@ const Layout = () => {
                         <div className="w-8 h-0.5 bg-white"></div>
                     </button>
                 </div>
-            </nav>
+            </nav >
 
             {/* Mobile Menu Overlay */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {mobileMenuOpen && (
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
@@ -268,24 +268,30 @@ const Layout = () => {
                             <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep PunchIn</Link>
                             <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Strefa Premium</Link>
                             {user && (
-                                <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="text-lg font-bold uppercase tracking-widest text-red-500 mt-4">
+                                <button
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        logout().then(() => window.location.href = '/login');
+                                    }}
+                                    className="text-lg font-bold uppercase tracking-widest text-red-500 mt-4"
+                                >
                                     Wyloguj się
                                 </button>
                             )}
                         </div>
                     </motion.div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
 
             {/* Page Content - Animations Removed for Debugging */}
-            <main className="flex-grow pt-0">
+            < main className="flex-grow pt-0" >
                 <Outlet />
-            </main>
+            </main >
 
             <AICoachWidget /> {/* Added AICoachWidget here */}
             <PremiumSidebar />
             <Footer />
-        </div>
+        </div >
     );
 };
 
