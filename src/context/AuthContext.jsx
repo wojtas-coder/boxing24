@@ -13,8 +13,8 @@ export const AuthProvider = ({ children }) => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Profile fetch helper
-    const syncProfile = async (userId, email, metadata) => {
+    // Profile sync with retries
+    const syncProfile = async (userId, email, metadata, retry = 2) => {
         if (!userId) return null;
         try {
             const { data, error } = await supabase
@@ -27,19 +27,23 @@ export const AuthProvider = ({ children }) => {
                 setProfile(data);
                 return data;
             } else if (email) {
-                // Create profile if missing
-                const newProfile = {
+                // Fallback / Creation
+                const fallback = {
                     id: userId,
                     full_name: metadata?.full_name || email.split('@')[0],
                     role: 'client',
                     membership_status: 'Free'
                 };
-                setProfile(newProfile);
-                await supabase.from('profiles').upsert(newProfile);
-                return newProfile;
+                setProfile(fallback);
+                await supabase.from('profiles').upsert(fallback);
+                return fallback;
             }
         } catch (err) {
-            console.error("Profile sync error:", err);
+            console.error("Profile sync attempt failed:", err);
+            if (retry > 0) {
+                await new Promise(r => setTimeout(r, 500));
+                return syncProfile(userId, email, metadata, retry - 1);
+            }
         }
         return null;
     };
@@ -47,44 +51,41 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true;
 
-        const performInit = async () => {
+        const initialize = async () => {
             try {
-                // Resurrection Guard
-                if (sessionStorage.getItem('b24_logout_pending')) {
+                // 1. Check for recent logout to prevent 'ghost' sessions
+                const lastLogout = localStorage.getItem('b24_last_logout');
+                if (lastLogout && Date.now() - parseInt(lastLogout) < 2000) {
+                    console.log("Blocking ghost session recovery...");
                     if (mounted) setLoading(false);
                     return;
                 }
 
-                // Initial Session Recovery
-                const { data: { session: initialSession } } = await supabase.auth.getSession();
+                // 2. Recovery session
+                const { data: { session: recovered } } = await supabase.auth.getSession();
 
                 if (!mounted) return;
 
-                if (initialSession) {
-                    setSession(initialSession);
-                    setUser(initialSession.user);
-                    // Critical: Wait for profile before releasing loading lock
-                    await syncProfile(
-                        initialSession.user.id,
-                        initialSession.user.email,
-                        initialSession.user.user_metadata
-                    );
+                if (recovered) {
+                    setSession(recovered);
+                    setUser(recovered.user);
+                    // 3. WAIT for profile before unlocking UI
+                    await syncProfile(recovered.user.id, recovered.user.email, recovered.user.user_metadata);
                 }
             } catch (err) {
-                console.error("Auth System Init Failure:", err);
+                console.error("Auth Boot Error:", err);
             } finally {
                 if (mounted) setLoading(false);
             }
         };
 
-        performInit();
+        initialize();
 
-        // Standard Event Listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
             if (!mounted) return;
-            console.log("Supabase Auth Event:", event);
+            console.log("Auth State Changed:", event);
 
-            if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !currentSession)) {
+            if (event === 'SIGNED_OUT') {
                 setSession(null);
                 setUser(null);
                 setProfile(null);
@@ -95,14 +96,12 @@ export const AuthProvider = ({ children }) => {
             if (currentSession) {
                 setSession(currentSession);
                 setUser(currentSession.user);
-                // Background refresh profile on session updates
-                await syncProfile(
-                    currentSession.user.id,
-                    currentSession.user.email,
-                    currentSession.user.user_metadata
-                );
+                await syncProfile(currentSession.user.id, currentSession.user.email, currentSession.user.user_metadata);
+            } else if (event !== 'INITIAL_SESSION') {
+                setSession(null);
+                setUser(null);
+                setProfile(null);
             }
-
             setLoading(false);
         });
 
@@ -119,16 +118,16 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAdmin: profile?.role === 'admin' || false,
         isTrainer: profile?.role === 'trainer' || false,
-        isPremium: ['member', 'premium', 'vip', 'admin'].includes(profile?.membership_status?.toLowerCase()) || profile?.role === 'admin' || false,
+        isPremium: ['member', 'premium', 'vip', 'admin'].includes(profile?.membership_status?.toLowerCase()) || false,
         userRole: profile?.role || 'client',
         membershipStatus: profile?.membership_status || 'Free',
         login: async (email, password) => {
-            sessionStorage.removeItem('b24_logout_pending');
+            localStorage.removeItem('b24_last_logout');
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
         },
         loginSocial: async (provider) => {
-            sessionStorage.removeItem('b24_logout_pending');
+            localStorage.removeItem('b24_last_logout');
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
@@ -166,10 +165,11 @@ export const AuthProvider = ({ children }) => {
         },
         logout: async () => {
             try {
-                // Persistent Logout Mark
+                // 1. Mark logout time & state to prevent resurrection
+                localStorage.setItem('b24_last_logout', Date.now().toString());
                 sessionStorage.setItem('b24_logout_pending', 'true');
 
-                // 2. Optimistic State Clear
+                // 2. Clear state immediately
                 setSession(null);
                 setUser(null);
                 setProfile(null);

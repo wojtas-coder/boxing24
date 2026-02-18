@@ -8,28 +8,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Missing Supabase credentials. Authentication will not work until .env is configured.');
 }
 
-// Main client - used for auth operations
+// Main client - used for all operations including auth and data
 export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder', {
     auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        storageKey: 'b24-auth-token', // Custom key for more reliable clearing
+        storage: window.localStorage
     }
 });
 
-// Data-only client - NO auth, NO AbortController issues
-// Use this for admin panel queries and any data fetching
-export const supabaseData = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder',
-    {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-            detectSessionInUrl: false
-        }
-    }
-);
+// Alias for legacy support - now shares the same auth session!
+export const supabaseData = supabase;
 
 // Raw fetch helper - ultimate fallback if Supabase client fails
 export async function supabaseRawQuery(table, { select = '*', limit, orderBy, ascending = false, filters = {} } = {}) {
