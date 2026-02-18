@@ -191,22 +191,8 @@ const Layout = () => {
                                     const handleLogout = async () => {
                                         if (loggingOut) return;
                                         setLoggingOut(true);
-
-                                        // Force redirect after 2s safety window
-                                        const safetyRedirect = setTimeout(() => {
-                                            window.location.href = '/login';
-                                        }, 2000);
-
-                                        try {
-                                            await logout();
-                                            clearTimeout(safetyRedirect);
-                                            window.location.href = '/login';
-                                        } catch (err) {
-                                            console.error("Logout failed:", err);
-                                            window.location.href = '/login';
-                                        }
+                                        await logout();
                                     };
-
                                     handleLogout();
                                 }}
                                 className="text-zinc-500 hover:text-red-500 transition-colors disabled:opacity-50"
