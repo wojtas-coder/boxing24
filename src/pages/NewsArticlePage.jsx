@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, User, AlertTriangle, Zap, Award, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { articles } from '../data/articles';
+import localNews from '../data/news.json';
 import { useAuth } from '../context/AuthContext';
 
 const NewsArticlePage = () => {
@@ -39,12 +40,20 @@ const NewsArticlePage = () => {
                         slug: foundArticle.id,
                         image_url: foundArticle.image,
                         published_at: new Date().toISOString(),
-                        // Return all content variants
                         content: foundArticle.content,
                         freeContent: foundArticle.freeContent,
                         premiumContent: foundArticle.premiumContent,
                         category: foundArticle.category || 'Wiedza Ekspercka',
                         author: foundArticle.author || 'Ekspert B24'
+                    };
+                }
+
+                // 3. Fallback: Local News (news.json)
+                const foundLocal = localNews.find(n => n.slug === slug);
+                if (foundLocal) {
+                    return {
+                        ...foundLocal,
+                        is_local: true
                     };
                 }
 

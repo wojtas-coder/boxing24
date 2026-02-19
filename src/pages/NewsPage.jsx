@@ -8,6 +8,7 @@ import NewsCard from '../components/news/NewsCard';
 import NewsTicker from '../components/news/NewsTicker';
 import NewsSidebar from '../components/news/NewsSidebar';
 import { articles } from '../data/articles';
+import localNews from '../data/news.json';
 
 const ITEMS_PER_PAGE = 20;
 const NEWS_PER_PAGE = 16;
@@ -46,8 +47,32 @@ const NewsPage = () => {
         retry: 2,
     });
 
-    const newsItems = newsData?.items || [];
-    const totalNewsCount = newsData?.totalCount || 0;
+    // Merge and Robust Mapping
+    const rawNewsItems = newsData?.items || [];
+    const totalNewsCount = newsData?.totalCount || localNews.length;
+
+    // Map local news to match Supabase structure if needed
+    const mappedLocalNews = localNews.map(item => ({
+        ...item,
+        is_local: true,
+        published_at: item.published_at || new Date().toISOString()
+    }));
+
+    // Combine: Latest Supabase items first, then unique local items
+    const combinedNews = [...rawNewsItems];
+    mappedLocalNews.forEach(localItem => {
+        if (!combinedNews.find(n => n.slug === localItem.slug)) {
+            combinedNews.push(localItem);
+        }
+    });
+
+    const newsItems = combinedNews;
+
+    console.log("News Data Context:", {
+        supabaseCount: rawNewsItems.length,
+        localCount: localNews.length,
+        combinedTotal: newsItems.length
+    });
 
     const filteredNews = searchTerm
         ? newsItems.filter(item => item.title.toLowerCase().includes(searchTerm.toLowerCase()))
