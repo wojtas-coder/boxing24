@@ -26,11 +26,18 @@ const NewsPage = () => {
             const from = (currentPage - 1) * NEWS_PER_PAGE;
             const to = from + NEWS_PER_PAGE - 1;
 
-            const { data, count, error } = await supabase
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout: Serwer nie odpowiada')), 5000)
+            );
+
+            const supabasePromise = supabase
                 .from('news')
                 .select('*', { count: 'exact' })
                 .order('created_at', { ascending: false })
                 .range(from, to);
+
+            // Race against timeout
+            const { data, count, error } = await Promise.race([supabasePromise, timeoutPromise]);
 
             if (error) throw error;
 
@@ -44,7 +51,7 @@ const NewsPage = () => {
                 totalCount: count || 0
             };
         },
-        retry: 2,
+        retry: 1, // Don't retry too much if timeout happens
     });
 
     // Merge and Robust Mapping
@@ -206,7 +213,11 @@ const NewsPage = () => {
                     <div className="flex flex-col items-center justify-center py-20 space-y-6">
                         <div className="text-red-500 text-6xl font-black">!</div>
                         <h2 className="text-white text-xl font-bold uppercase">Problem z ładowaniem newsów</h2>
-                        <p className="text-zinc-500 text-sm max-w-md text-center">Nie udało się pobrać artykułów. Sprawdź połączenie internetowe lub spróbuj ponownie.</p>
+                        <p className="text-zinc-500 text-sm max-w-md text-center">
+                            {newsError.message}
+                            <br />
+                            <span className="text-xs font-mono text-zinc-600 mt-2 block">{JSON.stringify(newsError)}</span>
+                        </p>
                         <button onClick={() => refetch()} className="px-6 py-3 bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-500 transition-colors">
                             Spróbuj Ponownie
                         </button>
