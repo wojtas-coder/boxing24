@@ -270,14 +270,14 @@ const Layout = () => {
             </AnimatePresence >
 
             {/* Page Content - Animations Removed for Debugging */}
-            < main className="flex-grow pt-0" >
+            <main className="flex-grow pt-0">
                 <Outlet />
-            </main >
+            </main>
 
             <AICoachWidget /> {/* Added AICoachWidget here */}
             <PremiumSidebar />
             <Footer />
-        </div >
+        </div>
     );
 };
 
