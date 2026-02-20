@@ -75,17 +75,23 @@ const BoutiquePage = () => {
 
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
                                             <span className="w-full py-3 bg-boxing-green text-white font-bold uppercase tracking-widest text-sm text-center">
-                                                Przeczytaj Recenzję
+                                                {product.stock_count <= 0 && !product.is_preorder ? 'Niedostępnie (Zobacz Opcje)' : 'Przeczytaj Recenzję'}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-start mb-2">
+                                    <div className="flex justify-between items-start mb-2 mt-4">
                                         <div>
-                                            <h3 className="text-xs font-bold text-boxing-green uppercase tracking-widest mb-1">{product.brand}</h3>
-                                            <h2 className="text-2xl font-bold text-white leading-none group-hover:text-boxing-green transition-colors">{product.name}</h2>
+                                            <h3 className="text-xs font-bold text-boxing-green uppercase tracking-widest mb-1">{product.brand} • {product.category || 'Produkt'}</h3>
+                                            <h2 className="text-2xl font-bold text-white leading-none group-hover:text-boxing-green transition-colors">
+                                                {product.name}
+                                                {product.is_preorder && <span className="ml-2 text-[10px] bg-red-600 px-1 py-0.5 rounded text-white uppercase not-italic align-middle">Pre</span>}
+                                            </h2>
                                         </div>
-                                        <div className="text-xl font-bold text-white whitespace-nowrap ml-4">{product.price}</div>
+                                        <div className="text-right ml-4">
+                                            <div className="text-xl font-bold text-white whitespace-nowrap">{product.price}</div>
+                                            {product.old_price && <div className="text-xs text-gray-500 line-through mt-1 text-right">{product.old_price}</div>}
+                                        </div>
                                     </div>
 
                                     <div className="flex gap-1 mb-4">

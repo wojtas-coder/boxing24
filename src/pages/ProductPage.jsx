@@ -89,14 +89,44 @@ const ProductPage = () => {
                         className="flex flex-col justify-center"
                     >
                         <div className="flex items-center gap-4 text-boxing-green mb-4">
-                            <span className="font-bold uppercase tracking-widest text-sm">{product.brand}</span>
+                            <span className="font-bold uppercase tracking-widest text-sm">{product.brand} • {product.category || 'Produkt'}</span>
                             <div className="flex gap-1">
                                 {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-4 h-4 fill-current" />)}
                             </div>
                         </div>
 
-                        <h1 className="text-5xl md:text-6xl font-black text-white mb-4 leading-none uppercase italic">{product.name}</h1>
-                        <div className="text-3xl font-bold text-gray-300 mb-8">{product.price}</div>
+                        <h1 className="text-5xl md:text-6xl font-black text-white mb-4 leading-none uppercase italic">
+                            {product.name}
+                            {product.is_preorder && <span className="ml-4 text-sm md:text-lg bg-red-600 px-3 py-1 rounded text-white uppercase not-italic align-middle">Pre-order</span>}
+                        </h1>
+
+                        <div className="flex items-end gap-4 mb-4">
+                            <div className="text-3xl font-bold text-gray-300">{product.price}</div>
+                            {product.old_price && <div className="text-xl text-gray-500 line-through mb-1">{product.old_price}</div>}
+                        </div>
+
+                        {product.stock_count > 0 ? (
+                            <div className="text-sm font-bold text-boxing-green uppercase tracking-widest mb-8">
+                                {product.stock_count <= 3 ? `🔥 Ostatnie ${product.stock_count} sztuki!` : 'W magazynie'}
+                            </div>
+                        ) : (
+                            <div className="text-sm font-bold text-red-500 uppercase tracking-widest mb-8">
+                                {product.is_preorder ? 'Dostępne w Pre-orderze' : 'Chwilowo niedostępne'}
+                            </div>
+                        )}
+
+                        {product.sizes && product.sizes.length > 0 && (
+                            <div className="mb-8">
+                                <h3 className="text-white font-bold uppercase tracking-widest text-xs mb-3">Wybierz Rozmiar</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {product.sizes.map(size => (
+                                        <button key={size} className="px-4 py-2 border border-white/20 text-white font-bold uppercase hover:bg-white/10 hover:border-white transition-all">
+                                            {size}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="bg-white/5 border-l-4 border-boxing-green p-6 mb-10 rounded-r-lg backdrop-blur-sm">
                             <h3 className="text-boxing-green font-bold uppercase tracking-widest text-sm mb-2 flex items-center gap-2">
@@ -122,9 +152,15 @@ const ProductPage = () => {
                             </div>
                         </div>
 
-                        <div className="mt-12 flex gap-4">
-                            <button className="flex-1 py-4 bg-boxing-green text-white font-bold uppercase tracking-widest hover:bg-green-700 transition-colors">
-                                Zamów w Pre-Order
+                        <div className="mt-12 flex flex-col sm:flex-row gap-4">
+                            <button
+                                disabled={product.stock_count <= 0 && !product.is_preorder}
+                                className={`flex-1 py-4 font-bold uppercase tracking-widest transition-colors ${product.stock_count <= 0 && !product.is_preorder
+                                        ? 'bg-zinc-800 text-gray-500 cursor-not-allowed'
+                                        : 'bg-boxing-green text-black hover:bg-green-500'
+                                    }`}
+                            >
+                                {product.is_preorder ? 'Zamów w Pre-Order' : (product.stock_count <= 0 ? 'Brak w magazynie' : 'Dodaj do koszyka')}
                             </button>
                             <button className="px-6 py-4 border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">
                                 Zapytaj o dostępność

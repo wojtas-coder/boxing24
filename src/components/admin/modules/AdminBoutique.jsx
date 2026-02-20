@@ -11,6 +11,11 @@ const emptyProduct = {
     brand: '',
     name: '',
     price: '',
+    old_price: '',
+    category: 'Rękawice',
+    stock_count: 10,
+    sizes: [],
+    is_preorder: false,
     image_url: '',
     badge: '',
     short_desc: '',
@@ -92,8 +97,9 @@ const AdminBoutique = () => {
             }
 
             const payload = { ...currentProduct };
-            delete payload.id; // Usuwamy ID jeśli było, bo upsert idzie po slug (jeśli conflict) albo po ID (tu lepiej pozwolić bazie).
-            // Zobaczmy czy to nowy czy edycja.
+            delete payload.id; // Usuwamy ID jeśli było
+            delete payload.created_at;
+            delete payload.updated_at;
 
             if (currentProduct.id) {
                 // Update
@@ -118,7 +124,7 @@ const AdminBoutique = () => {
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             console.error('Save error:', err);
-            setError('Błąd podczas zapisywania produktu.');
+            setError(`Błąd podczas zapisywania produktu: ${err.message || JSON.stringify(err)}`);
         }
     };
 
@@ -133,7 +139,7 @@ const AdminBoutique = () => {
             fetchProducts();
         } catch (err) {
             console.error('Toggle error:', err);
-            setError('Nie udało się zmienić statusu.');
+            setError(`Nie udało się zmienić statusu: ${err.message || JSON.stringify(err)}`);
         }
     };
 
@@ -152,7 +158,7 @@ const AdminBoutique = () => {
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             console.error('Delete error:', err);
-            setError('Nie udało się usunąć produktu.');
+            setError(`Nie udało się usunąć produktu: ${err.message || JSON.stringify(err)}`);
         }
     };
 
@@ -265,12 +271,15 @@ const AdminBoutique = () => {
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs text-boxing-green font-bold tracking-widest uppercase mb-1">{product.brand}</div>
-                                                        <div className="font-medium text-white">{product.name}</div>
+                                                        <div className="text-xs text-boxing-green font-bold tracking-widest uppercase mb-1">{product.brand} • {product.category || 'Produkt'}</div>
+                                                        <div className="font-medium text-white">{product.name} {product.is_preorder && <span className="ml-2 text-[10px] bg-red-600 px-1 py-0.5 rounded text-white uppercase">Pre</span>}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="p-4 text-gray-300 font-bold">{product.price}</td>
+                                            <td className="p-4">
+                                                <div className="text-gray-300 font-bold">{product.price}</div>
+                                                {product.old_price && <div className="text-xs text-gray-500 line-through">{product.old_price}</div>}
+                                            </td>
                                             <td className="p-4">
                                                 {product.badge ? (
                                                     <span className="bg-white/10 text-white text-xs px-2 py-1 uppercase tracking-wider rounded">
@@ -282,8 +291,8 @@ const AdminBoutique = () => {
                                                 <button
                                                     onClick={() => handleToggleActive(product.id, product.is_active)}
                                                     className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold uppercase tracking-widest transition-colors ${product.is_active
-                                                            ? 'bg-boxing-green/20 text-boxing-green hover:bg-boxing-green/30'
-                                                            : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                                                        ? 'bg-boxing-green/20 text-boxing-green hover:bg-boxing-green/30'
+                                                        : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                                                         }`}
                                                 >
                                                     {product.is_active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -370,35 +379,96 @@ const AdminBoutique = () => {
                             </div>
 
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Cena (np. 149 PLN)</label>
-                                    <input
-                                        type="text"
-                                        value={currentProduct.price}
-                                        onChange={e => setCurrentProduct({ ...currentProduct, price: e.target.value })}
-                                        className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Cena</label>
+                                        <input
+                                            type="text"
+                                            value={currentProduct.price}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, price: e.target.value })}
+                                            className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Stara Cena</label>
+                                        <input
+                                            type="text"
+                                            value={currentProduct.old_price || ''}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, old_price: e.target.value })}
+                                            className="w-full bg-black border border-white/10 rounded p-3 text-gray-400 focus:outline-none focus:border-boxing-green transition-colors placeholder:text-gray-700"
+                                            placeholder="Przekreślona"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Badge (np. NEW DROP)</label>
                                     <input
                                         type="text"
-                                        value={currentProduct.badge}
+                                        value={currentProduct.badge || ''}
                                         onChange={e => setCurrentProduct({ ...currentProduct, badge: e.target.value })}
                                         className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors placeholder:text-gray-700"
                                         placeholder="Opcjonalna naklejka"
                                     />
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Kategoria</label>
+                                        <select
+                                            value={currentProduct.category || 'Sprzęt'}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}
+                                            className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors"
+                                        >
+                                            <option value="Rękawice">Rękawice</option>
+                                            <option value="Tarcze i Worki">Tarcze i Worki</option>
+                                            <option value="Odzież">Odzież</option>
+                                            <option value="Akcesoria">Akcesoria</option>
+                                            <option value="Sprzęt">Sprzęt Inny</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Seria / Brand</label>
+                                        <input
+                                            type="text"
+                                            value={currentProduct.brand}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, brand: e.target.value })}
+                                            className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Magazyn (Ilość)</label>
+                                        <input
+                                            type="number"
+                                            value={currentProduct.stock_count || 0}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, stock_count: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors"
+                                        />
+                                    </div>
+                                    <div className="flex items-center pt-8">
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={currentProduct.is_preorder || false}
+                                                onChange={e => setCurrentProduct({ ...currentProduct, is_preorder: e.target.checked })}
+                                                className="w-5 h-5 rounded bg-black border border-white/10 text-boxing-green focus:ring-0 focus:ring-offset-0"
+                                            />
+                                            <span className="text-sm font-bold text-white uppercase tracking-widest group-hover:text-boxing-green transition-colors">Pre-order?</span>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Seria / Brand</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Rozmiary (po przecinku)</label>
                                     <input
                                         type="text"
-                                        value={currentProduct.brand}
-                                        onChange={e => setCurrentProduct({ ...currentProduct, brand: e.target.value })}
-                                        className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors"
+                                        value={currentProduct.sizes?.join(', ') || ''}
+                                        onChange={e => setCurrentProduct({ ...currentProduct, sizes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                                        className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors placeholder:text-gray-700"
+                                        placeholder="np. 10oz, 12oz, 14oz LUB S, M, L"
                                     />
                                 </div>
                             </div>
+
                         </div>
 
                         {/* Główna kolumna - Teksty */}
