@@ -192,6 +192,7 @@ const KnowledgeEditor = ({ article, onClose, onSave }) => {
                         <ImageUploader
                             currentImage={formData.image_url}
                             bucketName="media"
+                            freeform={true}
                             onUploadSuccess={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
                         />
                     </div>

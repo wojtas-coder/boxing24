@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { Save, Eye, X, Image as ImageIcon, AlertCircle, RefreshCw } from 'lucide-react';
+import ImageUploader from '../common/ImageUploader';
 
 const NewsEditor = ({ article, onClose, onSave }) => {
     const queryClient = useQueryClient();
@@ -18,7 +19,6 @@ const NewsEditor = ({ article, onClose, onSave }) => {
     });
 
     const [showPreview, setShowPreview] = useState(false);
-    const [imageError, setImageError] = useState(false);
     const [slugError, setSlugError] = useState(null);
 
     useEffect(() => {
@@ -234,10 +234,11 @@ const NewsEditor = ({ article, onClose, onSave }) => {
                     </div>
 
                     {/* Image Section */}
-                    <div className="space-y-2 bg-zinc-800/30 p-4 rounded-lg border border-zinc-800">
+                    <div className="space-y-4 bg-zinc-800/30 p-4 rounded-lg border border-zinc-800">
                         <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider flex items-center gap-2">
-                            <ImageIcon size={14} /> Zdjęcie Główne (URL)
+                            <ImageIcon size={14} /> Zdjęcie Główne (Wgraj lub wklej link)
                         </label>
+
                         <div className="flex gap-4">
                             <input
                                 name="image_url"
@@ -247,13 +248,16 @@ const NewsEditor = ({ article, onClose, onSave }) => {
                                 className="flex-1 bg-black border border-zinc-700 p-2 text-white text-sm rounded focus:border-red-600 outline-none transition-colors font-mono"
                             />
                         </div>
-                        {formData.image_url && !imageError && (
-                            <div className="mt-2 h-32 w-full overflow-hidden rounded bg-black flex items-center justify-center border border-zinc-800 relative">
-                                <img src={formData.image_url} alt="Preview" className="h-full object-contain" onError={() => setImageError(true)} />
-                                <div className="absolute bottom-1 right-1 bg-black/50 text-white text-[10px] px-1 rounded">Podgląd</div>
-                            </div>
-                        )}
-                        {imageError && <p className="text-xs text-red-500">Nie udało się załadować obrazka z tego linku.</p>}
+
+                        <div className="mt-4 border-t border-zinc-700 box-border pt-4">
+                            <ImageUploader
+                                currentImage={formData.image_url}
+                                bucketName="media"
+                                freeform={true}
+                                onUploadSuccess={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                            />
+                        </div>
+
                     </div>
 
                     {/* Content Section */}
