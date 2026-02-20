@@ -31,10 +31,6 @@ const NewsEditor = ({ article, onClose, onSave }) => {
         }
     }, [article]);
 
-    useEffect(() => {
-        setImageError(false);
-    }, [formData.image_url]);
-
     const mutation = useMutation({
         mutationFn: async (newArticle) => {
             const payload = { ...newArticle };
