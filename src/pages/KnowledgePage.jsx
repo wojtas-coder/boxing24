@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, BookOpen, X, Lock, Crown, Filter, CheckCircle, ChevronRight, PlayCircle, GraduationCap, Star, ShoppingBag, Microscope, Database, Menu, ChevronDown, Search, Clock, Bookmark, TrendingUp, BookmarkCheck } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { articles } from '../data/articles';
+import { supabaseData as supabase } from '../lib/supabaseClient';
+import { articles as localArticles } from '../data/articles'; // Fallback / mixed logic
 import { compendium } from '../data/compendium';
 import { reviews } from '../data/reviews';
 import { getProgress, isBookmarked, toggleBookmark, getContinueReading, getStats } from '../utils/libraryProgress';
@@ -13,6 +14,55 @@ const KnowledgePage = () => {
     const [activeTab, setActiveTab] = useState('articles'); // articles, compendium, reviews
     const { user, profile, isPremium } = useAuth();
     const isVip = isPremium;
+
+    // Database State
+    const [dbArticles, setDbArticles] = useState([]);
+    const [loadingDb, setLoadingDb] = useState(true);
+
+    useEffect(() => {
+        const fetchArticles = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('knowledge_articles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (!error && data) {
+                    // Map Supabase layout to component expectations
+                    const mapped = data.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        slug: item.slug,
+                        excerpt: item.excerpt,
+                        content: item.content,
+                        category: item.category,
+                        image: item.image_url,
+                        author: item.author_name,
+                        readingTime: item.reading_time_min,
+                        difficulty: item.difficulty_level,
+                        isPremium: item.is_premium,
+                        hasDualVersion: item.has_dual_version,
+                        freeContent: item.free_content,
+                        premiumContent: item.premium_content,
+                        tags: item.tags || [],
+                        updatedAt: item.updated_at
+                    }));
+                    setDbArticles(mapped);
+                }
+            } catch (err) {
+                console.error("Failed to load knowledge articles", err);
+            } finally {
+                setLoadingDb(false);
+            }
+        };
+        fetchArticles();
+    }, []);
+
+    // Combine local dummy data with DB data (DB takes precedence if same ID, though IDs differ)
+    // In production, we'd entirely drop localArticles once DB is populated.
+    const allArticles = useMemo(() => {
+        return [...dbArticles]; // Switched entirely to DB for articles tab as requested strictly DB driven
+    }, [dbArticles]);
 
     useEffect(() => {
         const view = searchParams.get('view');
@@ -57,12 +107,12 @@ const KnowledgePage = () => {
 
     // 1. ARTICLES VIEW
     const ArticlesView = () => {
-        const categories = useMemo(() => ['ALL', ...new Set(articles.map(a => a.category.toUpperCase()))], []);
+        const categories = useMemo(() => ['ALL', ...new Set(allArticles.map(a => a.category?.toUpperCase() || ''))], [allArticles]);
 
         // Apply search first, then category filter
-        const searchedArticles = searchContent(articles, searchQuery);
-        const filteredFree = searchedArticles.filter(a => !a.isPremium && (activeFilter === 'ALL' || a.category.toUpperCase() === activeFilter));
-        const filteredPremium = searchedArticles.filter(a => a.isPremium && (activeFilter === 'ALL' || a.category.toUpperCase() === activeFilter));
+        const searchedArticles = searchContent(allArticles, searchQuery);
+        const filteredFree = searchedArticles.filter(a => !a.isPremium && (activeFilter === 'ALL' || a.category?.toUpperCase() === activeFilter));
+        const filteredPremium = searchedArticles.filter(a => a.isPremium && (activeFilter === 'ALL' || a.category?.toUpperCase() === activeFilter));
 
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -359,7 +409,7 @@ const KnowledgePage = () => {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         {continueItems.map((item) => {
-                                            const content = item.type === 'article' ? articles.find(a => a.id === item.id) : null;
+                                            const content = item.type === 'article' ? allArticles.find(a => a.id === item.id) : null;
                                             if (!content) return null;
 
                                             return (
