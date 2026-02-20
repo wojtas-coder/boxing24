@@ -59,14 +59,19 @@ export default async function handler(req, res) {
             </div>
         `;
 
-        await resend.emails.send({
+        const { error: emailError } = await resend.emails.send({
             from: 'Boxing24 <biuro@boxing24.pl>',
             to: [email],
             subject: 'Witamy w Boxing24 Inside! 🥊',
             html: welcomeHtml,
         });
 
-        return res.status(200).json({ success: true, message: 'Dziękujemy! Oczekuj pierwszej wiadomości w swojej skrzynce.' });
+        if (emailError) {
+            console.error('Błąd wysyłki Resend (Prawdopodobnie brak weryfikacji domeny):', emailError);
+            // Zwracamy success, bo zapis do bazy się udał
+        }
+
+        return res.status(200).json({ success: true, message: 'Dziękujemy! Zostałeś zapisany do newslettera.' });
     } catch (error) {
         console.error('Newsletter Signup API Error:', error);
         return res.status(500).json({ error: 'Wystąpił błąd podczas zapisu. Spróbuj ponownie później.' });
