@@ -118,9 +118,9 @@ const AdminKnowledge = () => {
                         <button
                             onClick={handleMigrate}
                             className="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-3 font-bold flex items-center gap-2 rounded-xl transition-all tracking-wider text-xs border border-zinc-700"
-                            title="Przenieś stare artykuły z kodu do bazy"
+                            title="Wczytaj artykuły ze starej strony, aby móc je tutaj edytować"
                         >
-                            <Database className="w-4 h-4" /> <span className="hidden md:inline">Zmigruj Skrypt</span>
+                            <Database className="w-4 h-4" /> <span className="hidden md:inline">Wczytaj Obecne Artykuły z Boksopedii</span>
                         </button>
                         <button
                             onClick={() => { setCurrentArticle(null); setIsEditorOpen(true); }}
