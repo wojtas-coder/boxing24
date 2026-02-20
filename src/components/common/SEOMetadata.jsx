@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 const SEOMetadata = ({
     title,
     description,
-    image = 'https://boxing24.pl/og-image.jpg',
+    image = 'https://boxing24.pl/og-image.png',
     url = 'https://boxing24.pl/',
     type = 'website'
 }) => {
