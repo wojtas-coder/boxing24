@@ -14,6 +14,7 @@ import AdminLayout from './layout/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminNews from './pages/admin/News';
 import AdminKnowledge from './pages/admin/Knowledge';
+import AdminMedia from './pages/admin/Media';
 import AdminDebug from './pages/admin/Debug';
 
 import AdminUsers from './pages/admin/Users';
@@ -79,6 +80,7 @@ function App() {
                             <Route path="stats" element={<AdminStats />} />
                             <Route path="news" element={<AdminNews />} />
                             <Route path="knowledge" element={<AdminKnowledge />} />
+                            <Route path="media" element={<AdminMedia />} />
                             <Route path="users" element={<AdminUsers />} />
                             <Route path="ads" element={<AdminAds />} />
                             <Route path="seo" element={<AdminSEO />} />

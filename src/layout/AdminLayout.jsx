@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, Users, LogOut, Menu, X, Shield, BarChart3, Megaphone, Settings, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Newspaper, Users, LogOut, Menu, X, Shield, BarChart3, Megaphone, Settings, BookOpen, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
@@ -14,6 +14,7 @@ const AdminLayout = () => {
         { icon: BarChart3, label: 'Analityka', path: '/admin/stats' },
         { icon: Newspaper, label: 'Newsroom', path: '/admin/news' },
         { icon: BookOpen, label: 'Wiedza', path: '/admin/knowledge' },
+        { icon: ImageIcon, label: 'Galeria', path: '/admin/media' },
         { icon: Users, label: 'Użytkownicy', path: '/admin/users' },
         { icon: Megaphone, label: 'Kampanie', path: '/admin/ads' },
         { icon: Settings, label: 'SEO & Config', path: '/admin/seo' },
