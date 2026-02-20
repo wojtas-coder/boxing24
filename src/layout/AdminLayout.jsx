@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Newspaper, Users, LogOut, Menu, X,
     Shield, BarChart3, Megaphone, Settings, BookOpen,
-    Image as ImageIcon, Mail
+    Image as ImageIcon, Send
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
