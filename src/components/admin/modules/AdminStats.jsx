@@ -1,58 +1,86 @@
 import React, { useEffect, useState } from 'react';
 import { supabaseData as supabase } from '../../../lib/supabaseClient';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
-import { Users, UserPlus, TrendingUp, Info } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { Users, Newspaper, BookOpen, ImageIcon, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 
 const AdminStats = () => {
-    const [data, setData] = useState([]);
-    const [summary, setSummary] = useState({ totalSignups: 0, activeUsers: 0, recentSignups: 0 });
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        recentUsers: 0,
+        totalNews: 0,
+        breakingNews: 0,
+        totalKnowledge: 0,
+        premiumKnowledge: 0,
+        totalMediaCount: 0,
+        chartData: []
+    });
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState(null);
 
     useEffect(() => {
-        fetchStats();
+        fetchAllStats();
     }, []);
 
-    const fetchStats = async () => {
+    const fetchAllStats = async () => {
+        setLoading(true);
+        setErrorMsg(null);
         try {
-            // 1. Fetch Users (last 30 days for graph)
-            const { data: usersData, error: usersError } = await supabase
-                .from('profiles')
-                .select('created_at')
-                .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+            // 1. Users Data (Total & Last 30 days for chart)
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-            if (usersError) throw usersError;
+            const [
+                { count: totalUsers, error: usersError1 },
+                { data: recentUsersData, error: usersError2 },
+                { count: totalNews, error: newsError1 },
+                { count: breakingNews, error: newsError2 },
+                { count: totalKnowledge, error: kError1 },
+                { count: premiumKnowledge, error: kError2 },
+                { data: mediaFiles, error: mediaError }
+            ] = await Promise.all([
+                supabase.from('profiles').select('*', { count: 'exact', head: true }),
+                supabase.from('profiles').select('created_at').gte('created_at', thirtyDaysAgo),
+                supabase.from('news').select('*', { count: 'exact', head: true }),
+                supabase.from('news').select('*', { count: 'exact', head: true }).eq('is_breaking', true),
+                supabase.from('knowledge_articles').select('*', { count: 'exact', head: true }),
+                supabase.from('knowledge_articles').select('*', { count: 'exact', head: true }).or('is_premium.eq.true,has_dual_version.eq.true'),
+                supabase.storage.from('media').list('', { limit: 1000 })
+            ]);
 
-            // 2. Fetch Total Count
-            const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+            if (usersError1) throw usersError1;
+            if (usersError2) throw usersError2;
+            if (newsError1) throw newsError1;
+            if (newsError2) throw newsError2;
+            if (kError1) throw kError1;
+            if (kError2) throw kError2;
 
-            // 3. Build real daily signup data (no mocks)
-            const generateDailyData = () => {
-                const days = [];
-                for (let i = 29; i >= 0; i--) {
-                    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-                    const dateStr = date.toISOString().split('T')[0];
+            // Media error might just mean empty bucket, don't crash the whole page
+            if (mediaError && !mediaError.message.includes('not found')) {
+                console.warn("Storage fetch warning:", mediaError);
+            }
 
-                    // Count real signups for this day
-                    const signups = usersData?.filter(u => u.created_at?.startsWith(dateStr)).length || 0;
+            // Generate Chart Data (Last 30 Days)
+            const days = [];
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+                const dateStr = date.toISOString().split('T')[0];
+                const signups = recentUsersData?.filter(u => u.created_at?.startsWith(dateStr)).length || 0;
+                days.push({
+                    name: date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }),
+                    signups: signups
+                });
+            }
 
-                    days.push({
-                        name: date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }),
-                        signups: signups
-                    });
-                }
-                return days;
-            };
+            const validMediaFilesCount = mediaFiles?.filter(f => f.name !== '.emptyFolderPlaceholder').length || 0;
 
-            const formattedData = generateDailyData();
-            setData(formattedData);
-
-            const recentSignups = formattedData.reduce((acc, curr) => acc + curr.signups, 0);
-
-            setSummary({
-                totalSignups: totalUsers || 0,
-                activeUsers: totalUsers || 0,
-                recentSignups: recentSignups
+            setStats({
+                totalUsers: totalUsers || 0,
+                recentUsers: recentUsersData?.length || 0,
+                totalNews: totalNews || 0,
+                breakingNews: breakingNews || 0,
+                totalKnowledge: totalKnowledge || 0,
+                premiumKnowledge: premiumKnowledge || 0,
+                totalMediaCount: validMediaFilesCount,
+                chartData: days
             });
 
         } catch (err) {
@@ -63,75 +91,172 @@ const AdminStats = () => {
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-zinc-500 animate-pulse">Ładowanie danych analitycznych...</div>;
-    if (errorMsg) return (
-        <div className="p-10 text-center text-red-500 bg-red-500/10 rounded-xl border border-red-500/20">
-            <h3 className="font-bold mb-2">Błąd pobierania statystyk</h3>
-            <p className="text-sm font-mono">{errorMsg}</p>
-            <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Spróbuj ponownie</button>
-        </div>
-    );
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-32 text-zinc-500 min-h-screen">
+                <RefreshCw className="w-10 h-10 animate-spin mb-4 opacity-50" />
+                <p className="tracking-widest uppercase text-xs font-bold">Agregacja Danych Analitycznych...</p>
+            </div>
+        );
+    }
+
+    if (errorMsg) {
+        return (
+            <div className="p-8 max-w-7xl mx-auto min-h-screen">
+                <div className="p-10 text-center text-red-500 bg-red-500/10 rounded-3xl border border-red-500/20 flex flex-col items-center">
+                    <AlertCircle className="w-12 h-12 mb-4 opacity-80" />
+                    <h3 className="font-bold mb-2 text-xl tracking-widest uppercase">Błąd pobierania statystyk</h3>
+                    <p className="text-sm font-mono mb-6">{errorMsg}</p>
+                    <button onClick={fetchAllStats} className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-500 font-bold tracking-widest uppercase text-sm flex items-center gap-2 transition-colors">
+                        <RefreshCw className="w-4 h-4" /> Ponów
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">
-                Analityka <span className="text-red-600">Użytkowników</span>
-            </h1>
+        <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 min-h-screen text-white">
 
-            {/* Info banner */}
-            <div className="flex items-center gap-3 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl text-blue-400 text-sm">
-                <Info className="w-5 h-5 flex-shrink-0" />
-                <span>Dane oparte na rejestracji użytkowników z Supabase. Integracja z Google Analytics planowana w następnym etapie.</span>
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-zinc-900/50 p-6 rounded-3xl border border-white/5 backdrop-blur-sm">
+                <div>
+                    <h1 className="text-4xl font-black uppercase italic tracking-tighter mb-2">
+                        Analytics <span className="text-boxing-green">Dashboard</span>
+                    </h1>
+                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                        <span className="w-2 h-2 bg-boxing-green rounded-full animate-pulse"></span>
+                        Status platformy live (Supabase)
+                    </p>
+                </div>
+                <button
+                    onClick={fetchAllStats}
+                    className="p-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-all border border-white/5 group"
+                    title="Odśwież dane"
+                >
+                    <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+                </button>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                {/* Users KPI */}
+                <div className="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 hover:border-indigo-500/30 transition-colors backdrop-blur-sm flex flex-col">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-blue-500/10 rounded-lg text-blue-500"><Users className="w-6 h-6" /></div>
-                        <span className="text-xs font-bold text-zinc-500 uppercase">Ogółem</span>
+                        <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
+                            <Users className="w-6 h-6" />
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
+                            <TrendingUp className="w-3 h-3" /> +{stats.recentUsers} (30d)
+                        </span>
                     </div>
-                    <div className="text-4xl font-black text-white">{summary.totalSignups}</div>
-                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Zarejestrowani Użytkownicy</div>
+                    <div className="text-4xl font-black text-white mb-1">{stats.totalUsers}</div>
+                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Użytkownicy Total</div>
                 </div>
 
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                {/* News KPI */}
+                <div className="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 hover:border-red-500/30 transition-colors backdrop-blur-sm flex flex-col">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-green-500/10 rounded-lg text-green-500"><UserPlus className="w-6 h-6" /></div>
-                        <span className="text-xs font-bold text-zinc-500 uppercase">Ostatnie 30 dni</span>
+                        <div className="p-3 bg-red-500/10 rounded-xl text-red-500">
+                            <Newspaper className="w-6 h-6" />
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded">
+                            {stats.breakingNews} Breaking
+                        </span>
                     </div>
-                    <div className="text-4xl font-black text-white">{summary.recentSignups}</div>
-                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Nowe Rejestracje</div>
+                    <div className="text-4xl font-black text-white mb-1">{stats.totalNews}</div>
+                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Wpisy Newsroom</div>
                 </div>
 
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                {/* Knowledge KPI */}
+                <div className="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 hover:border-boxing-green/30 transition-colors backdrop-blur-sm flex flex-col">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-purple-500/10 rounded-lg text-purple-500"><TrendingUp className="w-6 h-6" /></div>
-                        <span className="text-xs font-bold text-zinc-500 uppercase">Trend</span>
+                        <div className="p-3 bg-boxing-green/10 rounded-xl text-boxing-green">
+                            <BookOpen className="w-6 h-6 text-black" />
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-bold text-boxing-green bg-boxing-green/10 px-2 py-1 rounded">
+                            {stats.premiumKnowledge} Premium
+                        </span>
                     </div>
-                    <div className="text-4xl font-black text-white">
-                        {summary.recentSignups > 0 ? '+' : ''}{summary.recentSignups}
-                    </div>
-                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Wzrost (30 dni)</div>
+                    <div className="text-4xl font-black text-white mb-1">{stats.totalKnowledge}</div>
+                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Baza Wiedzy</div>
                 </div>
+
+                {/* Media KPI */}
+                <div className="bg-zinc-900/40 p-6 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-colors backdrop-blur-sm flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
+                            <ImageIcon className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded uppercase">
+                            Bucket: media
+                        </span>
+                    </div>
+                    <div className="text-4xl font-black text-white mb-1">{stats.totalMediaCount}</div>
+                    <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Pliki Multimedialne</div>
+                </div>
+
             </div>
 
-            {/* Chart */}
-            <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm min-h-[400px]">
-                <h3 className="text-lg font-bold text-white mb-6 uppercase tracking-wider">Rejestracje Dziennie (30 dni)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                        <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                        <Tooltip
-                            cursor={{ fill: '#ffffff10' }}
-                            contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '8px' }}
-                            itemStyle={{ color: '#fff' }}
-                        />
-                        <Bar dataKey="signups" fill="#ef4444" radius={[4, 4, 0, 0]} name="Rejestracje" />
-                    </BarChart>
-                </ResponsiveContainer>
+            {/* Growth Chart */}
+            <div className="bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5 backdrop-blur-sm min-h-[400px]">
+                <div className="mb-8">
+                    <h3 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-3">
+                        <TrendingUp className="text-indigo-500" /> Wzrost Użytkowników
+                    </h3>
+                    <p className="text-zinc-500 text-xs uppercase font-bold tracking-widest mt-1">Ostatnie 30 dni (Aktywne Rejestracje)</p>
+                </div>
+
+                <div className="h-[350px] w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorSignups" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                            <XAxis
+                                dataKey="name"
+                                stroke="#52525b"
+                                fontSize={10}
+                                tickLine={false}
+                                axisLine={false}
+                                dy={10}
+                            />
+                            <YAxis
+                                stroke="#52525b"
+                                fontSize={10}
+                                tickLine={false}
+                                axisLine={false}
+                                allowDecimals={false}
+                            />
+                            <Tooltip
+                                cursor={{ stroke: '#ffffff20', strokeWidth: 1, strokeDasharray: '3 3' }}
+                                contentStyle={{
+                                    backgroundColor: '#18181b',
+                                    border: '1px solid #27272a',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
+                                }}
+                                itemStyle={{ color: '#6366f1', fontWeight: 'bold' }}
+                                labelStyle={{ color: '#a1a1aa', fontSize: '12px', marginBottom: '8px' }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="signups"
+                                name="Nowe Konta"
+                                stroke="#6366f1"
+                                strokeWidth={3}
+                                fillOpacity={1}
+                                fill="url(#colorSignups)"
+                                activeDot={{ r: 6, strokeWidth: 0, fill: '#6366f1' }}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );
