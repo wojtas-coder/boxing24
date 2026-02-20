@@ -64,9 +64,13 @@ const AdminKnowledge = () => {
                 content: a.content || '<p>Brak treści</p>',
                 category: a.category || 'Trening',
                 image_url: a.image || '',
-                author_name: 'Redakcja',
+                author_name: a.author || 'Redakcja',
                 is_premium: !!a.isPremium,
-                difficulty_level: a.difficulty || 'Początkujący'
+                has_dual_version: !!a.hasDualVersion,
+                free_content: a.freeContent || '',
+                premium_content: a.premiumContent || '',
+                difficulty_level: a.difficulty || 'Początkujący',
+                reading_time_min: a.readingTime || 5
             }));
 
             // In Supabase, inserting multiple rows in one query
