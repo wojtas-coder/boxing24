@@ -8,6 +8,7 @@ import { compendium } from '../data/compendium';
 import { reviews } from '../data/reviews';
 import { getProgress, isBookmarked, toggleBookmark, getContinueReading, getStats } from '../utils/libraryProgress';
 import { useAuth } from '../context/AuthContext';
+import SEOMetadata from '../components/common/SEOMetadata';
 
 const KnowledgePage = () => {
     const [searchParams] = useSearchParams();
@@ -370,8 +371,30 @@ const KnowledgePage = () => {
         )
     };
 
+    // Dynamic SEO metadata based on modal state
+    let seoTitle = 'Boksopedia';
+    let seoDescription = 'Centralna Baza Wiedzy Boxing24. Artykuły o boksie, biomechanice i nauce o sporcie.';
+    let seoImage = null;
+
+    if (selectedArticle) {
+        seoTitle = selectedArticle.title;
+        seoDescription = selectedArticle.excerpt || seoDescription;
+        seoImage = selectedArticle.image;
+    } else if (selectedLesson) {
+        seoTitle = selectedLesson.title;
+        seoDescription = selectedLesson.summary || seoDescription;
+        seoImage = selectedLesson.image;
+    }
+
     return (
         <div className="pt-32 pb-20 px-4 min-h-screen bg-black text-white selection:bg-boxing-green selection:text-white">
+            <SEOMetadata
+                title={seoTitle}
+                description={seoDescription}
+                image={seoImage}
+                url={`https://boxing24.pl/knowledge`}
+                type={selectedArticle || selectedLesson ? "article" : "website"}
+            />
             <div className="max-w-7xl mx-auto">
 
                 {/* Header */}

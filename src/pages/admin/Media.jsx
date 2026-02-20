@@ -138,12 +138,13 @@ const AdminMedia = () => {
                     <div className="bg-zinc-900/50 border border-white/10 p-6 rounded-3xl">
                         <div className="mb-4">
                             <h3 className="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
-                                <FileImageIcon className="w-5 h-5 text-boxing-green" /> Pojedyncze Wgrywanie z Kadrowaniem (16:9)
+                                <FileImageIcon className="w-5 h-5 text-boxing-green" /> Dowolne Kadrowanie Zdjęć (Freeform)
                             </h3>
-                            <p className="text-zinc-400 text-xs">Użyj tego narzędzia aby dociąć zdjęcie do idealnych proporcji miniatur. Po wgraniu, plik pojawi się w galerii poniżej.</p>
+                            <p className="text-zinc-400 text-xs">Użyj tego narzędzia aby dowolnie dociąć zdjęcie (również w pionie). Możesz swobodnie ciągnąć za rogi. Po wgraniu, plik pojawi się w galerii poniżej.</p>
                         </div>
                         <ImageUploader
                             currentImage={null}
+                            freeform={true}
                             onUploadSuccess={(url) => {
                                 // Refresh gallery after upload
                                 fetchFiles();

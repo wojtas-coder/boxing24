@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import { articles } from '../data/articles';
 import localNews from '../data/news.json';
 import { useAuth } from '../context/AuthContext';
+import SEOMetadata from '../components/common/SEOMetadata';
 
 const NewsArticlePage = () => {
     const { slug } = useParams();
@@ -66,38 +67,7 @@ const NewsArticlePage = () => {
         retry: false
     });
 
-    // Dynamic SEO Meta Tags
-    useEffect(() => {
-        if (!article) return;
-        const originalTitle = document.title;
-        document.title = `${article.title} | Boxing24`;
-
-        const setMeta = (property, content) => {
-            let el = document.querySelector(`meta[property="${property}"]`);
-            if (!el) {
-                el = document.createElement('meta');
-                el.setAttribute('property', property);
-                document.head.appendChild(el);
-            }
-            el.setAttribute('content', content || '');
-        };
-
-        setMeta('og:title', article.title);
-        setMeta('og:description', article.excerpt || article.lead || '');
-        setMeta('og:image', article.image_url || '');
-        setMeta('og:url', `https://boxing24.pl/news/${slug}`);
-        setMeta('og:type', 'article');
-
-        let twitterCard = document.querySelector('meta[name="twitter:card"]');
-        if (!twitterCard) {
-            twitterCard = document.createElement('meta');
-            twitterCard.setAttribute('name', 'twitter:card');
-            document.head.appendChild(twitterCard);
-        }
-        twitterCard.setAttribute('content', 'summary_large_image');
-
-        return () => { document.title = originalTitle; };
-    }, [article, slug]);
+    // Removed manual useEffect for SEO
 
     if (isLoading) {
         return (
@@ -178,6 +148,13 @@ const NewsArticlePage = () => {
 
     return (
         <div className="min-h-screen bg-black text-white pt-24 pb-20">
+            <SEOMetadata
+                title={article.title}
+                description={article.excerpt || article.lead || ''}
+                image={article.image_url}
+                url={`https://boxing24.pl/news/${slug}`}
+                type="article"
+            />
             <div className="w-full h-[60vh] relative bg-zinc-900 overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10" />
 

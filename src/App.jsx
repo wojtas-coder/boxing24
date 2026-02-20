@@ -40,64 +40,68 @@ import MemberPageWrapper from './pages/MemberPageWrapper';
 import SiteLock from './components/SiteLock';
 import AuthDebug from './components/AuthDebug';
 
+import { HelmetProvider } from 'react-helmet-async';
+
 function App() {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                {/* DEBUG COMPONENT - Always visible */}
-                <AuthDebug />
-                <SiteLock>
-                    <Routes>
-                        {/* Standalone Application Funnel - NO LAYOUT */}
-                        <Route path="/login" element={<LoginPage />} />
+        <HelmetProvider>
+            <AuthProvider>
+                <BrowserRouter>
+                    {/* DEBUG COMPONENT - Always visible */}
+                    <AuthDebug />
+                    <SiteLock>
+                        <Routes>
+                            {/* Standalone Application Funnel - NO LAYOUT */}
+                            <Route path="/login" element={<LoginPage />} />
 
-                        {/* Main Website Layout */}
-                        <Route path="/" element={<Layout />}>
-                            <Route index element={<HomePage />} />
-                            <Route path="news" element={<NewsPage />} />
-                            <Route path="news/:slug" element={<NewsArticlePage />} />
-                            <Route path="membership" element={<MembershipPage />} />
-                            <Route path="boutique" element={<BoutiquePage />} />
-                            <Route path="boutique/:id" element={<ProductPage />} />
-                            <Route path="knowledge" element={<KnowledgePage />} />
-                            <Route path="calendar" element={<CalendarPage />} />
-                            <Route path="booking" element={<BookingPage />} />
+                            {/* Main Website Layout */}
+                            <Route path="/" element={<Layout />}>
+                                <Route index element={<HomePage />} />
+                                <Route path="news" element={<NewsPage />} />
+                                <Route path="news/:slug" element={<NewsArticlePage />} />
+                                <Route path="membership" element={<MembershipPage />} />
+                                <Route path="boutique" element={<BoutiquePage />} />
+                                <Route path="boutique/:id" element={<ProductPage />} />
+                                <Route path="knowledge" element={<KnowledgePage />} />
+                                <Route path="calendar" element={<CalendarPage />} />
+                                <Route path="booking" element={<BookingPage />} />
 
-                            {/* Protected Routes */}
-                            <Route path="members" element={
-                                <ProtectedRoute>
-                                    <MemberPageWrapper />
-                                </ProtectedRoute>
-                            } />
-
-
-                        </Route>
+                                {/* Protected Routes */}
+                                <Route path="members" element={
+                                    <ProtectedRoute>
+                                        <MemberPageWrapper />
+                                    </ProtectedRoute>
+                                } />
 
 
-                        {/* New Admin Panel Layout */}
-                        <Route path="/admin" element={<AdminLayout />}>
-                            <Route index element={<AdminDashboard />} />
-                            <Route path="stats" element={<AdminStats />} />
-                            <Route path="news" element={<AdminNews />} />
-                            <Route path="knowledge" element={<AdminKnowledge />} />
-                            <Route path="media" element={<AdminMedia />} />
-                            <Route path="users" element={<AdminUsers />} />
-                            <Route path="ads" element={<AdminAds />} />
-                            <Route path="seo" element={<AdminSEO />} />
-                            <Route path="debug" element={<AdminDebug />} />
-                        </Route>
+                            </Route>
 
-                        {/* Coach Panel Layout */}
-                        <Route path="/coach" element={<CoachLayout />}>
-                            <Route index element={<CoachDashboard />} />
-                            <Route path="clients" element={<CoachClients />} />
-                            <Route path="chat" element={<CoachChat />} />
-                            <Route path="plans" element={<CoachPlans />} />
-                        </Route>
-                    </Routes>
-                </SiteLock>
-            </BrowserRouter>
-        </AuthProvider>
+
+                            {/* New Admin Panel Layout */}
+                            <Route path="/admin" element={<AdminLayout />}>
+                                <Route index element={<AdminDashboard />} />
+                                <Route path="stats" element={<AdminStats />} />
+                                <Route path="news" element={<AdminNews />} />
+                                <Route path="knowledge" element={<AdminKnowledge />} />
+                                <Route path="media" element={<AdminMedia />} />
+                                <Route path="users" element={<AdminUsers />} />
+                                <Route path="ads" element={<AdminAds />} />
+                                <Route path="seo" element={<AdminSEO />} />
+                                <Route path="debug" element={<AdminDebug />} />
+                            </Route>
+
+                            {/* Coach Panel Layout */}
+                            <Route path="/coach" element={<CoachLayout />}>
+                                <Route index element={<CoachDashboard />} />
+                                <Route path="clients" element={<CoachClients />} />
+                                <Route path="chat" element={<CoachChat />} />
+                                <Route path="plans" element={<CoachPlans />} />
+                            </Route>
+                        </Routes>
+                    </SiteLock>
+                </BrowserRouter>
+            </AuthProvider>
+        </HelmetProvider>
     );
 }
 

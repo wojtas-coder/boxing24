@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import HeroCarousel from '../components/HeroCarousel';
 import { ArrowRight, Star, Trophy, Users, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import SEOMetadata from '../components/common/SEOMetadata';
 
 const TickerTape = () => {
     return (
@@ -33,6 +34,7 @@ const HomePage = () => {
 
     return (
         <div className="w-full bg-black min-h-screen">
+            <SEOMetadata />
             {/* 1. HERO CAROUSEL */}
             <HeroCarousel />
 
