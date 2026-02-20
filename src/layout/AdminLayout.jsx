@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Newspaper, Users, LogOut, Menu, X,
     Shield, BarChart3, Megaphone, Settings, BookOpen,
-    Image as ImageIcon, Send
+    Image as ImageIcon, Send, Calendar
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
@@ -17,6 +17,7 @@ const AdminLayout = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Pulpit', path: '/admin' },
         { icon: BarChart3, label: 'Analityka', path: '/admin/stats' },
+        { icon: Calendar, label: 'Rezerwacje', path: '/admin/bookings' },
         { icon: Newspaper, label: 'Newsroom', path: '/admin/news' },
         { icon: BookOpen, label: 'Wiedza', path: '/admin/knowledge' },
         { icon: ImageIcon, label: 'Galeria', path: '/admin/media' },

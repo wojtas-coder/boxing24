@@ -22,6 +22,7 @@ import AdminStats from './components/admin/modules/AdminStats';
 import AdminAds from './components/admin/modules/AdminAds';
 import AdminSEO from './components/admin/modules/AdminSEO';
 import AdminEmail from './components/admin/modules/AdminEmail';
+import AdminBookings from './components/admin/modules/AdminBookings';
 
 import CoachLayout from './layout/CoachLayout';
 import CoachDashboard from './pages/coach/Dashboard';
@@ -82,6 +83,7 @@ function App() {
                             <Route path="/admin" element={<AdminLayout />}>
                                 <Route index element={<AdminDashboard />} />
                                 <Route path="stats" element={<AdminStats />} />
+                                <Route path="bookings" element={<AdminBookings />} />
                                 <Route path="news" element={<AdminNews />} />
                                 <Route path="knowledge" element={<AdminKnowledge />} />
                                 <Route path="media" element={<AdminMedia />} />
