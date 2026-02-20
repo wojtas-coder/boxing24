@@ -1,22 +1,24 @@
-import b24Tshirt from '../assets/shop/boxing24-tshirt.png';
-import b24Hoodie from '../assets/shop/boxing24-hoodie.png';
-import b24Gloves from '../assets/shop/boxing24-gloves.png';
-import punchinPads from '../assets/shop/punchin-pads.png';
-import punchinBag from '../assets/shop/punchin-bag.png';
-import punchinWraps from '../assets/shop/punchin-wraps.png';
-import punchinPaddles from '../assets/shop/punchin-paddles.png';
-import punchinPaddlesLightning from '../assets/shop/punchin-paddles-lightning.png';
-import punchinAirMitts from '../assets/shop/punchin-airmitts.png';
-import punchinBomber from '../assets/shop/punchin-bomber.png';
-import punchinTeeGraphic from '../assets/shop/punchin-tee-graphic.png';
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 
-export const products = [
+dotenv.config({ path: '.env.production' });
+
+const supabase = createClient(
+    process.env.VITE_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
+);
+
+// Pół-rękopis produktów na podstawie products.js
+const mockProducts = [
     {
         id: 'b24-gloves-viking',
         brand: 'BOXING24',
         name: 'The Viking Pro Gloves',
         price: '649 PLN',
-        image: b24Gloves,
+        image: 'boxing24-gloves.png',
         badge: 'DESIGNED BY B24',
         shortDesc: 'Oficjalne rękawice systemu Boxing24. Zaprojektowane dla maksymalnej ochrony i siły uderzenia.',
         verdict: 'Nasza odpowiedź na japońskie Winningi. Połączyliśmy bezpieczeństwo z twardością meksykańskiej skóry.',
@@ -33,7 +35,7 @@ export const products = [
         brand: 'PunchIn\'™',
         name: 'Street Bomber Jacket',
         price: '499 PLN',
-        image: punchinBomber,
+        image: 'punchin-bomber.png',
         badge: 'NEW DROP',
         shortDesc: 'Klasyczny krój bomberki z systemem wentylacji. Haftowane logo na plecach.',
         verdict: 'Ikona stylu. Z siłowni prosto na miasto w wielkim stylu.',
@@ -50,7 +52,7 @@ export const products = [
         brand: 'PunchIn\'™',
         name: 'Shockwave Air Mitts',
         price: '599 PLN',
-        image: punchinAirMitts,
+        image: 'punchin-airmitts.png',
         badge: 'PRO COACH',
         shortDesc: 'Tarcze powietrzne tłumiące najpotężniejsze uderzenia. Ochrona stawów level max.',
         verdict: 'Koniec z bólem barków po tarczowaniu wagi ciężkiej. Powietrze wykonuje robotę za Ciebie.',
@@ -67,7 +69,7 @@ export const products = [
         brand: 'PunchIn\'⚡',
         name: 'Speed Paddles PRO',
         price: '299 PLN',
-        image: punchinPaddlesLightning,
+        image: 'punchin-paddles-lightning.png',
         badge: 'LIGHTNING EDITION',
         shortDesc: 'Limitowana edycja z systemem "Snap Sound". Piorunująca szybkość.',
         verdict: 'Wersja dla tych, którzy chcą być słyszani i widziani. Design + performance.',
@@ -84,7 +86,7 @@ export const products = [
         brand: 'PunchIn\'™',
         name: 'Speed Paddles',
         price: '249 PLN',
-        image: punchinPaddles,
+        image: 'punchin-paddles.png',
         badge: 'SPEED TOOL',
         shortDesc: 'Packi trenerskie do budowania szybkości i refleksu. Precyzja chirurga.',
         verdict: 'Narzędzie, które zmusza zawodnika do myślenia. Szybsze niż tradycyjne tarcze.',
@@ -101,7 +103,7 @@ export const products = [
         brand: 'PunchIn\'™',
         name: 'Graffiti Street Tee',
         price: '149 PLN',
-        image: punchinTeeGraphic,
+        image: 'punchin-tee-graphic.png',
         badge: 'LIMITED',
         shortDesc: 'Streetwearowy t-shirt z "brudnym" printem. Surowy klimat podziemia.',
         verdict: 'To nie jest koszulka na siłownię. To deklaracja przynależności.',
@@ -118,7 +120,7 @@ export const products = [
         brand: 'BOXING24',
         name: 'Elite Performance Hoodie',
         price: '349 PLN',
-        image: b24Hoodie,
+        image: 'boxing24-hoodie.png',
         badge: 'STREET WEAR',
         shortDesc: 'Bluza, która mówi wszystko zanim wejdziesz na salę. Gruba bawełna, bezkompromisowy styl.',
         verdict: 'Idealna na chłodne poranki przed bieganiem i wyjście po ciężkim sparingu.',
@@ -135,7 +137,7 @@ export const products = [
         brand: 'BOXING24',
         name: 'Pro Performance Tee',
         price: '199 PLN',
-        image: b24Tshirt,
+        image: 'boxing24-tshirt.png',
         badge: 'TRAINING ESSENTIAL',
         shortDesc: 'Technologiczna perfekcja. Minimalistyczny design, maksymalna wydajność.',
         verdict: 'Twoja druga skóra. Nie krępuje ruchów, oddycha, wygląda zabójczo.',
@@ -152,7 +154,7 @@ export const products = [
         brand: 'PunchIn\'™',
         name: 'Impact Heavy Bag',
         price: '899 PLN',
-        image: punchinBag,
+        image: 'punchin-bag.png',
         badge: 'IMPACT SERIES',
         shortDesc: 'Stworzony, by przyjmować najcięższe bomby. Worek, który nie wybacza błędów.',
         verdict: 'Idealny do budowania siły niszczącej. Strefy uderzeń (1-2-3) wymuszają precyzję.',
@@ -169,7 +171,7 @@ export const products = [
         brand: 'PunchIn\'™',
         name: 'Precision Focus Mitts',
         price: '399 PLN',
-        image: punchinPads,
+        image: 'punchin-pads.png',
         badge: 'COACH TOOL',
         shortDesc: 'Przedłużenie ręki trenera. Wyprofilowane, lekkie, szybkie.',
         verdict: 'Dla trenerów, którzy cenią swoje stawy łokciowe. Absorpcja uderzeń poziom Master.',
@@ -186,7 +188,7 @@ export const products = [
         brand: 'PunchIn\'™',
         name: 'Gel Tech Wraps',
         price: '79 PLN',
-        image: punchinWraps,
+        image: 'punchin-wraps.png',
         badge: 'QUICK WRAP',
         shortDesc: 'Ochrona kostek w 10 sekund. Alternatywa dla tradycyjnego bandażowania.',
         verdict: 'Kiedy nie masz czasu na owijanie, a chcesz zadbać o dłonie.',
@@ -251,3 +253,75 @@ export const products = [
         ]
     }
 ];
+
+// Omijanie wstrzykiwania do CommonJS
+const __dirname = path.resolve();
+
+async function migrateProducts() {
+    console.log('Rozpoczynam migrację produktów do Supabase...');
+
+    for (const item of mockProducts) {
+        let imageUrlToSave = item.image;
+
+        // Jeśli to nie jest URL zewnętrzny, wrzucamy na Supabase Storage
+        if (!item.image.startsWith('http')) {
+            const localPath = path.join(__dirname, 'src', 'assets', 'shop', item.image);
+
+            if (fs.existsSync(localPath)) {
+                console.log(`Uploading file ${item.image}...`);
+                const fileBuffer = fs.readFileSync(localPath);
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('products')
+                    .upload(`cover_${item.image}`, fileBuffer, {
+                        contentType: 'image/png',
+                        upsert: true
+                    });
+
+                if (uploadError) {
+                    console.error(`Błąd w czasie uploadu zdjęcia ${item.image}:`, uploadError.message);
+                } else {
+                    const { data: publicUrlData } = supabase.storage
+                        .from('products')
+                        .getPublicUrl(`cover_${item.image}`);
+
+                    imageUrlToSave = publicUrlData.publicUrl;
+                    console.log(`Success upload: ${imageUrlToSave}`);
+                }
+            } else {
+                console.warn(`File not found: ${localPath}`);
+            }
+        }
+
+        // Wstawiamy produkt do bazy z wygenerowanym imageUrl
+        const payload = {
+            slug: item.id,
+            brand: item.brand,
+            name: item.name,
+            price: item.price,
+            image_url: imageUrlToSave,
+            badge: item.badge,
+            short_desc: item.shortDesc,
+            verdict: item.verdict,
+            deep_dive: item.deepDive,
+            stress_test: item.stressTest,
+            specs: item.specs,
+            is_active: true
+        };
+
+        const { data, error } = await supabase
+            .from('products')
+            .upsert([payload], { onConflict: 'slug' })
+            .select();
+
+        if (error) {
+            console.error(`DB Insert Error dla ${item.name}:`, error.message);
+        } else {
+            console.log(`Zapisano w bazie obiekt: ${item.name}`);
+        }
+    }
+
+    console.log('Migracja zakończona.');
+}
+
+migrateProducts();

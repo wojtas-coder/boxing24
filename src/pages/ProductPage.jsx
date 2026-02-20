@@ -1,14 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products } from '../data/products';
-import { ChevronLeft, Star, ShieldCheck, Zap, Activity } from 'lucide-react';
+import { ChevronLeft, Star, ShieldCheck, Zap, Activity, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabaseClient';
 
 const ProductPage = () => {
-    const { id } = useParams();
-    const product = products.find(p => p.id === id);
+    const { id } = useParams(); // URL slug
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    if (!product) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Produkt nie znaleziony.</div>;
+    useEffect(() => {
+        fetchProduct();
+    }, [id]);
+
+    const fetchProduct = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq('slug', id)
+                .single();
+
+            if (error) throw error;
+            setProduct(data);
+        } catch (error) {
+            console.error('Error fetching product:', error);
+            setProduct(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-boxing-green" />
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center flex-col gap-4">
+                <div className="text-xl">Produkt nie znaleziony.</div>
+                <Link to="/boutique" className="text-boxing-green hover:underline">Wróć do Sklepu</Link>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-black pt-32 pb-20 px-4">
@@ -25,15 +63,17 @@ const ProductPage = () => {
                         animate={{ opacity: 1, x: 0 }}
                         className="relative"
                     >
-                        <div className="aspect-square bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800">
-                            <div className="absolute top-6 left-6 z-10 bg-boxing-green text-white text-xs font-black uppercase px-4 py-2 tracking-widest shadow-lg">
-                                {product.badge}
-                            </div>
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                        <div className="aspect-square bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 flex items-center justify-center">
+                            {product.badge && (
+                                <div className="absolute top-6 left-6 z-10 bg-boxing-green text-white text-xs font-black uppercase px-4 py-2 tracking-widest shadow-lg">
+                                    {product.badge}
+                                </div>
+                            )}
+                            <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
                         </div>
                         {/* Specs Grid */}
                         <div className="grid grid-cols-2 gap-4 mt-8">
-                            {product.specs.map((spec, i) => (
+                            {product.specs?.map((spec, i) => (
                                 <div key={i} className="bg-zinc-900/50 p-4 rounded-lg border border-white/5">
                                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">{spec.label}</div>
                                     <div className="text-white font-bold">{spec.value}</div>
@@ -72,13 +112,13 @@ const ProductPage = () => {
                                 <h3 className="text-white font-bold uppercase tracking-widest text-sm mb-3 flex items-center gap-2">
                                     <Zap className="w-4 h-4 text-boxing-green" /> Technical Deep Dive
                                 </h3>
-                                <p>{product.deepDive}</p>
+                                <p>{product.deep_dive}</p>
                             </div>
                             <div>
                                 <h3 className="text-white font-bold uppercase tracking-widest text-sm mb-3 flex items-center gap-2">
                                     <Activity className="w-4 h-4 text-boxing-green" /> Stress Test (12mc)
                                 </h3>
-                                <p>{product.stressTest}</p>
+                                <p>{product.stress_test}</p>
                             </div>
                         </div>
 
