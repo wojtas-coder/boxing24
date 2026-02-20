@@ -14,22 +14,26 @@ const NewsletterBox = ({ variant = 'default' }) => {
 
         setStatus('loading');
         try {
-            const { data, error } = await supabase
-                .from('subscribers')
-                .insert([{ email }]);
+            const response = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
 
-            if (error) {
-                console.error('Newsletter Signup Detailed Error:', error);
-                if (error.code === '23505') {
-                    setMessage('Ten email jest już w naszej bazie.');
-                } else {
-                    throw error;
-                }
-                setStatus('error');
+            const result = await response.json();
+
+            if (!response.ok) {
+                console.error('Newsletter API Error:', result.error);
+                throw new Error(result.error || 'Błąd zapisu');
+            }
+
+            if (result.duplicate) {
+                setMessage(result.message);
+                setStatus('error'); // or 'success' depending on UX wanted. Let's keep error styling or duplicate info
             } else {
-                console.log('Newsletter Signup Success:', data);
+                console.log('Newsletter Signup Success:', result.message);
                 setStatus('success');
-                setMessage('Dziękujemy! Zostałeś zapisany do newslettera.');
+                setMessage(result.message || 'Dziękujemy! Oczekuj pierwszej wiadomości w swojej skrzynce.');
                 setEmail('');
             }
         } catch (err) {
