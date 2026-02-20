@@ -47,7 +47,7 @@ const AdminEmail = () => {
         setSuccessMsg('');
 
         try {
-            const response = await fetch('/api/send-newsletter', {
+            const response = await fetch('/api/newsletter', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
