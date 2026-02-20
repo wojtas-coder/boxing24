@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabaseData as supabase } from '../../lib/supabaseClient';
-import { Image as ImageIcon, Trash2, Copy, AlertCircle, RefreshCw, Upload, FileImageIcon } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Copy, AlertCircle, RefreshCw, Upload, FileImageIcon, X } from 'lucide-react';
 import ImageUploader from '../../components/common/ImageUploader';
 
 const AdminMedia = () => {
