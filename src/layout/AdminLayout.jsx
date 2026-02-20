@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, Users, LogOut, Menu, X, Shield, BarChart3, Megaphone, Settings, BookOpen, Image as ImageIcon } from 'lucide-react';
+import { LayoutDashboard, Newspaper, Users, LogOut, Menu, X, Shield, BarChart3, Megaphone, Settings, BookOpen, Image as ImageIcon, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
