@@ -1,23 +1,16 @@
--- Create a new storage bucket for news images
-insert into storage.buckets (id, name, public)
-values ('news-images', 'news-images', true)
+-- TWORZENIE BUCKETU 'media' DLA WGRYWANYCH ZDJĘĆ
+insert into storage.buckets (id, name, public) 
+values ('media', 'media', true) 
 on conflict (id) do nothing;
 
--- Allow public access to view images
-create policy "Public Access"
+-- POLITYKA: Zezwól na wrzucanie plików wszystkim zalogowanym (lub ogólnie)
+-- W Supabase, storage.objects to tabela z plikami
+create policy "Public Access (Odczyt)"
 on storage.objects for select
-using ( bucket_id = 'news-images' );
+to public
+using ( bucket_id = 'media' );
 
--- Allow authenticated users (admins) to upload images
-create policy "Admin Upload"
+create policy "Auth Insert (Wgrywanie)"
 on storage.objects for insert
-with check ( bucket_id = 'news-images' AND auth.role() = 'authenticated' );
-
--- Allow authenticated users to update/delete (optional for managing)
-create policy "Admin Update"
-on storage.objects for update
-using ( bucket_id = 'news-images' AND auth.role() = 'authenticated' );
-
-create policy "Admin Delete"
-on storage.objects for delete
-using ( bucket_id = 'news-images' AND auth.role() = 'authenticated' );
+to anon, authenticated
+with check ( bucket_id = 'media' );

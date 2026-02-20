@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabaseData as supabase } from '../../lib/supabaseClient';
-import { RefreshCw, Plus, Trash2, Edit, Search, ImageOff, ExternalLink, GraduationCap, Star } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Edit, Search, ImageOff, ExternalLink, GraduationCap, Star, Database } from 'lucide-react';
 import KnowledgeEditor from '../../components/knowledge/KnowledgeEditor';
 
 const AdminKnowledge = () => {
@@ -52,6 +52,37 @@ const AdminKnowledge = () => {
         }
     };
 
+    const handleMigrate = async () => {
+        if (!window.confirm('UWAGA: Ta opcja skopiuje na sztywno stare artykuły z plików na dysku do bazy danych. Spowoduje to nadpisanie (lub zduplikowanie) wpisów, jeśli zrobisz to drugi raz. Kontynuować?')) return;
+        setLoading(true);
+        try {
+            const { articles: localArticles } = await import('../../data/articles.js');
+            let toInsert = localArticles.map(a => ({
+                title: a.title || 'Bez tytułu',
+                slug: (a.id || Date.now().toString()),
+                excerpt: a.excerpt || '',
+                content: a.content || '<p>Brak treści</p>',
+                category: a.category || 'Trening',
+                image_url: a.image || '',
+                author_name: 'Redakcja',
+                is_premium: !!a.isPremium,
+                difficulty_level: a.difficulty || 'Początkujący'
+            }));
+
+            // In Supabase, inserting multiple rows in one query
+            const { error } = await supabase.from('knowledge_articles').upsert(toInsert, { onConflict: 'slug' });
+            if (error) throw error;
+
+            alert('Migracja przebiegła pomyślnie! Odświeżam listę...');
+            fetchArticles();
+        } catch (err) {
+            console.error('Migration failed:', err);
+            alert('Błąd podczas migracji: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const filteredArticles = articles.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.slug.toLowerCase().includes(searchTerm.toLowerCase())
@@ -84,6 +115,13 @@ const AdminKnowledge = () => {
                     </div>
 
                     <div className="flex gap-2">
+                        <button
+                            onClick={handleMigrate}
+                            className="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-3 font-bold flex items-center gap-2 rounded-xl transition-all tracking-wider text-xs border border-zinc-700"
+                            title="Przenieś stare artykuły z kodu do bazy"
+                        >
+                            <Database className="w-4 h-4" /> <span className="hidden md:inline">Zmigruj Skrypt</span>
+                        </button>
                         <button
                             onClick={() => { setCurrentArticle(null); setIsEditorOpen(true); }}
                             className="bg-boxing-green hover:bg-[#b0f020] text-black px-6 py-3 font-bold flex items-center gap-2 rounded-xl shadow-[0_0_20px_rgba(204,255,0,0.2)] hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all uppercase tracking-wider text-sm"

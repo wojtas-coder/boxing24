@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabaseData as supabase } from '../../lib/supabaseClient';
 import { Save, Eye, X, Image as ImageIcon, AlertCircle, RefreshCw, GraduationCap } from 'lucide-react';
+import RichTextEditor from '../common/RichTextEditor';
+import ImageUploader from '../common/ImageUploader';
 
 const KnowledgeEditor = ({ article, onClose, onSave }) => {
     const queryClient = useQueryClient();
@@ -184,21 +186,14 @@ const KnowledgeEditor = ({ article, onClose, onSave }) => {
 
                     {/* Image Section */}
                     <div className="space-y-2 bg-zinc-800/30 p-4 rounded-lg border border-zinc-800">
-                        <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider flex items-center gap-2">
-                            <ImageIcon size={14} /> Zdjęcie Główne (URL)
+                        <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider flex items-center gap-2 mb-2">
+                            <ImageIcon size={14} /> Zdjęcie Główne
                         </label>
-                        <input
-                            name="image_url"
-                            value={formData.image_url}
-                            onChange={handleChange}
-                            placeholder="https://..."
-                            className="w-full bg-black border border-zinc-700 p-2 text-white text-sm rounded focus:border-boxing-green outline-none transition-colors font-mono"
+                        <ImageUploader
+                            currentImage={formData.image_url}
+                            bucketName="media"
+                            onUploadSuccess={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
                         />
-                        {formData.image_url && !imageError && (
-                            <div className="mt-4 h-32 w-48 overflow-hidden rounded bg-black flex items-center justify-center border border-zinc-800 relative mx-auto">
-                                <img src={formData.image_url} alt="Preview" className="h-full object-cover" onError={() => setImageError(true)} />
-                            </div>
-                        )}
                     </div>
 
                     {/* Excerpt */}
@@ -229,22 +224,27 @@ const KnowledgeEditor = ({ article, onClose, onSave }) => {
                     {/* Content Logic Based on Toggle */}
                     {formData.has_dual_version ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/5 pt-6">
-                            <div className="space-y-2">
-                                <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider text-boxing-green">Wersja FREE (Brief Taktyczny) - HTML</label>
-                                <textarea name="free_content" value={formData.free_content} onChange={handleChange} rows="15" className="w-full bg-black border border-zinc-700 p-3 text-white font-mono text-sm rounded focus:border-boxing-green outline-none" />
+                            <div className="space-y-4">
+                                <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider text-boxing-green">Wersja FREE (Brief Taktyczny)</label>
+                                <RichTextEditor
+                                    value={formData.free_content}
+                                    onChange={(val) => setFormData(prev => ({ ...prev, free_content: val }))}
+                                />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider text-indigo-400">Wersja PREMIUM (Pełny Raport) - HTML</label>
-                                <textarea name="premium_content" value={formData.premium_content} onChange={handleChange} rows="15" className="w-full bg-indigo-950/20 border border-indigo-500/50 p-3 text-white font-mono text-sm rounded focus:border-indigo-500 outline-none" />
+                            <div className="space-y-4">
+                                <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider text-indigo-400">Wersja PREMIUM (Pełny Raport)</label>
+                                <RichTextEditor
+                                    value={formData.premium_content}
+                                    onChange={(val) => setFormData(prev => ({ ...prev, premium_content: val }))}
+                                />
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-2 border-t border-white/5 pt-6">
-                            <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider">Główna Treść Artykułu (HTML)</label>
-                            <textarea
-                                name="content" value={formData.content} onChange={handleChange} rows="15"
-                                placeholder="Pełna treść artykułu. Możesz używać znaczników HTML <p>, <h2>, <ul>..."
-                                className="w-full bg-black border border-zinc-700 p-3 text-white font-mono text-sm rounded focus:border-boxing-green outline-none transition-colors"
+                            <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider">Główna Treść Artykułu</label>
+                            <RichTextEditor
+                                value={formData.content}
+                                onChange={(val) => setFormData(prev => ({ ...prev, content: val }))}
                             />
                         </div>
                     )}
