@@ -16,6 +16,7 @@ const AdminLayout = () => {
         { icon: BookOpen, label: 'Wiedza', path: '/admin/knowledge' },
         { icon: ImageIcon, label: 'Galeria', path: '/admin/media' },
         { icon: Users, label: 'Użytkownicy', path: '/admin/users' },
+        { icon: Mail, label: 'Newsletter', path: '/admin/email' },
         { icon: Megaphone, label: 'Kampanie', path: '/admin/ads' },
         { icon: Settings, label: 'SEO & Config', path: '/admin/seo' },
     ];

@@ -21,6 +21,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminStats from './components/admin/modules/AdminStats';
 import AdminAds from './components/admin/modules/AdminAds';
 import AdminSEO from './components/admin/modules/AdminSEO';
+import AdminEmail from './components/admin/modules/AdminEmail';
 
 import CoachLayout from './layout/CoachLayout';
 import CoachDashboard from './pages/coach/Dashboard';
@@ -87,6 +88,7 @@ function App() {
                                 <Route path="users" element={<AdminUsers />} />
                                 <Route path="ads" element={<AdminAds />} />
                                 <Route path="seo" element={<AdminSEO />} />
+                                <Route path="email" element={<AdminEmail />} />
                                 <Route path="debug" element={<AdminDebug />} />
                             </Route>
 

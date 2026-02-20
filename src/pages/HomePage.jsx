@@ -4,6 +4,7 @@ import HeroCarousel from '../components/HeroCarousel';
 import { ArrowRight, Star, Trophy, Users, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SEOMetadata from '../components/common/SEOMetadata';
+import NewsletterBox from '../components/common/NewsletterBox';
 
 const TickerTape = () => {
     return (
@@ -85,6 +86,8 @@ const HomePage = () => {
                     </div>
                 </div>
             </section>
+
+            <NewsletterBox />
 
             {/* 4. CALL TO ACTION */}
             <section className="py-20 md:py-32 px-4 border-t border-white/5 bg-[#050505] text-center">
