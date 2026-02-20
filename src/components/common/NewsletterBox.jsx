@@ -14,11 +14,12 @@ const NewsletterBox = ({ variant = 'default' }) => {
 
         setStatus('loading');
         try {
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('subscribers')
                 .insert([{ email }]);
 
             if (error) {
+                console.error('Newsletter Signup Detailed Error:', error);
                 if (error.code === '23505') {
                     setMessage('Ten email jest już w naszej bazie.');
                 } else {
@@ -26,6 +27,7 @@ const NewsletterBox = ({ variant = 'default' }) => {
                 }
                 setStatus('error');
             } else {
+                console.log('Newsletter Signup Success:', data);
                 setStatus('success');
                 setMessage('Dziękujemy! Zostałeś zapisany do newslettera.');
                 setEmail('');
@@ -125,8 +127,8 @@ const NewsletterBox = ({ variant = 'default' }) => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0 }}
                                 className={`mt-6 p-4 rounded-xl border flex items-center gap-3 justify-center ${status === 'success'
-                                        ? 'bg-green-500/10 border-green-500/20 text-green-500'
-                                        : 'bg-red-500/10 border-red-500/20 text-red-500'
+                                    ? 'bg-green-500/10 border-green-500/20 text-green-500'
+                                    : 'bg-red-500/10 border-red-500/20 text-red-500'
                                     }`}
                             >
                                 {status === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
