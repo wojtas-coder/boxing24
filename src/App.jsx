@@ -22,6 +22,7 @@ import AdminStats from './components/admin/modules/AdminStats';
 import AdminAds from './components/admin/modules/AdminAds';
 import AdminSettings from './components/admin/modules/AdminSettings';
 import AdminNavigation from './components/admin/modules/AdminNavigation';
+import AdminFooter from './components/admin/modules/AdminFooter';
 import AdminEmail from './components/admin/modules/AdminEmail';
 import AdminBookings from './components/admin/modules/AdminBookings';
 import AdminBoutique from './components/admin/modules/AdminBoutique';
@@ -98,6 +99,7 @@ function App() {
                                     <Route path="ads" element={<AdminAds />} />
                                     <Route path="config" element={<AdminSettings />} />
                                     <Route path="navigation" element={<AdminNavigation />} />
+                                    <Route path="footer" element={<AdminFooter />} />
                                     <Route path="email" element={<AdminEmail />} />
                                     <Route path="debug" element={<AdminDebug />} />
                                 </Route>

@@ -9,13 +9,10 @@ const Footer = () => {
     const { settings } = useSettings();
     const currentYear = new Date().getFullYear();
 
-    const quickLinks = [
-        { label: 'Newsy', to: '/news' },
-        { label: 'Kalendarz', to: '/calendar' },
-        { label: 'Rezerwacja', to: '/booking' },
-        { label: 'Wiedza', to: '/knowledge' },
-        { label: 'Członkostwo', to: '/membership' },
-        { label: 'Sklep', to: '/boutique' },
+    const quickLinks = settings?.footer_menu?.quick_links || [];
+    const bottomLinks = settings?.footer_menu?.bottom_links || [
+        { id: "b1", label: "Polityka Prywatności", path: "/privacy" },
+        { id: "b2", "label": "Regulamin", path: "/terms" }
     ];
 
     return (
@@ -57,8 +54,8 @@ const Footer = () => {
                         <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-6">Nawigacja</h4>
                         <ul className="space-y-3">
                             {quickLinks.map(link => (
-                                <li key={link.to}>
-                                    <Link to={link.to} className="text-zinc-400 text-sm hover:text-white transition-colors">
+                                <li key={link.id}>
+                                    <Link to={link.path} className="text-zinc-400 text-sm hover:text-white transition-colors">
                                         {link.label}
                                     </Link>
                                 </li>
@@ -107,8 +104,11 @@ const Footer = () => {
                         © {currentYear} {settings.company_name || 'Boxing24'}. Wszystkie prawa zastrzeżone.
                     </p>
                     <div className="flex gap-6 text-zinc-600 text-xs">
-                        <Link to="/privacy" className="hover:text-zinc-400 transition-colors">Polityka Prywatności</Link>
-                        <Link to="/terms" className="hover:text-zinc-400 transition-colors">Regulamin</Link>
+                        {bottomLinks.map(link => (
+                            <Link key={link.id} to={link.path} className="hover:text-zinc-400 transition-colors">
+                                {link.label}
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </div>
