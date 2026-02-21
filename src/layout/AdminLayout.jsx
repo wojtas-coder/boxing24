@@ -24,6 +24,7 @@ const AdminLayout = () => {
         { icon: BookOpen, label: 'Wiedza', path: '/admin/knowledge' },
         { icon: ImageIcon, label: 'Galeria', path: '/admin/media' },
         { icon: Users, label: 'Użytkownicy', path: '/admin/users' },
+        { icon: Users, label: 'Kadra', path: '/admin/coaches' },
         { icon: Send, label: 'Newsletter', path: '/admin/email' },
         { icon: Megaphone, label: 'Kampanie', path: '/admin/ads' },
         { icon: Menu, label: 'Nawigacja', path: '/admin/navigation' },

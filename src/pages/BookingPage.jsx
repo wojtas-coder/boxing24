@@ -1,12 +1,35 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, ArrowRight, MapPin } from 'lucide-react';
-import { coaches } from '../data/coaches';
+import { supabase } from '../lib/supabaseClient';
 import BookingCalendar from '../components/BookingCalendar';
 
 const BookingPage = () => {
     const [step, setStep] = useState('coach_selection'); // coach_selection, calendar, success
     const [selectedCoach, setSelectedCoach] = useState(null);
+    const [coaches, setCoaches] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCoaches = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('coaches')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('order_index', { ascending: true })
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+                setCoaches(data || []);
+            } catch (err) {
+                console.error("Error fetching coaches:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCoaches();
+    }, []);
 
     // --- VIEW: COACH SELECTION ---
     if (step === 'coach_selection') return (
@@ -134,7 +157,7 @@ const BookingPage = () => {
                         <p className="text-zinc-400 mb-8">System rezerwacji online.</p>
 
                         <BookingCalendar
-                            calLink={selectedCoach.calLink}
+                            calLink={selectedCoach.cal_link}
                             onBookingSuccess={() => setStep('success')}
                         />
                     </div>
