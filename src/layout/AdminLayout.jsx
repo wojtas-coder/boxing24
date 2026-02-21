@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Newspaper, Users, LogOut, Menu, X,
     Shield, BarChart3, Megaphone, Settings, BookOpen,
-    Image as ImageIcon, Send, Calendar, ShoppingBag
+    Image as ImageIcon, Send, Calendar, CalendarDays, ShoppingBag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
@@ -19,6 +19,7 @@ const AdminLayout = () => {
         { icon: BarChart3, label: 'Analityka', path: '/admin/stats' },
         { icon: ShoppingBag, label: 'Sklep', path: '/admin/boutique' },
         { icon: Calendar, label: 'Rezerwacje', path: '/admin/bookings' },
+        { icon: CalendarDays, label: 'Kalendarz', path: '/admin/calendar' },
         { icon: Newspaper, label: 'Newsroom', path: '/admin/news' },
         { icon: BookOpen, label: 'Wiedza', path: '/admin/knowledge' },
         { icon: ImageIcon, label: 'Galeria', path: '/admin/media' },

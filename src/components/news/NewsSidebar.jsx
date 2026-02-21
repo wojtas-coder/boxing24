@@ -3,37 +3,30 @@ import { Trophy, Calendar, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { articles } from '../../data/articles';
-import { calendarEvents as mockEvents } from '../../data/calendarData';
 import fileNews from '../../data/news.json';
-import fileEvents from '../../data/calendar.json';
 
 const NewsSidebar = () => {
-    // START WITH ROBUST DEFAULTS (File System)
-    const [events, setEvents] = useState(mockEvents);
+    const [events, setEvents] = useState([]);
     const [popular, setPopular] = useState(fileNews.slice(0, 5));
     const [calendarFilter, setCalendarFilter] = useState('PRO'); // Default PRO for Sidebar
 
     useEffect(() => {
         const fetchData = async () => {
-            // 1. Fetch Calendar (File + Mock)
-            // Priority: File Events
-            let combinedEvents = Array.isArray(fileEvents) ? [...fileEvents] : [];
+            // 1. Fetch Calendar from Supabase
+            try {
+                const { data, error } = await supabase
+                    .from('calendar_events')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('date', { ascending: true });
 
-            // Add mocks if not duplicate
-            mockEvents.forEach(m => {
-                const exists = combinedEvents.find(f => f.title === m.title);
-                if (!exists) combinedEvents.push(m);
-            });
-
-            // Sort by Date
-            combinedEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-            // Filter out past
-            const now = new Date();
-            combinedEvents = combinedEvents.filter(e => new Date(e.date) >= now);
-
-            if (combinedEvents.length > 0) {
-                setEvents(combinedEvents);
-            }
+                if (!error && data) {
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    const futureEvents = data.filter(e => new Date(e.date) >= now);
+                    setEvents(futureEvents);
+                }
+            } catch (e) { }
 
             // 2. Fetch Popular (Real View Data from Supabase)
             try {
@@ -72,9 +65,9 @@ const NewsSidebar = () => {
     // Filter events for display
     const displayedEvents = events
         .filter(e => {
-            if (calendarFilter === 'PRO') return e.category === 'PRO' || e.type === 'PRO' || e.category === 'HEAVYWEIGHT';
-            // Amateur/Olympic
-            return e.category === 'AMATEUR' || e.type === 'AMATEUR' || e.category === 'OLYMPIC' || e.type === 'OLYMPIC';
+            if (calendarFilter === 'PRO') return e.type === 'PRO';
+            // Amateur/Olympic/Special
+            return e.type !== 'PRO';
         })
         .slice(0, 5); // Take top 5 of filtered
 

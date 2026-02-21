@@ -1,35 +1,40 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar as CalendarIcon, MapPin, Trophy, Users, Star, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, Trophy, Users, Star, RefreshCw, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { calendarEvents as mockEvents } from '../data/calendarData';
-import fileEvents from '../data/calendar.json';
+import { supabase } from '../lib/supabaseClient';
 
 const CalendarPage = () => {
-    // Combine File (Fresh) + Mock (Fallback)
-    // De-duplicating by title+date or ID if possible.
-    // File events take precedence.
-    const combinedEvents = [
-        ...(Array.isArray(fileEvents) ? fileEvents : []),
-        ...mockEvents.filter(m => {
-            // Only add mock event if not already in fileEvents (fuzzy match)
-            const exists = Array.isArray(fileEvents) && fileEvents.find(f => f.title === m.title || (new Date(f.date).toDateString() === new Date(m.date).toDateString() && f.location === m.location));
-            return !exists;
-        })
-    ].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-
     const [searchParams] = useSearchParams();
-    const [events, setEvents] = useState(combinedEvents);
+    const [events, setEvents] = useState([]);
     const [filter, setFilter] = useState('PRO'); // Default to PRO
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const view = searchParams.get('view');
         if (view && ['PRO', 'AMATEUR'].includes(view)) {
             setFilter(view);
         }
+
+        const fetchEvents = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('calendar_events')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('date', { ascending: true });
+
+                if (error) throw error;
+                // Filter out past events
+                const futureEvents = (data || []).filter(e => new Date(e.date) >= new Date(new Date().setHours(0, 0, 0, 0)));
+                setEvents(futureEvents);
+            } catch (err) {
+                console.error("Error fetching calendar events:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEvents();
     }, [searchParams]);
 
     // Helper to get icon based on event type
@@ -55,8 +60,8 @@ const CalendarPage = () => {
     // Filter and Sort
     const filteredEvents = events
         .filter(e => {
-            if (filter === 'PRO') return (e.category === 'PRO' || e.type === 'PRO' || e.category === 'HEAVYWEIGHT');
-            if (filter === 'AMATEUR') return e.category === 'AMATEUR' || e.type === 'AMATEUR' || e.category === 'OLYMPIC' || e.type === 'OLYMPIC';
+            if (filter === 'PRO') return (e.type === 'PRO');
+            if (filter === 'AMATEUR') return (e.type === 'AMATEUR');
             return true;
         })
         .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -90,69 +95,74 @@ const CalendarPage = () => {
                     </div>
                 </div>
 
-                {/* Timeline / Event List */}
-                <div className="space-y-6 min-h-[400px]">
-                    <AnimatePresence mode="popLayout">
-                        {filteredEvents.length > 0 ? (
-                            filteredEvents.map((event, index) => (
-                                <motion.div
-                                    key={event.id || index}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="group relative border border-white/10 bg-zinc-900/50 p-6 rounded-2xl hover:border-red-600/30 transition-all overflow-hidden"
-                                >
-                                    {/* Hover Gradient */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/0 to-red-600/0 group-hover:via-red-600/5 transition-all duration-500" />
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="w-12 h-12 animate-spin text-red-600" />
+                    </div>
+                ) : (
+                    <div className="space-y-6 min-h-[400px]">
+                        <AnimatePresence mode="popLayout">
+                            {filteredEvents.length > 0 ? (
+                                filteredEvents.map((event, index) => (
+                                    <motion.div
+                                        key={event.id || index}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="group relative border border-white/10 bg-zinc-900/50 p-6 rounded-2xl hover:border-red-600/30 transition-all overflow-hidden"
+                                    >
+                                        {/* Hover Gradient */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/0 to-red-600/0 group-hover:via-red-600/5 transition-all duration-500" />
 
-                                    <div className="flex flex-col md:flex-row md:items-center gap-6 relative z-10">
-                                        {/* Date Box */}
-                                        <div className="flex-shrink-0 w-full md:w-24 h-24 bg-black border border-white/10 rounded-xl flex flex-col justify-center items-center text-center p-2 group-hover:border-red-600/50 transition-colors">
-                                            <span className="text-3xl font-black text-white block leading-none mb-1">
-                                                {new Date(event.date).getDate()}
-                                            </span>
-                                            <span className="text-xs font-bold uppercase text-red-600 tracking-widest">
-                                                {new Date(event.date).toLocaleString('pl-PL', { month: 'short' })}
-                                            </span>
-                                            <span className="text-xs text-zinc-500 mt-1">
-                                                {new Date(event.date).getFullYear()}
-                                            </span>
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="flex-grow">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getTypeColor(event.category || event.type)}`}>
-                                                    {event.category || event.type}
+                                        <div className="flex flex-col md:flex-row md:items-center gap-6 relative z-10">
+                                            {/* Date Box */}
+                                            <div className="flex-shrink-0 w-full md:w-24 h-24 bg-black border border-white/10 rounded-xl flex flex-col justify-center items-center text-center p-2 group-hover:border-red-600/50 transition-colors">
+                                                <span className="text-3xl font-black text-white block leading-none mb-1">
+                                                    {new Date(event.date).getDate()}
                                                 </span>
-                                                <span className="flex items-center gap-1 text-zinc-400 text-xs">
-                                                    <MapPin className="w-3 h-3" />
-                                                    {event.location}
+                                                <span className="text-xs font-bold uppercase text-red-600 tracking-widest">
+                                                    {new Date(event.date).toLocaleString('pl-PL', { month: 'short' })}
+                                                </span>
+                                                <span className="text-xs text-zinc-500 mt-1">
+                                                    {new Date(event.date).getFullYear()}
                                                 </span>
                                             </div>
-                                            <h3 className="text-xl md:text-2xl font-bold mb-2 group-hover:text-red-500 transition-colors">
-                                                {event.title}
-                                            </h3>
-                                            <p className="text-sm text-zinc-400">
-                                                {event.description || (event.source_url ? <a href={event.source_url} target="_blank" className="hover:text-white underline decoration-zinc-700">Źródło informacji</a> : 'Szczegóły wkrótce')}
-                                            </p>
-                                        </div>
 
-                                        {/* Action Icon */}
-                                        <div className="flex-shrink-0 self-start md:self-center">
-                                            {getEventIcon(event.category || event.type)}
+                                            {/* Content */}
+                                            <div className="flex-grow">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getTypeColor(event.type)}`}>
+                                                        {event.type}
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-zinc-400 text-xs">
+                                                        <MapPin className="w-3 h-3" />
+                                                        {event.location}
+                                                    </span>
+                                                </div>
+                                                <h3 className="text-xl md:text-2xl font-bold mb-2 group-hover:text-red-500 transition-colors">
+                                                    {event.title}
+                                                </h3>
+                                                <p className="text-sm text-zinc-400">
+                                                    {event.description || (event.link ? <a href={event.link} target="_blank" rel="noreferrer" className="hover:text-white underline decoration-zinc-700">Więcej informacji / Źródło</a> : 'Szczegóły wkrótce')}
+                                                </p>
+                                            </div>
+
+                                            {/* Action Icon */}
+                                            <div className="flex-shrink-0 self-start md:self-center">
+                                                {getEventIcon(event.type)}
+                                            </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-                            ))
-                        ) : (
-                            <div className="text-center py-20 text-zinc-500">
-                                <p>Brak nadchodzących wydarzeń w tej kategorii.</p>
-                            </div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                                    </motion.div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 text-zinc-500">
+                                    <p>Brak nadchodzących wydarzeń w tej kategorii.</p>
+                                </div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                )}
 
                 {/* Footer CTA */}
                 <div className="mt-20 p-8 border border-white/10 rounded-2xl bg-zinc-900/30 text-center">

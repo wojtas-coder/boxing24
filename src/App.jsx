@@ -24,6 +24,7 @@ import AdminSEO from './components/admin/modules/AdminSEO';
 import AdminEmail from './components/admin/modules/AdminEmail';
 import AdminBookings from './components/admin/modules/AdminBookings';
 import AdminBoutique from './components/admin/modules/AdminBoutique';
+import AdminCalendar from './components/admin/modules/AdminCalendar';
 
 import CoachLayout from './layout/CoachLayout';
 import CoachDashboard from './pages/coach/Dashboard';
@@ -85,6 +86,7 @@ function App() {
                                 <Route index element={<AdminDashboard />} />
                                 <Route path="stats" element={<AdminStats />} />
                                 <Route path="bookings" element={<AdminBookings />} />
+                                <Route path="calendar" element={<AdminCalendar />} />
                                 <Route path="boutique" element={<AdminBoutique />} />
                                 <Route path="news" element={<AdminNews />} />
                                 <Route path="knowledge" element={<AdminKnowledge />} />
