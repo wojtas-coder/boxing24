@@ -461,7 +461,7 @@ const AdminBoutique = () => {
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Rozmiary (po przecinku)</label>
                                     <input
                                         type="text"
-                                        value={currentProduct.sizes?.join(', ') || ''}
+                                        value={Array.isArray(currentProduct.sizes) ? currentProduct.sizes.join(', ') : (typeof currentProduct.sizes === 'string' ? currentProduct.sizes : '')}
                                         onChange={e => setCurrentProduct({ ...currentProduct, sizes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                                         className="w-full bg-black border border-white/10 rounded p-3 text-white focus:outline-none focus:border-boxing-green transition-colors placeholder:text-gray-700"
                                         placeholder="np. 10oz, 12oz, 14oz LUB S, M, L"
@@ -548,7 +548,7 @@ const AdminBoutique = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    {currentProduct.specs?.map((spec, index) => (
+                                    {Array.isArray(currentProduct.specs) && currentProduct.specs.map((spec, index) => (
                                         <div key={index} className="flex gap-2 items-center">
                                             <input
                                                 type="text"

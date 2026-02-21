@@ -115,7 +115,7 @@ const ProductPage = () => {
                             </div>
                         )}
 
-                        {product.sizes && product.sizes.length > 0 && (
+                        {Array.isArray(product.sizes) && product.sizes.length > 0 && (
                             <div className="mb-8">
                                 <h3 className="text-white font-bold uppercase tracking-widest text-xs mb-3">Wybierz Rozmiar</h3>
                                 <div className="flex flex-wrap gap-2">
@@ -156,8 +156,8 @@ const ProductPage = () => {
                             <button
                                 disabled={product.stock_count <= 0 && !product.is_preorder}
                                 className={`flex-1 py-4 font-bold uppercase tracking-widest transition-colors ${product.stock_count <= 0 && !product.is_preorder
-                                        ? 'bg-zinc-800 text-gray-500 cursor-not-allowed'
-                                        : 'bg-boxing-green text-black hover:bg-green-500'
+                                    ? 'bg-zinc-800 text-gray-500 cursor-not-allowed'
+                                    : 'bg-boxing-green text-black hover:bg-green-500'
                                     }`}
                             >
                                 {product.is_preorder ? 'Zamów w Pre-Order' : (product.stock_count <= 0 ? 'Brak w magazynie' : 'Dodaj do koszyka')}
