@@ -5,6 +5,7 @@ import { ArrowRight, Star, Trophy, Users, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SEOMetadata from '../components/common/SEOMetadata';
 import NewsletterBox from '../components/common/NewsletterBox';
+import TestimonialsSection from '../components/TestimonialsSection';
 
 const TickerTape = () => {
     return (
@@ -89,7 +90,10 @@ const HomePage = () => {
 
             <NewsletterBox />
 
-            {/* 4. CALL TO ACTION */}
+            {/* 4. TESTIMONIALS */}
+            <TestimonialsSection />
+
+            {/* 5. CALL TO ACTION */}
             <section className="py-20 md:py-32 px-4 border-t border-white/5 bg-[#050505] text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-8 text-stroke-white opacity-20">
