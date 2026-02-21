@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Dumbbell, Clock, Target, Shield, Shirt, Droplet, Zap, Heart, Users, Award, Bath, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { coaches } from '../data/coaches';
 import { useSettings } from '../context/SettingsContext';
+import { supabase } from '../lib/supabaseClient';
 
 const PricingCard = ({ title, price, features, tier, recommended, onClick, buttonText }) => {
     return (
@@ -56,6 +56,28 @@ const MembershipPage = () => {
     const navigate = useNavigate();
     const { settings } = useSettings();
     const [activeView, setActiveView] = useState('online'); // 'online' or 'personalne'
+    const [plans, setPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('memberships')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('order_index', { ascending: true });
+
+                if (error) throw error;
+                setPlans(data || []);
+            } catch (err) {
+                console.error("Error fetching memberships:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPlans();
+    }, []);
 
     return (
         <div className="bg-[#050505] min-h-screen pt-24 md:pt-32 pb-20 px-4">
@@ -100,56 +122,33 @@ const MembershipPage = () => {
                 <div className="max-w-7xl mx-auto">
                     {/* PRICING GRID */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-center">
+                        {loading && plans.length === 0 ? (
+                            <div className="col-span-3 text-center py-12 text-zinc-500">Ładowanie pakietów...</div>
+                        ) : plans.map((plan) => {
 
-                        {/* TIER 1: SCOUT */}
-                        <PricingCard
-                            title="Digital Pass"
-                            price="19.99"
-                            tier="basic"
-                            onClick={() => alert("Przekierowanie do płatności subskrypcyjnej...")}
-                            features={[
-                                "Pełen dostęp do Boksopedii (Artykuły Premium)",
-                                "Nielimitowany dostęp do bazy wiedzy",
-                                "Dostęp do Społeczności Discord",
-                                "Newsletter Taktyczny"
-                            ]}
-                        />
+                            // Determine onClick action based on action_type
+                            let handleAction = () => { };
+                            if (plan.action_type === 'mailto') {
+                                handleAction = () => window.location.href = `mailto:${settings.contact_email}?subject=${encodeURIComponent(plan.action_url || plan.title)}`;
+                            } else if (plan.action_type === 'link') {
+                                handleAction = () => plan.action_url.startsWith('http') ? window.location.href = plan.action_url : navigate(plan.action_url);
+                            } else if (plan.action_type === 'alert') {
+                                handleAction = () => alert(plan.action_url || "Wkrótce dostępne!");
+                            }
 
-                        {/* TIER 2: FIGHTER (RECOMMENDED) */}
-                        <PricingCard
-                            title="Pro Fighter"
-                            price="249"
-                            tier="pro"
-                            recommended={true}
-                            buttonText="Rozpocznij Współpracę"
-                            onClick={() => navigate('/members')}
-                            features={[
-                                "Wszystko z pakietu Digital Pass",
-                                "Dostęp do Panelu Zawodnika (Member Zone)",
-                                "Plan Treningowy (Boks / Motoryka / Hybryda)",
-                                "Dziennik Treningowy Online",
-                                "1x Konsultacja Wideo (Analiza Techniki) / mc"
-                            ]}
-                        />
-
-                        {/* TIER 3: ELITE */}
-                        <PricingCard
-                            title="Elite Mentorship"
-                            price="1499"
-                            tier="elite"
-                            buttonText="Aplikuj o Miejsce"
-                            onClick={() => window.location.href = `mailto:${settings.contact_email}?subject=High%20Ticket%20Mentorship`}
-                            features={[
-                                "Pełna opieka trenerska 24/7",
-                                "Indywidualny makrocykl treningowy",
-                                "Cotygodniowa Analiza Wideo Twoich walk/sparingów",
-                                "Konsultacje dietetyczne i suplementacyjne",
-                                "Ebooki i Poradniki Premium w cenie",
-                                "Priorytetowy kontakt na WhatsApp",
-                                "Spotkania na żywo (opcjonalnie)"
-                            ]}
-                        />
-
+                            return (
+                                <PricingCard
+                                    key={plan.id}
+                                    title={plan.title}
+                                    price={plan.price}
+                                    tier={plan.tier}
+                                    features={plan.features}
+                                    recommended={plan.recommended}
+                                    buttonText={plan.button_text}
+                                    onClick={handleAction}
+                                />
+                            );
+                        })}
                     </div>
 
                     {/* FAQ SECTION */}

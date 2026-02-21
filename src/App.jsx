@@ -26,6 +26,7 @@ import AdminFooter from './components/admin/modules/AdminFooter';
 import AdminBackup from './components/admin/modules/AdminBackup';
 import AdminEmail from './components/admin/modules/AdminEmail';
 import AdminCoaches from './components/admin/modules/AdminCoaches';
+import AdminPlans from './components/admin/modules/AdminPlans';
 import AdminBookings from './components/admin/modules/AdminBookings';
 import AdminBoutique from './components/admin/modules/AdminBoutique';
 import AdminCalendar from './components/admin/modules/AdminCalendar';
@@ -99,6 +100,7 @@ function App() {
                                     <Route path="media" element={<AdminMedia />} />
                                     <Route path="users" element={<AdminUsers />} />
                                     <Route path="coaches" element={<AdminCoaches />} />
+                                    <Route path="plans" element={<AdminPlans />} />
                                     <Route path="ads" element={<AdminAds />} />
                                     <Route path="config" element={<AdminSettings />} />
                                     <Route path="navigation" element={<AdminNavigation />} />
