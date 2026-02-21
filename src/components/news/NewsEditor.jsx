@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { Save, Eye, X, Image as ImageIcon, AlertCircle, RefreshCw } from 'lucide-react';
 import ImageUploader from '../common/ImageUploader';
+import NewsReformatter from './NewsReformatter';
+import RichTextEditor from '../common/RichTextEditor';
 
 const NewsEditor = ({ article, onClose, onSave }) => {
     const queryClient = useQueryClient();
@@ -270,19 +272,14 @@ const NewsEditor = ({ article, onClose, onSave }) => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider">Treść Artykułu (HTML)</label>
-                        <textarea
-                            name="content"
-                            value={formData.content}
-                            onChange={handleChange}
-                            rows="12"
-                            placeholder="Pełna treść artykułu..."
-                            className="w-full bg-black border border-zinc-700 p-3 text-white font-mono text-sm rounded focus:border-red-600 outline-none transition-colors"
-                        />
-                        <div className="flex gap-2 text-[10px] text-zinc-500 font-mono">
-                            <span>&lt;b&gt;bold&lt;/b&gt;</span>
-                            <span>&lt;h2&gt;header&lt;/h2&gt;</span>
-                            <span>&lt;p&gt;paragraph&lt;/p&gt;</span>
+                        <label className="text-zinc-400 text-xs uppercase font-bold tracking-wider">Treść Artykułu</label>
+                        <div className="bg-white rounded text-black mb-12">
+                            <RichTextEditor
+                                value={formData.content}
+                                onChange={(value) => setFormData({ ...formData, content: value })}
+                                placeholder="Pełna treść artykułu..."
+                                className="h-[400px]"
+                            />
                         </div>
                     </div>
 
