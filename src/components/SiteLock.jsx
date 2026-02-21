@@ -25,7 +25,7 @@ const SiteLock = ({ children }) => {
     const handleUnlock = (e) => {
         e.preventDefault();
         // Client-side protection
-        if (password.toLowerCase() === 'boxing2420' || password === 'admin') {
+        if (password === '7519') {
             sessionStorage.setItem('b24_unlocked', 'true');
             setIsUnlocked(true);
         } else {
