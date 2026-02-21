@@ -26,6 +26,7 @@ const AdminLayout = () => {
         { icon: Users, label: 'Użytkownicy', path: '/admin/users' },
         { icon: Send, label: 'Newsletter', path: '/admin/email' },
         { icon: Megaphone, label: 'Kampanie', path: '/admin/ads' },
+        { icon: Menu, label: 'Nawigacja', path: '/admin/navigation' },
         { icon: Settings, label: 'Ustawienia', path: '/admin/config' },
     ];
 

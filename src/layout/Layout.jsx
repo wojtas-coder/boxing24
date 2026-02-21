@@ -8,6 +8,7 @@ import AICoachWidget from '../components/AICoachWidget';
 import PremiumSidebar from '../components/PremiumSidebar';
 
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { useAnalytics } from '../hooks/useAnalytics';
 
 const AdminButton = () => {
@@ -27,6 +28,7 @@ const AdminButton = () => {
 
 const Layout = () => {
     const { user, logout } = useAuth();
+    const { settings } = useSettings();
     const [loggingOut, setLoggingOut] = useState(false);
     const location = useLocation();
     const [scrolled, setScrolled] = useState(false);
@@ -34,6 +36,8 @@ const Layout = () => {
 
     // Initialize Analytics
     useAnalytics();
+
+    const navItems = settings?.navigation_menu || [];
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -66,111 +70,46 @@ const Layout = () => {
 
                     {/* CENTER: Navigation Links */}
                     <div className="hidden lg:flex items-center justify-center space-x-8 absolute left-1/2 -translate-x-1/2">
-                        <Link
-                            to="/news"
-                            className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all relative group text-red-500 hover:text-white"
-                        >
-                            Aktualności
-                            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-current transition-all group-hover:w-full opacity-0 group-hover:opacity-100"></span>
-                        </Link>
+                        {navItems.map(item => {
+                            if (item.children && item.children.length > 0) {
+                                return (
+                                    <div key={item.id} className="relative group/dropdown py-2">
+                                        <Link to={item.path} className={`whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 group-hover/dropdown:text-white ${item.color || 'text-zinc-400'}`}>
+                                            {item.label}
+                                            <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="6 9 12 15 18 9"></polyline>
+                                            </svg>
+                                        </Link>
 
-                        {/* DROPDOWN: KALENDARZ */}
-                        <div className="relative group/dropdown py-2">
-                            <Link to="/calendar" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-zinc-400 group-hover/dropdown:text-white">
-                                Kalendarz
-                                <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </Link>
+                                        {/* Dropdown Menu */}
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
+                                            <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/10 p-2 rounded shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-w-[220px]">
+                                                {item.children.map(child => (
+                                                    <Link
+                                                        key={child.id}
+                                                        to={child.path}
+                                                        className={`block px-4 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 rounded transition-all ${child.color || 'text-zinc-400 hover:text-white'}`}
+                                                    >
+                                                        {child.label}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }
 
-                            {/* Dropdown Menu */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
-                                <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/10 p-2 rounded shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-w-[220px]">
-                                    <Link
-                                        to="/calendar?view=PRO"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-yellow-500 hover:bg-white/5 rounded transition-all"
-                                    >
-                                        Boks Zawodowy
-                                    </Link>
-                                    <Link
-                                        to="/calendar?view=AMATEUR"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-blue-500 hover:bg-white/5 rounded transition-all"
-                                    >
-                                        Boks Olimpijski / Amatorski
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* DROPDOWN: OFERTA */}
-                        <div className="relative group/dropdown py-2">
-                            <Link to="/membership" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-boxing-green group-hover/dropdown:text-white">
-                                Oferta
-                                <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </Link>
-
-                            {/* Dropdown Menu */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
-                                <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/10 p-2 rounded shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-w-[200px]">
-                                    <Link
-                                        to="/membership"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-red-500 hover:bg-white/5 rounded transition-all"
-                                    >
-                                        Online Premium
-                                    </Link>
-                                    <Link
-                                        to="/booking"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded transition-all"
-                                    >
-                                        Treningi Personalne
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* DROPDOWN: WIEDZA */}
-                        <div className="relative group/dropdown py-2">
-                            <Link to="/knowledge" className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-1 text-zinc-400 group-hover/dropdown:text-white">
-                                Wiedza
-                                <svg className="w-3 h-3 transition-transform group-hover/dropdown:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </Link>
-
-                            {/* Dropdown Menu */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 transform group-hover/dropdown:translate-y-0 translate-y-2">
-                                <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/10 p-2 rounded shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-w-[180px]">
-                                    <Link
-                                        to="/knowledge?view=articles"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded transition-all"
-                                    >
-                                        Artykuły
-                                    </Link>
-                                    <Link
-                                        to="/knowledge?view=compendium"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded transition-all"
-                                    >
-                                        Kompendium
-                                    </Link>
-                                    <Link
-                                        to="/knowledge?view=reviews"
-                                        className="block px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded transition-all"
-                                    >
-                                        Recenzje
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        <Link
-                            to="/boutique"
-                            className="whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all relative group text-zinc-400 hover:text-white"
-                        >
-                            Sklep PunchIn
-                            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-current transition-all group-hover:w-full opacity-0 group-hover:opacity-100"></span>
-                        </Link>
+                            return (
+                                <Link
+                                    key={item.id}
+                                    to={item.path}
+                                    className={`whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.2em] transition-all relative group hover:text-white ${item.color || 'text-zinc-400'}`}
+                                >
+                                    {item.label}
+                                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-current transition-all group-hover:w-full opacity-0 group-hover:opacity-100"></span>
+                                </Link>
+                            );
+                        })}
                     </div>
 
                     {/* RIGHT: Actions */}
@@ -230,28 +169,19 @@ const Layout = () => {
                         className="fixed inset-0 z-40 bg-black pt-24 px-6 md:hidden"
                     >
                         <div className="flex flex-col space-y-6 text-center">
-                            <Link to="/news" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Aktualności</Link>
+                            {navItems.map(item => (
+                                <div key={item.id} className="flex flex-col space-y-4">
+                                    <Link to={item.path} onClick={() => setMobileMenuOpen(false)} className={`text-2xl font-bold uppercase tracking-widest ${item.color || 'text-white'}`}>
+                                        {item.label}
+                                    </Link>
+                                    {item.children && item.children.length > 0 && item.children.map(child => (
+                                        <Link key={child.id} to={child.path} onClick={() => setMobileMenuOpen(false)} className={`text-lg font-bold uppercase tracking-widest hover:text-white transition-colors ${child.color || 'text-zinc-400'}`}>
+                                            → {child.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            ))}
 
-                            <div className="flex flex-col space-y-4">
-                                <Link to="/calendar" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Kalendarz</Link>
-                                <Link to="/calendar?view=PRO" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-yellow-500 transition-colors">→ Boks Zawodowy</Link>
-                                <Link to="/calendar?view=AMATEUR" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-blue-500 transition-colors">→ Boks Olimpijski</Link>
-                            </div>
-
-                            <div className="flex flex-col space-y-4">
-                                <Link to="/membership" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Oferta</Link>
-                                <Link to="/membership" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Online Premium</Link>
-                                <Link to="/booking" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Treningi Personalne</Link>
-                            </div>
-
-                            <div className="flex flex-col space-y-4">
-                                <Link to="/knowledge" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Wiedza</Link>
-                                <Link to="/knowledge?view=articles" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Artykuły</Link>
-                                <Link to="/knowledge?view=compendium" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Kompendium</Link>
-                                <Link to="/knowledge?view=reviews" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">→ Recenzje</Link>
-                            </div>
-
-                            <Link to="/boutique" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-white">Sklep PunchIn</Link>
                             <Link to="/members" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-red-500">Strefa Premium</Link>
                             {user && (
                                 <button
