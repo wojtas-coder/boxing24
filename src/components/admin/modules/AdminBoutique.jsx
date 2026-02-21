@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import {
     Plus, Search, Edit2, Trash2, Eye, EyeOff, Loader2, Save, X, Image as ImageIcon,
-    AlertCircle, Tag
+    AlertCircle, Tag, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
