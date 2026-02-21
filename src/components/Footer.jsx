@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, MapPin, Instagram, Youtube, Phone } from 'lucide-react';
+import { Mail, MapPin, Instagram, Youtube, Phone, Facebook } from 'lucide-react';
 import Logo from './Logo';
 import NewsletterBox from './common/NewsletterBox';
+import { useSettings } from '../context/SettingsContext';
 
 const Footer = () => {
+    const { settings } = useSettings();
     const currentYear = new Date().getFullYear();
 
     const quickLinks = [
@@ -29,14 +31,24 @@ const Footer = () => {
                             Biomechanika spotyka technologię. Kompletny ekosystem treningowy dla ambitnych bokserów.
                         </p>
                         <div className="flex items-center gap-4">
-                            <a href="https://www.instagram.com/boxing24.pl/" target="_blank" rel="noopener noreferrer"
-                                className="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-zinc-500 hover:text-white hover:border-red-500/30 transition-all">
-                                <Instagram className="w-4 h-4" />
-                            </a>
-                            <a href="https://www.youtube.com/@Boxing24_pl" target="_blank" rel="noopener noreferrer"
-                                className="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-zinc-500 hover:text-white hover:border-red-500/30 transition-all">
-                                <Youtube className="w-4 h-4" />
-                            </a>
+                            {settings.social_instagram && (
+                                <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer"
+                                    className="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-zinc-500 hover:text-white hover:border-red-500/30 transition-all">
+                                    <Instagram className="w-4 h-4" />
+                                </a>
+                            )}
+                            {settings.social_facebook && (
+                                <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer"
+                                    className="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-zinc-500 hover:text-white hover:border-red-500/30 transition-all">
+                                    <Facebook className="w-4 h-4" />
+                                </a>
+                            )}
+                            {settings.social_youtube && (
+                                <a href={settings.social_youtube} target="_blank" rel="noopener noreferrer"
+                                    className="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-zinc-500 hover:text-white hover:border-red-500/30 transition-all">
+                                    <Youtube className="w-4 h-4" />
+                                </a>
+                            )}
                         </div>
                     </div>
 
@@ -58,16 +70,28 @@ const Footer = () => {
                     <div>
                         <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-6">Kontakt</h4>
                         <ul className="space-y-4">
-                            <li className="flex items-center gap-3 text-zinc-400 text-sm">
-                                <MapPin className="w-4 h-4 text-zinc-600 flex-shrink-0" />
-                                <span>Wrocław, Polska</span>
-                            </li>
-                            <li>
-                                <a href="mailto:kontakt@boxing24.pl" className="flex items-center gap-3 text-zinc-400 text-sm hover:text-white transition-colors">
-                                    <Mail className="w-4 h-4 text-zinc-600 flex-shrink-0" />
-                                    <span>kontakt@boxing24.pl</span>
-                                </a>
-                            </li>
+                            {settings.address_city && (
+                                <li className="flex items-center gap-3 text-zinc-400 text-sm">
+                                    <MapPin className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                                    <span>{settings.address_city}{settings.address_street ? `, ${settings.address_street}` : ''}</span>
+                                </li>
+                            )}
+                            {settings.contact_email && (
+                                <li>
+                                    <a href={`mailto:${settings.contact_email}`} className="flex items-center gap-3 text-zinc-400 text-sm hover:text-white transition-colors">
+                                        <Mail className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                                        <span>{settings.contact_email}</span>
+                                    </a>
+                                </li>
+                            )}
+                            {settings.contact_phone && (
+                                <li>
+                                    <a href={`tel:${settings.contact_phone}`} className="flex items-center gap-3 text-zinc-400 text-sm hover:text-white transition-colors">
+                                        <Phone className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                                        <span>{settings.contact_phone}</span>
+                                    </a>
+                                </li>
+                            )}
                         </ul>
                     </div>
 
@@ -80,7 +104,7 @@ const Footer = () => {
             <div className="border-t border-zinc-900/50 py-6">
                 <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-zinc-600 text-xs">
-                        © {currentYear} Boxing24. Portal z pasji do boksu. All rights reserved.
+                        © {currentYear} {settings.company_name || 'Boxing24'}. Wszystkie prawa zastrzeżone.
                     </p>
                     <div className="flex gap-6 text-zinc-600 text-xs">
                         <Link to="/privacy" className="hover:text-zinc-400 transition-colors">Polityka Prywatności</Link>

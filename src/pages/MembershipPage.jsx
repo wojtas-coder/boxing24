@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, Dumbbell, Clock, Target, Shield, Shirt, Droplet, Zap, Heart, Users, Award, Bath, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { coaches } from '../data/coaches';
+import { useSettings } from '../context/SettingsContext';
 
 const PricingCard = ({ title, price, features, tier, recommended, onClick, buttonText }) => {
     return (
@@ -53,6 +54,7 @@ const PricingCard = ({ title, price, features, tier, recommended, onClick, butto
 
 const MembershipPage = () => {
     const navigate = useNavigate();
+    const { settings } = useSettings();
     const [activeView, setActiveView] = useState('online'); // 'online' or 'personalne'
 
     return (
@@ -136,7 +138,7 @@ const MembershipPage = () => {
                             price="1499"
                             tier="elite"
                             buttonText="Aplikuj o Miejsce"
-                            onClick={() => window.location.href = 'mailto:kontakt@boxing24.pl?subject=High%20Ticket%20Mentorship'}
+                            onClick={() => window.location.href = `mailto:${settings.contact_email}?subject=High%20Ticket%20Mentorship`}
                             features={[
                                 "Pełna opieka trenerska 24/7",
                                 "Indywidualny makrocykl treningowy",
@@ -367,7 +369,7 @@ const MembershipPage = () => {
                             Umów Trening Już Teraz
                         </button>
                         <p className="text-zinc-600 text-xs mt-6">
-                            Lub napisz do nas: <a href="mailto:kontakt@boxing24.pl" className="text-boxing-green hover:text-white">kontakt@boxing24.pl</a>
+                            Lub napisz do nas: <a href={`mailto:${settings.contact_email}`} className="text-boxing-green hover:text-white">{settings.contact_email}</a>
                         </p>
                     </div>
 
