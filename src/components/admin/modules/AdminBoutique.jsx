@@ -103,17 +103,35 @@ const AdminBoutique = () => {
 
             if (currentProduct.id) {
                 // Update
-                const { error: updateError } = await supabase
+                console.log("SENDING UPDATE PAYLOAD:", payload);
+                const response = await supabase
                     .from('products')
                     .update(payload)
-                    .eq('id', currentProduct.id);
-                if (updateError) throw updateError;
+                    .eq('id', currentProduct.id)
+                    .select();
+
+                console.log("UPDATE RAW RESPONSE:", response);
+                if (response.error) throw response.error;
+
+                if (!response.data || response.data.length === 0) {
+                    setError(`ZAPIS ZABLOKOWANY PRZEZ BAZĘ (RLS). Dane się nie zapisały. Token wygasł lub brak uprawnień. Odśwież i zaloguj się ponownie.`);
+                    return;
+                }
             } else {
                 // Insert
-                const { error: insertError } = await supabase
+                console.log("SENDING INSERT PAYLOAD:", payload);
+                const response = await supabase
                     .from('products')
-                    .insert([payload]);
-                if (insertError) throw insertError;
+                    .insert([payload])
+                    .select();
+
+                console.log("INSERT RAW RESPONSE:", response);
+                if (response.error) throw response.error;
+
+                if (!response.data || response.data.length === 0) {
+                    setError(`DODANIE ZABLOKOWANE PRZEZ BAZĘ (RLS). Brak uprawnień.`);
+                    return;
+                }
             }
 
             setSuccess('Zapisano produkt pomyślnie!');
@@ -130,12 +148,20 @@ const AdminBoutique = () => {
 
     const handleToggleActive = async (id, currentStatus) => {
         try {
-            const { error } = await supabase
+            console.log(`TOGGLING PRODUCT ${id} to ${!currentStatus}`);
+            const response = await supabase
                 .from('products')
                 .update({ is_active: !currentStatus })
-                .eq('id', id);
+                .eq('id', id)
+                .select();
 
-            if (error) throw error;
+            console.log("TOGGLE RAW RESPONSE:", response);
+            if (response.error) throw response.error;
+
+            if (!response.data || response.data.length === 0) {
+                setError(`ZMIANA STATUSU ZABLOKOWANA (RLS). Baza uważa że nie masz dostępu.`);
+                return;
+            }
             fetchProducts();
         } catch (err) {
             console.error('Toggle error:', err);
