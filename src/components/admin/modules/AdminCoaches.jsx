@@ -8,7 +8,7 @@ import ImageUploader from '../../common/ImageUploader';
 
 const AdminCoaches = () => {
     const [coaches, setCoaches] = useState([]);
-    const [loading, setLoading] = true;
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [currentCoach, setCurrentCoach] = useState(null);
